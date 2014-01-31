@@ -6,7 +6,7 @@
 #define SORT_DIFF  0
 
 #define PRINT_OUTPUT 1
-#define PRINT_FREQ 100000
+#define PRINT_FREQ 10000
 
 #define MAX_EVENTS 0
 
@@ -37,18 +37,6 @@ struct Mnemonic	{
    std::string arraysubposition;
    std::string collectedcharge;
    std::string outputsensor;
-};
-
-struct FitResult   {
-   float Energy;
-   float Const;
-   float dConst;
-   float Mean;
-   float dMean; 
-   float Sigma;
-   float dSigma;
-   float ChiSq;
-   int NDF;
 };
 
 // Function to parse Mnemonic name:

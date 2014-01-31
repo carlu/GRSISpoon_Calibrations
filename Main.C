@@ -1,13 +1,9 @@
 //To compile:
-// g++ Main.C CoincEff.C Calib.C PropXtalk.C -I/home/cu/Code/TIGRESS/GRSISpoon/include --std=c++0x -o Sort /home/cu/Code/TIGRESS/GRSISpoon/libraries/TigFormat/libFormat.so -O2 `root-config --cflags --libs` -lTreePlayer -lSpectrum -lgsl -lgslcblas -g
-// g++ Main.C CoincEff.C Calib.C PropXtalk.C -I/home/cu/Code/TIGRESS/TriScope/tigscope/include --std=c++0x -o Sort /home/cu/Code/TIGRESS/TriScope/tigscope/libraries/TigFormat/libTigFormat.a -O2 `root-config --cflags --libs` -lTreePlayer -lSpectrum -lgsl -lgslcblas -g
-// Old libraries:
-// g++ Main.C CoincEff.C Calib.C PropXtalk.C -I../TriScope-16Oct13/include --std=c++0x -o Sort ../TriScope-16Oct13/libraries/libTigFormat.a -O2 `root-config --cflags --libs` -lTreePlayer -lSpectrum -lgsl -lgslcblas -g -Wall
-//
+// g++ Main.C CoincEff.C Calib.C PropXtalk.C -I/home/cu/Code/TIGRESS/GRSISpoon/include --std=c++0x -o Sort /home/cu/Code/TIGRESS/GRSISpoon/libraries/TigFormat/libFormat.so /home/cu/Code/TIGRESS/GRSISpoon/libraries/libCalManager.so /home/cu/Code/TIGRESS/GRSISpoon/libraries/libRootIOManager.so -O2 `root-config --cflags --libs` -lTreePlayer -lSpectrum -lgsl -lgslcblas -g
 
 // --------------------------------------------------------------------------------
 // ----  Sort code for processing ROOT TTrees of TTigFragments                 ----
-// ----  (as produced by Peter Bender's TriScope code from TIGRESS data)       ----
+// ----  (as produced by GRSISPoon code from TIGRESS data)                     ----
 // ----                                                                        ----
 // ----  Main loop of files/trees and then events is here, sorting code        ----
 // ----  included from other files.                                            ----
@@ -93,9 +89,10 @@ int main(int argc, char **argv) {
 	gStyle->SetOptStat("iouRMen");
 	
 	
-   TTreePlayer *TTP = new TTreePlayer();	// This line is needed for the libraries required 
+   //TTreePlayer *TTP = new TTreePlayer();	// This line is needed for the libraries required 
 	                                       // to read the event index to be correctly loaded.
-	                                       // without it the compiler thinks we don't need it and skips - CU 26 Aug 13  
+	                                       // without it the compiler thinks we don't need it and skips - CU 26 Aug 13 
+	                                        
 	//TFSPC_Info  *TFSPC = new TFSPC_Info(); // Similarily this causes the library for reading and storing  odb info 
 	                                       // to be loaded correctly - CU 27 Aug 13        
    
@@ -220,8 +217,6 @@ int main(int argc, char **argv) {
 		   else {
 		      EventCount++;  
 		   }
-		   
-		   
 		   
 		   //cout << "HERE!!!!!!!!!!" << endl;
 		   // do something with the evFrag vector (contains a built event)... ProcessEvent(evFrags); 

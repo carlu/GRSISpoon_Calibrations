@@ -10,6 +10,7 @@
 #define VERBOSE 1 // print lots of info on peak search and fitting
 #define OUTPUT_GAIN 1 // write full-run gains to file
 #define OUTPUT_REPORT 1 // write full report including all fits and gains
+#define DEBUG 0  // PRint Debugging messages to screen
 
 // Plotting
 #define PLOT_FITS  0  // plot fits, all chans plotted if below items = 0
@@ -59,10 +60,35 @@
 // Energy/ch fitting
 #define INITIAL_GAIN 0.16
 
+struct FitResult   {
+   float Energy;
+   float Const;
+   float dConst;
+   float Mean;
+   float dMean; 
+   float Sigma;
+   float dSigma;
+   float ChiSq;
+   int NDF;
+};
+
+// Structure for fits and gain for one spectrum
+struct SpectrumFit   {
+   FitResult PeakFits[NUM_LINES];
+   int FitSuccess[NUM_LINES];
+   float LinGain[2];  // [O,G]
+   float dLinGain[2];
+   float LinGainFit[3]; // [O,G,CSPD]
+   float dLinGainFit[2]; // [dO,dG]
+   float QuadGainFit[4]; // [O,G,Q,CSPD]
+   float dQuadGainFit[4]; // [dO,dG,dQ]
+};
 
 
+// Sources
+extern float Sources[3][10];
 
-
+static TCanvas *c1, *c2, *ctemp;
 
 
 

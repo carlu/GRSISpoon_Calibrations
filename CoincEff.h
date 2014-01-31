@@ -12,7 +12,17 @@
 #define EN_SPECTRA_CHANS 8192
 #define EN_SPECTRA_MAX 2048
 
-
+struct FitResult   {
+   float Energy;
+   float Const;
+   float dConst;
+   float Mean;
+   float dMean; 
+   float Sigma;
+   float dSigma;
+   float ChiSq;
+   int NDF;
+};
 
 
 

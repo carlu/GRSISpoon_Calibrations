@@ -260,6 +260,13 @@ void PropXtalk(std::vector<TTigFragment> &ev) {
       }
       if(SegFoldClover==1) {
          // Xtalk calculation here
+         // checks - One seg hit  
+         //        - CoreE = SegE
+         //        - CoreABCloverE = CoreE    
+         
+         // Energy gate ?
+         
+         // Energy in each non-hit channel as frac of hit channel
          
       }
    }
