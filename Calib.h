@@ -13,11 +13,11 @@
 #define DEBUG 0  // PRint Debugging messages to screen
 
 // Plotting
-#define PLOT_FITS  0  // plot fits, all chans plotted if below items = 0
-#define PLOT_CLOVER 5  // select 1-16 to plot that only
-#define PLOT_CRYSTAL 1  // 1-4
-#define PLOT_SEG 1  //  1-10
-#define PLOT_CALIB 0 // Plot calibration 
+#define PLOT_FITS  1  // plot fits, all chans plotted if below items = 0
+#define PLOT_CLOVER 6  // select 1-16 to plot that only
+#define PLOT_CRYSTAL 0  // 1-4
+#define PLOT_SEG 0  //  1-10
+#define PLOT_CALIB 1 // Plot calibration 
 #define PLOT_CALIB_SUMMARY 1 // Plot and histo of calibration values
 
 // Charge spectra stuff
@@ -36,12 +36,11 @@
 #define SOURCE_NUM_FRONT 1 // Source for front segments and core 0=60Co, 1=152Eu, 2=152Eu (no 121)
 #define SOURCE_NUM_BACK 2 // Source for back segments
 #define SOURCE_NUM_CORE 1 // Source for core
-#define NUM_LINES 5 // Number of lines to fit 
-#define FIT_EXTRA_LINES 1 // 
+#define NUM_LINES 8 // Number of lines to fit 
 
 // Peak Fitting
 #define MIN_FIT_COUNTS 500 // Minimum counts in whole spectrum for fit to be attempted
-#define FIT_WIDTH 12000    // Range either side of peak to be fitted (value, not channels)
+#define FIT_WIDTH 14000    // Range either side of peak to be fitted (value, not channels)
 #define FIT_BACKGROUND 1   // 1 = yes, 0 = no.  Should be best to use this all the time but left option there just in case.
 #define BACK_WIDTH 1000 // range for background estimate from either side of fit width. (value, not channels)
 
@@ -88,7 +87,5 @@ struct SpectrumFit   {
 // Sources
 extern float Sources[3][10];
 
-static TCanvas *c1, *c2, *ctemp;
-
-
+extern TCanvas *c1, *c2, *ctemp;
 

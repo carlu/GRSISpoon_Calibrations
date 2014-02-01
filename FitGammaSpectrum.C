@@ -29,7 +29,7 @@ using namespace std;
 
 
 // TriScope libraries
-#include "TTigFragment.h"
+//#include "TTigFragment.h"
 //#include "TFSPC_Info.h"
 //#include "TSharc.h"
 //#include "TTigress.h"
@@ -141,8 +141,8 @@ int FitGammaSpectrum(TH1F* Histo, SpectrumFit *Fit, int Source, int PlotOn) {
             if(Line==0) {Peak=BestPeak1;}
             if(Line==1) {Peak=BestPeak2;}
             
-            Min = PeakPositions[Peak]-FIT_WIDTH;
-            Max = PeakPositions[Peak]+FIT_WIDTH;
+            Min = float(PeakPositions[Peak]-FIT_WIDTH);
+            Max = float(PeakPositions[Peak]+FIT_WIDTH);
             
             if(VERBOSE) {
                cout << "Fitting line " << Line << " Min: " << Min << " Max: " << Max << endl;

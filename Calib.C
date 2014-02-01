@@ -52,6 +52,7 @@ static TH1F *hCrystalChargeTemp[CRYSTALS * CLOVERS] = {};  // Only doing these g
 static TH1F *hCrystalGain[CRYSTALS * CLOVERS] = {};    
 static TH1F *hCrystalOffset[CRYSTALS * CLOVERS] = {};
 
+//static TCanvas *c1, *c2, *ctemp;
 
 // Functions called from main:   
 void InitCalib();
@@ -64,9 +65,11 @@ void ResetTempSpectra();
 
 float Sources[3][10] = {
    {1173.237, 1332.501},
-   {121.7817, 1408.006, 244.6975, 344.2785, 778.9040, 964.079},
-   {344.2785, 1408.006, 121.7817, 244.6975, 778.9040, 964.079}
+   {121.7817, 1408.006, 244.6975, 344.2785, 411.116, 778.9040, 964.079, 1112.074},
+   {344.2785, 1408.006, 121.7817, 244.6975, 411.116, 778.9040, 964.079, 1112.074}
 };
+
+TCanvas *c1, *c2, *ctemp;
 
 void InitCalib() {
  
