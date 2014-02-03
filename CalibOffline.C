@@ -139,7 +139,7 @@ int main(int argc, char** argv){
                      Source = SOURCE_NUM_CORE;   
                      break;
                   case 9:
-                     sprintf(HistName,"TIG%02d%cN%02db Chg",Clover+1,Colours[Crystal],Seg);
+                     sprintf(HistName,"TIG%02d%cN%02db Chg",Clover+1,Colours[Crystal],0);
                      Source = SOURCE_NUM_CORE;   
                      break;
                   default:

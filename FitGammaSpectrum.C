@@ -53,7 +53,7 @@ int FitGammaSpectrum(TH1F* Histo, SpectrumFit *Fit, int Source, int PlotOn) {
    Float_t* PeakPositions;  // for output of root peak search
    int Line, LinesUsed;   
    float FitCentre, G, O, dG, dO;  // Fits and values for fast 2 point calibration.
-   float Energies[NUM_LINES], dEnergies[NUM_LINES], Centroids[NUM_LINES], dCentroids[NUM_LINES]; // Data for full calibration
+   float Energies[NUM_LINES+1], dEnergies[NUM_LINES+1], Centroids[NUM_LINES+1], dCentroids[NUM_LINES+1]; // Data for full calibration
    float En1, En2;   // line energies for two point calib    
    En1 = Sources[Source][0];
    En2 = Sources[Source][1];
@@ -131,7 +131,7 @@ int FitGammaSpectrum(TH1F* Histo, SpectrumFit *Fit, int Source, int PlotOn) {
          //-------------------------------------------------------------//
          // Now fit the first two lines and get approx gain             //
          //-------------------------------------------------------------//     
-                  
+                
          if(VERBOSE){cout << "Peaks identified, commencing fit..." << endl << endl;}
          
          TF1 *FitRange[NUM_LINES];  // pointers to functions for fitting "gaus" to each line
@@ -316,10 +316,10 @@ int FitGammaSpectrum(TH1F* Histo, SpectrumFit *Fit, int Source, int PlotOn) {
          if(VERBOSE) {
             cout << endl << "Calibrating..." << endl;
          }
-         memset(&Energies,   0.0, sizeof(float)*NUM_LINES);
-         memset(&dEnergies,  0.0, sizeof(float)*NUM_LINES);
-         memset(&Centroids,  0.0, sizeof(float)*NUM_LINES);
-         memset(&dCentroids, 0.0, sizeof(float)*NUM_LINES);
+         memset(&Energies,   0.0, sizeof(float)*(NUM_LINES+1));
+         memset(&dEnergies,  0.0, sizeof(float)*(NUM_LINES+1));
+         memset(&Centroids,  0.0, sizeof(float)*(NUM_LINES+1));
+         memset(&dCentroids, 0.0, sizeof(float)*(NUM_LINES+1));
          
          LinesUsed=0;
          for(Line=0; Line<NUM_LINES; Line++) {
@@ -334,19 +334,38 @@ int FitGammaSpectrum(TH1F* Histo, SpectrumFit *Fit, int Source, int PlotOn) {
                      }
                      // Pass fit results back out to main
                      Fit->PeakFits[Line].Energy = FitRes[Line].Energy;    
-                     Fit->PeakFits[Line].Const = FitRes[Line].Const ;
+                     Fit->PeakFits[Line].Const = FitRes[Line].Const;
                      Fit->PeakFits[Line].dConst = FitRes[Line].dConst;
-                     Fit->PeakFits[Line].Mean = FitRes[Line].Mean   ;
-                     Fit->PeakFits[Line].dMean = FitRes[Line].dMean  ;
-                     Fit->PeakFits[Line].Sigma = FitRes[Line].Sigma  ;
-                     Fit->PeakFits[Line].dSigma = FitRes[Line].dSigma  ;     
-                     Fit->PeakFits[Line].ChiSq = FitRes[Line].ChiSq  ;
-                     Fit->PeakFits[Line].NDF = FitRes[Line].NDF     ;  
+                     Fit->PeakFits[Line].Mean = FitRes[Line].Mean;
+                     Fit->PeakFits[Line].dMean = FitRes[Line].dMean;
+                     Fit->PeakFits[Line].Sigma = FitRes[Line].Sigma;
+                     Fit->PeakFits[Line].dSigma = FitRes[Line].dSigma;     
+                     Fit->PeakFits[Line].ChiSq = FitRes[Line].ChiSq;
+                     Fit->PeakFits[Line].NDF = FitRes[Line].NDF;  
                      Fit->FitSuccess[Line]=1;              
                      LinesUsed += 1;
                   }
                }   
             }         
+         }
+         if(INCLUDE_ZERO) {
+            Energies[LinesUsed] = 0.0;
+            Centroids[LinesUsed] = 0.0;
+            dCentroids[LinesUsed] = ZERO_ERR;
+            if(VERBOSE) {
+               cout << Energies[LinesUsed] << " keV\t" << Centroids[LinesUsed] << " +/- " << dCentroids[LinesUsed] << " ch" << endl;
+            }
+            Fit->PeakFits[NUM_LINES].Energy = 0.0;    
+            Fit->PeakFits[NUM_LINES].Const = 0.0;
+            Fit->PeakFits[NUM_LINES].dConst = 0.0;
+            Fit->PeakFits[NUM_LINES].Mean = 0.0;
+            Fit->PeakFits[NUM_LINES].dMean = 1.0;
+            Fit->PeakFits[NUM_LINES].Sigma = 0.0;
+            Fit->PeakFits[NUM_LINES].dSigma = 0.0;     
+            Fit->PeakFits[NUM_LINES].ChiSq = 0.0;
+            Fit->PeakFits[NUM_LINES].NDF = 1;  
+            Fit->FitSuccess[Line]=1;              
+            LinesUsed += 1;
          }
          
          TGraphErrors CalibPlot(LinesUsed,Centroids,Energies,dCentroids,dEnergies);
