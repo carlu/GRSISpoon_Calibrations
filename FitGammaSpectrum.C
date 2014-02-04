@@ -68,7 +68,7 @@ int FitGammaSpectrum(TH1F* Histo, SpectrumFit *Fit, int Source, int PlotOn) {
    float InitialGain = 0.16;
    
    // Fitting stuff
-   std::string FitOptions = ("RQE");
+   std::string FitOptions = ("RQEM");
    // R=restrict to function range, Q=quiet, L=log likelihood method, E=improved err estimation, + add fit instead of replace
    std::string Opts;
    
