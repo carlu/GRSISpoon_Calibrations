@@ -76,6 +76,10 @@ static TH1F *hFold1CoreEn[CLOVERS][CRYSTALS][SEGS+1];             // Core energy
 static TH1F *hSegAddBackCloverByFold[CLOVERS][SEGS];           // Sum of segs, over clover, for each event, by seg fold
 static TH1F *hSegAddBackCrystalByFold[CLOVERS][CRYSTALS][SEGS]; // Sum od segs, over crystal, for each event, by seg fold
 
+// Storing xtalk
+static int XtalkCount[CLOVERS][(SEGS+2)*CRYSTALS]; // Count corsstalk events for each channel in each clover
+static float XTalkFrac[CLOVERS][(SEGS+2)*CRYSTALS][(SEGS+2)*CRYSTALS]; // Record crosstalk events for 
+
 // Functions
 void InitPropXtalk();
 void FinalPropXtalk();
@@ -86,7 +90,7 @@ void PropXtalk(std::vector<TTigFragment> &ev) {
    //cout << "Here " << temp++ << endl;
 
    int i;
-   int HitClover, HitCrystal;
+   int HitClover, HitCrystal, HitSeg;
    int Clover, Crystal, Seg, Fold;
    int CloverFoldTig, CrystalFoldTig, SegFoldTig, CrystalFoldClover, SegFoldClover, SegFoldCrystal;
    float CoreABTig, CoreABClover, SegABClover, SegABCrystal;
@@ -94,6 +98,7 @@ void PropXtalk(std::vector<TTigFragment> &ev) {
    int Slave, Port, Chan;
    float En;
    std::string Name; 
+   
    
    int Hits[CLOVERS][CRYSTALS][SEGS+2];
    int CloverCoreFold[CLOVERS];  // + 1 for each core hit in each clover
@@ -230,6 +235,8 @@ void PropXtalk(std::vector<TTigFragment> &ev) {
             CrystalFoldTig+=1;
             CoreABTig += Energies[Clover][Crystal][0];
             CoreABClover += Energies[Clover][Crystal][0];
+            HitClover = Clover;
+            HitCrystal = Crystal;
          }
          for(Seg=1; Seg<=SEGS+1; Seg++) {
             if(Hits[Clover][Crystal][Seg]>0) {
@@ -238,6 +245,7 @@ void PropXtalk(std::vector<TTigFragment> &ev) {
                SegFoldCrystal+=1;
                SegABClover += Energies[Clover][Crystal][Seg];
                SegABCrystal += Energies[Clover][Crystal][Seg];
+               HitSeg = Seg;
             }
          }
          if(SegFoldCrystal > 0 || Hits[Clover][Crystal][0] > 0) {  // If hit here in this crystal core OR any seg, then record seg fold.
@@ -263,10 +271,24 @@ void PropXtalk(std::vector<TTigFragment> &ev) {
          // checks - One seg hit  
          //        - CoreE = SegE
          //        - CoreABCloverE = CoreE    
+         // As this is fold1, should be able to use HitClover, HitCrystal and HitSeg.
          
-         // Energy gate ?
+         // Energy Gate
+         if(Energies[Clover][HitCrystal][HitSeg] > 100.0) {
+            // Check CoreE = SegE, CoreABCloverE = CoreE    
+            
+            // Count Events
+            XtalkCount[Clover][(HitCrystal*4)+HitSeg] += 1;
+            
+            // Loop and record crosstalk
+            for(Crystal=0; Crystal<CRYSTALS; Crystal++) {
+               for(Seg=0; Seg<SEGS+2; Seg++) {
+                  XTalkFrac[Clover][(HitCrystal*4)+HitSeg][(Crystal*4)+Seg] = Energies[Clover][Crystal][Seg] / Energies[Clover][HitCrystal][HitSeg];
+               }
+            }
+         }
          
-         // Energy in each non-hit channel as frac of hit channel
+        
          
       }
    }

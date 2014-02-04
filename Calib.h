@@ -39,7 +39,7 @@
 #define NUM_LINES 8 // Number of lines to fit 
 
 // Extra calibration point at 0 ch = 0 keV
-#define INCLUDE_ZERO 0  // Add an extra calibration point at 0ch = 0 keV
+#define INCLUDE_ZERO 1  // Add an extra calibration point at 0ch = 0 keV
 #define ZERO_ERR 0.01
 
 // Peak Fitting
