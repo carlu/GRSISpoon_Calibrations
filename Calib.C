@@ -155,6 +155,7 @@ void Calib(std::vector<TTigFragment> &ev) {
    int PlotOn = 0;
    int Source = 0;
    
+   
    if(DEBUG) {cout << "--------- New Event ---------" << endl;}
    
    for(i=0;i<ev.size();i++) {
@@ -314,6 +315,9 @@ void FinalCalib() {
    TH1F *GainHist, *OffsetHist, *QuadHist;
    int ItemNum;
    
+   
+   float CalibEn = 0.0;
+   
    if(PLOT_CALIB_SUMMARY) {
       c2 = new TCanvas("c2", "Calibration Canvas", 800, 600);  // Canvas for gain plots and histograms
       c2->Divide(2,3);
@@ -430,8 +434,10 @@ void FinalCalib() {
                // Now print reports on results of fits and calibration.
                if(OUTPUT_GAIN) {
                   if(FitSuccess > 0) {
-                     GainOut << HistName << " " << Fit.LinGainFit[0] << " +/- " << Fit.dLinGainFit[0];
-                     GainOut << " " << Fit.LinGainFit[1] << " +/- " << Fit.dLinGainFit[1] << " " <<   Fit.LinGainFit[2] << endl;
+                     //GainOut << HistName << " " << Fit.LinGainFit[0] << " +/- " << Fit.dLinGainFit[0];
+                     //GainOut << " " << Fit.LinGainFit[1] << " +/- " << Fit.dLinGainFit[1] << " " <<   Fit.LinGainFit[2] << endl;
+                     GainOut << HistName << " " << Fit.QuadGainFit[0] << " +/- " << Fit.dQuadGainFit[0] << " ";
+                     GainOut << Fit.QuadGainFit[1] << " +/- " << Fit.dQuadGainFit[1] << " " << Fit.QuadGainFit[2] << " +/- " << Fit.dQuadGainFit[2] << endl;     
                   }
                   else {
                      GainOut << HistName << " Fail!!!" << endl;
@@ -461,10 +467,21 @@ void FinalCalib() {
                      ReportOut << "Quad = " << Fit.QuadGainFit[2] << " +/- " << Fit.dQuadGainFit[2] << "\t";
                      ReportOut << "CSPD = " << Fit.LinGainFit[3] << endl;
                               
+                     ReportOut << endl << "Check calibration...." << endl;
+                        ReportOut << "Centroid (ch)\t\tList Energy (keV)\t\tCalibration Energy (keV)\t\tResidual (keV)" << endl;
+                        for(i=0; i<NUM_LINES; i++) {
+                           if(Fit.FitSuccess[i]==1) {
+                              CalibEn = Fit.QuadGainFit[0] + (Fit.QuadGainFit[1]*(Fit.PeakFits[i].Mean/INTEGRATION)) + (pow((Fit.PeakFits[i].Mean/INTEGRATION),2)*Fit.QuadGainFit[2]);
+                              ReportOut << Fit.PeakFits[i].Mean << "\t\t\t" << Fit.PeakFits[i].Energy << "\t\t\t";
+                              ReportOut << CalibEn << "\t\t\t" << CalibEn -  Fit.PeakFits[i].Energy << endl;
+                           }
+                        }           
+                              
                   }
                   else {
                      ReportOut << endl << "------------------------------------------" << endl << HistName << endl << "------------------------------------------" << endl << endl;
                      ReportOut << "Fail Fail Fail! The calibration has failed!" << endl;
+                     
                   }
               
                }

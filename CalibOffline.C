@@ -79,6 +79,8 @@ int main(int argc, char** argv){
    ofstream GainOut;
    ofstream ReportOut;
    
+   float CalibEn = 0.0;
+   
    gStyle->SetOptStat("iouRMen");
    
    // Set up plots
@@ -236,7 +238,16 @@ int main(int argc, char** argv){
                         ReportOut << "Gain = " << Fit.QuadGainFit[1] << " +/- " << Fit.dQuadGainFit[1] << "\t";
                         ReportOut << "Quad = " << Fit.QuadGainFit[2] << " +/- " << Fit.dQuadGainFit[2] << "\t";
                         ReportOut << "CSPD = " << Fit.LinGainFit[3] << endl;
-                                 
+                           
+                        ReportOut << endl << "Check calibration...." << endl;
+                        ReportOut << "Centroid (ch)\t\tList Energy (keV)\t\tCalibration Energy (keV)\t\tResidual (keV)" << endl;
+                        for(i=0; i<NUM_LINES; i++) {
+                           if(Fit.FitSuccess[i]==1) {
+                              CalibEn = Fit.QuadGainFit[0] + (Fit.QuadGainFit[1]*(Fit.PeakFits[i].Mean/INTEGRATION)) + (pow((Fit.PeakFits[i].Mean/INTEGRATION),2)*Fit.QuadGainFit[2]);
+                              ReportOut << Fit.PeakFits[i].Mean << "\t\t\t" << Fit.PeakFits[i].Energy << "\t\t\t";
+                              ReportOut << CalibEn << "\t\t\t" << CalibEn -  Fit.PeakFits[i].Energy << endl;
+                           }
+                        }         
                      }
                      else {
                         ReportOut << endl << "------------------------------------------" << endl << HistName << endl << "------------------------------------------" << endl << endl;
