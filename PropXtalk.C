@@ -37,7 +37,7 @@ using namespace std;
 
 // stuff
 extern TApplication* App;
-static TCanvas* c1;
+static TCanvas* cXtalk1;
 
 
 // File pointers:
@@ -437,8 +437,8 @@ void FinalPropXtalk() {
 
    outfile->cd();
    if(PLOT_ON==1){
-      c1 = new TCanvas();
-      c1->cd();
+      cXtalk1 = new TCanvas();
+      cXtalk1->cd();
    }
    int Clover, Crystal, Seg, Fold;  
    

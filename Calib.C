@@ -48,11 +48,9 @@ extern TApplication* App;
 // Spectra Pointers:
 static TH1F *hCharge[CLOVERS][CRYSTALS][SEGS+2] = {};  // primary Cores and segs
 static TH1F *hMidasTime = 0;
-static TH1F *hCrystalChargeTemp[CRYSTALS * CLOVERS] = {};  // Only doing these guys for the cores
+static TH1F *hCrystalChargeTemp[CRYSTALS][CLOVERS] = {};  // Only doing these guys for the cores
 static TH1F *hCrystalGain[CRYSTALS * CLOVERS] = {};    
 static TH1F *hCrystalOffset[CRYSTALS * CLOVERS] = {};
-
-//static TCanvas *c1, *c2, *ctemp;
 
 // Functions called from main:   
 void InitCalib();
@@ -69,7 +67,7 @@ float Sources[3][10] = {
    {344.2785, 1408.006, 121.7817, 244.6975, 411.116, 778.9040, 964.079, 1112.074}
 };
 
-TCanvas *c1, *c2, *ctemp;
+TCanvas *cCalib1, *cCalib2, *ctemp;
 
 void InitCalib() {
  
@@ -87,7 +85,7 @@ void InitCalib() {
          
          sprintf(name,"TIG%02d%c Tmp Chg",Clover+1,Colours[Crystal]);
          sprintf(title,"TIG%02d%c Temp Core Charge (arb)",Clover+1,Colours[Crystal]);
-         hCrystalChargeTemp[((Clover*4)+Crystal)] = new TH1F(name,title,CHARGE_BINS,0,CHARGE_MAX);
+         hCrystalChargeTemp[Clover][Crystal] = new TH1F(name,title,CHARGE_BINS,0,CHARGE_MAX);
          sprintf(name,"TIG%02d%c Gain",Clover+1,Colours[Crystal]);
          sprintf(title,"TIG%02d%c Gain vs Time",Clover+1,Colours[Crystal]);
          hCrystalGain[((Clover*4)+Crystal)]   = new TH1F(name,title,TIME_BINS,0,MAX_TIME);
@@ -121,14 +119,10 @@ void InitCalib() {
          
 
    if(PLOT_FITS || PLOT_CALIB) {
-      c1 = new TCanvas();  // Canvas for spectrum plots
-      c1->Divide(1,2);
+      cCalib1 = new TCanvas();  // Canvas for spectrum plots
+      cCalib1->Divide(1,2);
    }
-   
-   //if(PLOT_CALIB) {
-     // c2 = new TCanvas();
-   //}
-   
+
 }
 
 
@@ -209,7 +203,7 @@ void Calib(std::vector<TTigFragment> &ev) {
                   // Increment raw charge spectra
                   if(DEBUG) {cout << "A: Filling " << Clover -1 << ", " << Crystal << ", 0, " << mnemonic.outputsensor << " with charge = " <<  ev[i].Charge << endl;}              
                   hCharge[Clover-1][Crystal][0]->Fill(ev[i].Charge); 
-                  hCrystalChargeTemp[(((Clover-1)*4)+Crystal)]->Fill(ev[i].Charge);
+                  hCrystalChargeTemp[Clover-1][Crystal]->Fill(ev[i].Charge);
                }   
             }
             else {
@@ -269,7 +263,7 @@ void Calib(std::vector<TTigFragment> &ev) {
                   PlotOn = 0;
                   Source = SOURCE_NUM_CORE;
                   //FitSuccess = FitSpectrum(hCrystalChargeTemp[(j*4)+k], &Gains[(j*4)+k], &Offsets[(j*4)+k], &dGains[(j*4)+k], &dOffsets[(j*4)+k]);
-                  FitSuccess = FitGammaSpectrum(hCrystalChargeTemp[(j*4)+k], &Fit, Source, PlotOn);
+                  FitSuccess = FitGammaSpectrum(hCrystalChargeTemp[j][k], &Fit, Source, PlotOn);
                   
                   if(FitSuccess > -1) {
                      hCrystalGain[(j*4)+k]->SetBinContent(TimeBin,Fit.LinGainFit[1]);
@@ -319,11 +313,11 @@ void FinalCalib() {
    float CalibEn = 0.0;
    
    if(PLOT_CALIB_SUMMARY) {
-      c2 = new TCanvas("c2", "Calibration Canvas", 800, 600);  // Canvas for gain plots and histograms
-      c2->Divide(2,3);
-      c2->Update();   
+      cCalib2 = new TCanvas("cCalib2", "Calibration Canvas", 800, 600);  // Canvas for gain plots and histograms
+      cCalib2->Divide(2,3);
+      cCalib2->Update();   
       ctemp = new TCanvas("ctemp", "Temp Canvas", 100, 50);  // Canvas for gain plots and histograms
-         // Having this canvas seems to make c2 division work properly.  I don't know why.  I hate root.
+         // Having this canvas seems to make cCalib2 division work properly.  I don't know why.  I hate root.
    }
 
    GainPlot = new TH1F("Gains","Gain of all fitted channels",1001,-0.5,1000.5);
@@ -350,7 +344,7 @@ void FinalCalib() {
          for(Seg=0; Seg<=SEGS+1; Seg++) {
             hCharge[Clover][Crystal][Seg]->Write();
          }
-         hCrystalChargeTemp[((Clover*4)+Crystal)]->Write();
+         hCrystalChargeTemp[Clover][Crystal]->Write();
          hCrystalGain[((Clover*4)+Crystal)]->Write();
          hCrystalOffset[((Clover*4)+Crystal)]->Write();
       }
@@ -500,30 +494,30 @@ void FinalCalib() {
    }
   
    if(PLOT_CALIB_SUMMARY) {
-      c2->cd(1);
+      cCalib2->cd(1);
       OffsetPlot->Draw();
-      c2->Modified();
-      c2->Update();
-      c2->cd(2);
+      cCalib2->Modified();
+      cCalib2->Update();
+      cCalib2->cd(2);
       OffsetHist->Draw();
-      c2->Modified();
-      c2->Update();
-      c2->cd(3);
+      cCalib2->Modified();
+      cCalib2->Update();
+      cCalib2->cd(3);
       GainPlot->Draw();
-      c2->Modified();
-      c2->Update();
-      c2->cd(4);
+      cCalib2->Modified();
+      cCalib2->Update();
+      cCalib2->cd(4);
       GainHist->Draw();
-      c2->Modified();
-      c2->Update();
-      c2->cd(5);
+      cCalib2->Modified();
+      cCalib2->Update();
+      cCalib2->cd(5);
       QuadPlot->Draw();
-      c2->Modified();
-      c2->Update();
-      c2->cd(6);
+      cCalib2->Modified();
+      cCalib2->Update();
+      cCalib2->cd(6);
       QuadHist->Draw();               
-      c2->Modified();
-      c2->Update();
+      cCalib2->Modified();
+      cCalib2->Update();
       
       App->Run();
    }
@@ -548,7 +542,7 @@ void ResetTempSpectra() {
    int Clover,Crystal;
    for(Clover=0;Clover<CLOVERS;Clover++) {
       for(Crystal=0;Crystal<CRYSTALS;Crystal++) {
-         hCrystalChargeTemp[((Clover*4)+Crystal)]->Reset();
+         hCrystalChargeTemp[Clover][Crystal]->Reset();
       }
    }
 }

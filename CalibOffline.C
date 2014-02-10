@@ -53,12 +53,10 @@ std::string Opts;
 float InitialSigma = 50.0;
 float InitialGain = 0.16;
 
-// Functions called from here:
-//int FitSpectrum(TH1F* Histo, SpectrumFit *Fit, int Source , int PlotOn);
 
 TApplication* App;  // Pointer to root environment for plotting etc
 
-TCanvas *c1, *c2, *ctemp;
+TCanvas *cCalib1, *cCalib2; //, *cCalib3;
 
 int main(int argc, char** argv){
 
@@ -79,22 +77,27 @@ int main(int argc, char** argv){
    ofstream GainOut;
    ofstream ReportOut;
    
+   int NumFits;
+   float Energies[NUM_LINES], Residuals[NUM_LINES];
+   
    float CalibEn = 0.0;
    
    gStyle->SetOptStat("iouRMen");
    
    // Set up plots
    App= new TApplication("Output", 0, NULL);  // creates root environment for interacting with plots etc
-   if(PLOT_FITS || PLOT_CALIB) {
-      c1 = new TCanvas();  // Canvas for spectrum plots
-      c1->Divide(1,2);
-   }
-   if(PLOT_CALIB_SUMMARY) {
-      c2 = new TCanvas("c2", "Calibration Canvas", 800, 600);  // Canvas for gain plots and histograms
-      c2->Divide(2,3);
-      c2->Update();   
-      ctemp = new TCanvas("ctemp", "Temp Canvas", 100, 50);  // Canvas for gain plots and histograms
-         // Having this canvas seems to make c2 division work properly.  I don't know why.  I hate root.
+   if(PLOT_FITS || PLOT_CALIB || PLOT_CALIB_SUMMARY || PLOT_RESIDUAL) {
+      cCalib1 = new TCanvas("cCalib1", "Fit and Calibration", 800, 600);  // Canvas for spectrum plots
+      cCalib1->Divide(1,3);
+
+      cCalib2 = new TCanvas("cCalib2", "Calibration Summary", 800, 600);  // Canvas for gain plots and histograms
+      cCalib2->Divide(2,3);
+      cCalib2->Update();   
+
+      //cCalib3 = new TCanvas("cCalib3", "Calibration Residual", 800, 600);  // Canvas for residual plit
+      //cCalib3->Update();   
+      
+      cCalib1->cd(1);
    }
    
    // Files
@@ -217,8 +220,9 @@ int main(int argc, char** argv){
                   }
                   if(OUTPUT_REPORT) {
                      if(FitSuccess > 0) {
-                        // Heading for channel
+                        // Heading for this channel
                         ReportOut << endl << "------------------------------------------" << endl << HistName << endl << "------------------------------------------" << endl << endl;
+                        // Peak fit info
                         for(i=0; i<NUM_LINES; i++) {
                            if(Fit.FitSuccess[i]==1) {
                               ReportOut << Fit.PeakFits[i].Energy << " keV" << endl;
@@ -229,6 +233,7 @@ int main(int argc, char** argv){
                               ReportOut << endl << endl;
                            }   
                         }
+                        // Calibration...
                         ReportOut << "Linear Solution: Offset = " << Fit.LinGain[0] << " +/- " << Fit.dLinGain[0] << "\t";
                         ReportOut <<  "Gain = " << Fit.LinGain[1] << " +/- " << Fit.dLinGain[1] << endl;
                         ReportOut << "Linear Fit: Offset = " << Fit.LinGainFit[0] << " +/- " << Fit.dLinGainFit[0] << "\t";
@@ -239,7 +244,8 @@ int main(int argc, char** argv){
                         ReportOut << "Quad = " << Fit.QuadGainFit[2] << " +/- " << Fit.dQuadGainFit[2] << "\t";
                         ReportOut << "CSPD = " << Fit.LinGainFit[3] << endl;
                            
-                        ReportOut << endl << "Check calibration...." << endl;
+                        // Residual from quadratic fit
+                        ReportOut << endl << "Check quadratic calibration...." << endl;
                         ReportOut << "Centroid (ch)\t\tList Energy (keV)\t\tCalibration Energy (keV)\t\tResidual (keV)" << endl;
                         for(i=0; i<NUM_LINES; i++) {
                            if(Fit.FitSuccess[i]==1) {
@@ -248,6 +254,35 @@ int main(int argc, char** argv){
                               ReportOut << CalibEn << "\t\t\t" << CalibEn -  Fit.PeakFits[i].Energy << endl;
                            }
                         }         
+                        
+                        // Residual from linear fit
+                        NumFits=0;
+                        ReportOut << endl << "Check linear calibration...." << endl;
+                        ReportOut << "Centroid (ch)\t\tList Energy (keV)\t\tCalibration Energy (keV)\t\tResidual (keV)" << endl;  
+                        for(i=0; i<NUM_LINES; i++) {
+                           if(Fit.FitSuccess[i]==1) {
+                              CalibEn = Fit.LinGainFit[0] + (Fit.LinGainFit[1]*(Fit.PeakFits[i].Mean/INTEGRATION));
+                              ReportOut << Fit.PeakFits[i].Mean << "\t\t\t" << Fit.PeakFits[i].Energy << "\t\t\t";
+                              ReportOut << CalibEn << "\t\t\t" << CalibEn - Fit.PeakFits[i].Energy << endl;
+                              Energies[NumFits] = Fit.PeakFits[i].Energy;
+                              Residuals[NumFits] = CalibEn - Fit.PeakFits[i].Energy;
+                              NumFits++;
+                           }
+                        }             
+                        TGraphErrors CalibResidual(NumFits,Energies,Residuals);
+                        if(PLOT_RESIDUAL) {
+                           cCalib1->cd(3);
+                           CalibResidual.SetMarkerColor(2); 
+                           CalibResidual.SetMarkerStyle(20); 
+                           CalibResidual.SetMarkerSize(1.0);
+                           CalibResidual.SetTitle("Residual from linear calibration");
+                           CalibResidual.Draw("AP");           
+                           //CalibResidual.Draw();
+                           cCalib1->Modified();
+                           cCalib1->Update();
+                           App->Run(1);
+                           //cCalib1->cd(1);
+                        }
                      }
                      else {
                         ReportOut << endl << "------------------------------------------" << endl << HistName << endl << "------------------------------------------" << endl << endl;
@@ -257,8 +292,7 @@ int main(int argc, char** argv){
                }   
                else {
                   cout << endl << "Hist " << HistName << " failed to load." << endl;
-               }
-               
+               } 
             }
          }   
       }      
@@ -269,32 +303,32 @@ int main(int argc, char** argv){
    }
    
    if(PLOT_CALIB_SUMMARY) {
-      //c2->cd();
-      c2->cd(1);
+      //cCalib2->cd();
+      cCalib2->cd(1);
       OffsetPlot->Draw();
-      c2->Modified();
-      c2->Update();
+      cCalib2->Modified();
+      cCalib2->Update();
       //App->Run();
-      c2->cd(2);
+      cCalib2->cd(2);
       OffsetHist->Draw();
-      c2->Modified();
-      c2->Update();
-      c2->cd(3);
+      cCalib2->Modified();
+      cCalib2->Update();
+      cCalib2->cd(3);
       GainPlot->Draw();
-      c2->Modified();
-      c2->Update();
-      c2->cd(4);
+      cCalib2->Modified();
+      cCalib2->Update();
+      cCalib2->cd(4);
       GainHist->Draw();
-      c2->Modified();
-      c2->Update();
-      c2->cd(5);
+      cCalib2->Modified();
+      cCalib2->Update();
+      cCalib2->cd(5);
       QuadPlot->Draw();
-      c2->Modified();
-      c2->Update();
-      c2->cd(6);
+      cCalib2->Modified();
+      cCalib2->Update();
+      cCalib2->cd(6);
       QuadHist->Draw();               
-      c2->Modified();
-      c2->Update();
+      cCalib2->Modified();
+      cCalib2->Update();
       App->Run();
    }
      

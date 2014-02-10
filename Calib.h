@@ -1,8 +1,8 @@
 // Stuff for time based analysis
 #define MAX_TIME 360000.0    // in seconds, max time after start of run.
-#define TIME_BINS 2000  // timed energy spectra to collect data for this many seconds
+#define TIME_BINS 500  // timed energy spectra to collect data for this many seconds
 #define TIME_BIN_SIZE MAX_TIME/TIME_BINS
-#define FIT_TEMP_SPECTRA 0 // 1= find and fit peaks when time bin changes.  0= do not.
+#define FIT_TEMP_SPECTRA 1 // 1= find and fit peaks when time bin changes.  0= do not.
 #define FIT_FINAL_SPECTRA 1 // 1 = fit final spectra  
 
 // General options
@@ -13,11 +13,12 @@
 #define DEBUG 0  // PRint Debugging messages to screen
 
 // Plotting
-#define PLOT_FITS  0  // plot fits, all chans plotted if below items = 0
+#define PLOT_FITS 0  // plot fits, all chans plotted if below items = 0
 #define PLOT_CLOVER 6  // select 1-16 to plot that only
 #define PLOT_CRYSTAL 0  // 1-4
 #define PLOT_SEG 0  //  1-10
 #define PLOT_CALIB 0 // Plot calibration 
+#define PLOT_RESIDUAL 0 
 #define PLOT_CALIB_SUMMARY 1 // Plot and histo of calibration values
 
 // Charge spectra stuff
@@ -91,5 +92,5 @@ struct SpectrumFit   {
 // Sources
 extern float Sources[3][10];
 
-extern TCanvas *c1, *c2, *ctemp;
+extern TCanvas *cCalib1, *cCalib2, *ctemp;
 

@@ -203,9 +203,9 @@ int FitGammaSpectrum(TH1F* Histo, SpectrumFit *Fit, int Source, int PlotOn) {
             }
             
             if(PlotOn) {            
-               c1->cd(1);               
+               cCalib1->cd(1);               
                Histo->Draw();
-               c1->Update();
+               cCalib1->Update();
             }
          }
         
@@ -237,8 +237,8 @@ int FitGammaSpectrum(TH1F* Histo, SpectrumFit *Fit, int Source, int PlotOn) {
          }
              
          if(PlotOn){ // && Clover==9) {
-            c1->cd(1);
-            c1->Update();
+            cCalib1->cd(1);
+            cCalib1->Update();
             App->Run(1);  
          }        
    
@@ -304,7 +304,7 @@ int FitGammaSpectrum(TH1F* Histo, SpectrumFit *Fit, int Source, int PlotOn) {
                  
             if(PlotOn){ // && Clover==9) {
                
-               c1->cd(1);               
+               cCalib1->cd(1);               
                Histo->Draw();
                App->Run(1);  
             } 
@@ -430,10 +430,11 @@ int FitGammaSpectrum(TH1F* Histo, SpectrumFit *Fit, int Source, int PlotOn) {
          
          
          if(PLOT_CALIB && PlotOn) {
-            c1->cd(2);
+            cCalib1->cd(2);
             CalibPlot.SetMarkerColor(2); 
             CalibPlot.SetMarkerStyle(20); 
             CalibPlot.SetMarkerSize(1.0);
+            CalibPlot.SetTitle("Calibration");
             CalibPlot.Draw("AP");           
             App->Run(1);  
          }
