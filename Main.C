@@ -188,7 +188,7 @@ int main(int argc, char **argv) {
 		
 		// cout << "HERE!!!! " << NumChainEntries << " " << NumTreeEntries << " " << NumTreeEvents << endl;
 		
-		for(int j=i;j<NumTreeEvents;j++)	{  
+		for(int j=0;j<NumTreeEvents;j++)	{  
 		   evFrags.clear();		   
 		   int FragNum = 1;
 		   
