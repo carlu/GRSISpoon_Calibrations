@@ -81,6 +81,8 @@ static TH1F *hFold1CoreEn[CLOVERS][CRYSTALS][SEGS+1];             // Core energy
 static TH1F *hSegAddBackCloverByFold[CLOVERS][SEGS];           // Sum of segs, over clover, for each event, by seg fold
 static TH1F *hSegAddBackCrystalByFold[CLOVERS][CRYSTALS][SEGS]; // Sum od segs, over crystal, for each event, by seg fold
 
+static TH2F *hXTalk[CLOVERS]; 
+
 // Storing xtalk
 static int XtalkCount[CLOVERS][(SEGS+2)*CRYSTALS]; // Count corsstalk events for each channel in each clover
 static float XTalkFrac[CLOVERS][(SEGS+2)*CRYSTALS][(SEGS+2)*CRYSTALS]; // Record crosstalk events for 
@@ -108,6 +110,9 @@ void PropXtalk(std::vector<TTigFragment> &ev) {
    int Slave, Port, Chan;
    float En;
    std::string Name; 
+   
+   float XTalkTemp;
+   int XTalkNum, Count;
    
    int CalChan;
    
@@ -145,33 +150,34 @@ void PropXtalk(std::vector<TTigFragment> &ev) {
       hHitPattern->Fill(ev[i].ChannelNumber);
       
       // Get calibrated charge
+      
       if(!USE_ALT_CALIB) {
          //cout << "Using standard calibration..." << endl;
          En = ev[i].ChargeCal;
       }
       else {
-         //cout << "Using custom calibration..." << endl;
-         //cout << Name << endl;
+         int NewCoeffFound = 0;
          std::vector<float> Coefficients;
          for(CalChan=0;CalChan<NUM_ALT_COEFFS;CalChan++) {
-            //cout << CoeffNames[CalChan] << endl;
             if(strncmp(CoeffNames[CalChan],Name.c_str(),9)==0) {
-               //cout << "MAtch!" << endl;
                Coefficients.push_back(CoeffValues[CalChan][0]);
                Coefficients.push_back(CoeffValues[CalChan][1]);
                Coefficients.push_back(CoeffValues[CalChan][2]);
-               //cout << "Coeffs 2,1,0: " << CoeffValues[CalChan][2] << CoeffValues[CalChan][1] << CoeffValues[CalChan][0] << endl;
-               //cout << "Coeffs 2,1,0: " << Coefficients[2] << " " << Coefficients[1] << " " << Coefficients[0] << endl;
+               NewCoeffFound = 1;
                break;
             }
          }
-         En = CalibrateEnergy(ev[i].Charge,Coefficients);
-         //En = ev[i].ChargeCal;
+         if(NewCoeffFound==1) {  // If a new set of coeffs was found, then calibrate
+            En = CalibrateEnergy(ev[i].Charge,Coefficients);
+         }
+         else {   // else use the existing calibration
+            En = ev[i].ChargeCal;  
+         }   
       }
       
       
       // Fill "energy hit pattern"
-      if(ev[i].ChargeCal>EN_THRESH) {
+      if(En>EN_THRESH) {
          hEHitPattern->Fill(ev[i].ChannelNumber);
       }
    
@@ -189,7 +195,7 @@ void PropXtalk(std::vector<TTigFragment> &ev) {
          
          Clover  = mnemonic.arrayposition;
          Seg = mnemonic.segment; 
-         En  = ev[i].ChargeCal;
+         //En  = ev[i].ChargeCal;
          
          //cout << "Here " << temp++ << endl;
          
@@ -318,14 +324,21 @@ void PropXtalk(std::vector<TTigFragment> &ev) {
             // Check CoreE = SegE, CoreABCloverE = CoreE    
             
             // Count Events
-            XtalkCount[Clover][(HitCrystal*4)+HitSeg] += 1;
+            
+            Count = XtalkCount[Clover][(HitCrystal*4)+HitSeg];
             
             // Loop and record crosstalk
             for(Crystal=0; Crystal<CRYSTALS; Crystal++) {
                for(Seg=0; Seg<SEGS+2; Seg++) {
-                  XTalkFrac[Clover][(HitCrystal*4)+HitSeg][(Crystal*4)+Seg] = Energies[Clover][Crystal][Seg] / Energies[Clover][HitCrystal][HitSeg];
+                  XTalkTemp = Energies[Clover][Crystal][Seg] / Energies[Clover][HitCrystal][HitSeg];
+                  XTalkNum = (HitCrystal*(SEGS+2))+HitSeg;
+                  XTalkFrac[Clover][XTalkNum][(Crystal*(SEGS+2))+Seg] = ((XTalkFrac[Clover][XTalkNum][(Crystal*(SEGS+2))+Seg]*Count)+XTalkTemp)/(Count+1);
                }
             }
+            
+            XtalkCount[Clover][(HitCrystal*4)+HitSeg] += 1;
+            
+            
          }
          
         
@@ -375,8 +388,8 @@ void InitPropXtalk() {
             hEn[Clover][Crystal][Seg] = new TH1F(name,title,EN_SPECTRA_CHANS,0,EN_SPECTRA_MAX);
          }
          Seg=SEGS+1;
-         sprintf(name,"TIG%02d%c%02dB Core En",Clover+1,Colours[Crystal],Seg);
-         sprintf(title,"TIG%02d%c%02dB Core B Energy (keV)",Clover+1,Colours[Crystal],Seg);
+         sprintf(name,"TIG%02d%c%02dB Core En",Clover+1,Colours[Crystal],0);
+         sprintf(title,"TIG%02d%c%02dB Core B Energy (keV)",Clover+1,Colours[Crystal],0);
          hEn[Clover][Crystal][Seg] = new TH1F(name,title,EN_SPECTRA_CHANS,0,EN_SPECTRA_MAX);   
       }
    }   
@@ -470,6 +483,13 @@ void InitPropXtalk() {
       }
    }
    
+   // 2D crosstalk matrices 
+   for(Clover=0;Clover<CLOVERS;Clover++) {
+      sprintf(name,"TIG%02d Xtalk",Clover+1);
+      sprintf(title,"TIG%02d Fractional Crosstalk",Clover+1);
+      hXTalk[Clover] = new TH2F(name,title,(CRYSTALS*(SEGS+2)),0,(CRYSTALS*(SEGS+2)),(CRYSTALS*(SEGS+2)),0,(CRYSTALS*(SEGS+2)));
+   }
+   
    // Initialise alternate gains
    if(USE_ALT_CALIB) {
       //SetGains();
@@ -486,6 +506,21 @@ void FinalPropXtalk() {
       cXtalk1->cd();
    }
    int Clover, Crystal, Seg, Fold;  
+   int HitSegment, OtherSegment;
+   
+   // Write crosstalk values out to text file and fill 2d hist
+   ofstream XTalkOut;
+   XTalkOut.open("XTalkValuesOut.txt");
+   for(Clover=0;Clover<CLOVERS;Clover++) {
+      XTalkOut << endl << "------------------" << endl << " Clover " << Clover+1 << endl << "------------------" << endl << endl;
+      for(HitSegment=0; HitSegment<((SEGS+2)*CRYSTALS); HitSegment++) {
+         for(OtherSegment=0; OtherSegment<((SEGS+2)*CRYSTALS); OtherSegment++) {
+            XTalkOut << XTalkFrac[Clover][HitSegment][OtherSegment] << " ";
+            hXTalk[Clover]->SetBinContent(HitSegment,OtherSegment,XTalkFrac[Clover][HitSegment][OtherSegment]);
+         }
+         XTalkOut << endl;
+      }
+   }            
    
    // Write spectra to file
    // Raw
@@ -549,12 +584,18 @@ void FinalPropXtalk() {
       }
       for(Seg=0; Seg<SEGS; Seg++) {
          for(Fold=0;Fold<SEGS;Fold++) {
-            hSegAddBackCrystalByFold[Clover][Crystal][Fold]->Write();
+            //hSegAddBackCrystalByFold[Clover][Crystal][Fold]->Write();
          }
       }
    }
    
+   for(Clover=0;Clover<CLOVERS;Clover++) {
+      hXTalk[Clover]->Write();
+   }
+   
    outfile->Close();
+
+   
 
 }
 
