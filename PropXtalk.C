@@ -23,6 +23,8 @@ using namespace std;
 #include <TCanvas.h>
 #include <TApplication.h>
 
+#include "TRandom.h"
+
 // TriScope libraries
 #include "TTigFragment.h"
 //#include "TFSPC_Info.h"
@@ -39,6 +41,8 @@ using namespace std;
 // stuff
 extern TApplication* App;
 static TCanvas* cXtalk1;
+
+static TRandom rand1;
 
 
 // File pointers:
@@ -88,7 +92,7 @@ static float XTalkFrac[CLOVERS][(SEGS+2)*CRYSTALS][(SEGS+2)*CRYSTALS]; // Record
 void InitPropXtalk();
 void FinalPropXtalk();
 //void SetGains();
-float CalibrateEnergy(double Charge, std::vector<float> Coefficients);
+float CalibrateEnergy(int Charge, std::vector<float> Coefficients);
 
 void PropXtalk(std::vector<TTigFragment> &ev) {
    
@@ -554,9 +558,11 @@ void FinalPropXtalk() {
 
 }
 
-float CalibrateEnergy(double Charge, std::vector<float> Coefficients)	{
+float CalibrateEnergy(int Charge, std::vector<float> Coefficients)	{
+
+   float ChargeF = (float)Charge + rand1.Uniform();
 	if(Coefficients.size()==0)
-		return Charge;
+		return ChargeF;
 	
 	float TempInt = 125.0;
 	if(INTEGRATION != 0) {TempInt = INTEGRATION;}
@@ -564,7 +570,7 @@ float CalibrateEnergy(double Charge, std::vector<float> Coefficients)	{
 	float Energy = 0.0;
 	//cout << "Charge: " << Charge << endl;
 	for(int i=0;i<Coefficients.size();i++){
-		Energy += Coefficients[i] * pow((Charge/TempInt),i);
+		Energy += Coefficients[i] * pow((ChargeF/TempInt),i);
 		//cout << "i, coeff: " << i << " " << Coefficients[i] << endl;
 	}
 	//cout << "Energy: " << Energy << endl;
