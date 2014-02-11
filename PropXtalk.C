@@ -34,6 +34,7 @@ using namespace std;
 // My libraries
 #include "Main.h"
 #include "PropXtalk.h"
+//#include "Gains.h"
 
 // stuff
 extern TApplication* App;
@@ -80,9 +81,14 @@ static TH1F *hSegAddBackCrystalByFold[CLOVERS][CRYSTALS][SEGS]; // Sum od segs, 
 static int XtalkCount[CLOVERS][(SEGS+2)*CRYSTALS]; // Count corsstalk events for each channel in each clover
 static float XTalkFrac[CLOVERS][(SEGS+2)*CRYSTALS][(SEGS+2)*CRYSTALS]; // Record crosstalk events for 
 
+// Gain arrays
+#include "Gains.h"
+
 // Functions
 void InitPropXtalk();
 void FinalPropXtalk();
+//void SetGains();
+float CalibrateEnergy(double Charge, std::vector<float> Coefficients);
 
 void PropXtalk(std::vector<TTigFragment> &ev) {
    
@@ -99,6 +105,7 @@ void PropXtalk(std::vector<TTigFragment> &ev) {
    float En;
    std::string Name; 
    
+   int CalChan;
    
    int Hits[CLOVERS][CRYSTALS][SEGS+2];
    int CloverCoreFold[CLOVERS];  // + 1 for each core hit in each clover
@@ -121,21 +128,50 @@ void PropXtalk(std::vector<TTigFragment> &ev) {
       Port  = ((ev[i].ChannelAddress & 0x00000F00) >> 8);
       Chan  =  (ev[i].ChannelAddress & 0x000000FF);
       Name = ev[i].ChannelName;
-   
-      // Fill Hit PAttern
-      hHitPattern->Fill(ev[i].ChannelNumber);
-      if(ev[i].ChargeCal>EN_THRESH) {
-         hEHitPattern->Fill(ev[i].ChannelNumber);
-      }
-   
-      //cout << "Here " << temp++ << endl;
-   
+      
+      // Parse name
       Mnemonic mnemonic;
       if(Name.size() >= 10) {ParseMnemonic(&Name,&mnemonic);}
       else {
          cout << "Fragment Name Too Short! - This shouldn't happen if the odb is correctly configured!" << endl;
          continue;   
-      }   
+      } 
+   
+      // Fill "Port Hit Pattern"
+      hHitPattern->Fill(ev[i].ChannelNumber);
+      
+      // Get calibrated charge
+      if(!USE_ALT_CALIB) {
+         //cout << "Using standard calibration..." << endl;
+         En = ev[i].ChargeCal;
+      }
+      else {
+         //cout << "Using custom calibration..." << endl;
+         //cout << Name << endl;
+         std::vector<float> Coefficients;
+         for(CalChan=0;CalChan<NUM_ALT_COEFFS;CalChan++) {
+            //cout << CoeffNames[CalChan] << endl;
+            if(strncmp(CoeffNames[CalChan],Name.c_str(),9)==0) {
+               //cout << "MAtch!" << endl;
+               Coefficients.push_back(CoeffValues[CalChan][0]);
+               Coefficients.push_back(CoeffValues[CalChan][1]);
+               Coefficients.push_back(CoeffValues[CalChan][2]);
+               //cout << "Coeffs 2,1,0: " << CoeffValues[CalChan][2] << CoeffValues[CalChan][1] << CoeffValues[CalChan][0] << endl;
+               //cout << "Coeffs 2,1,0: " << Coefficients[2] << " " << Coefficients[1] << " " << Coefficients[0] << endl;
+               break;
+            }
+         }
+         En = CalibrateEnergy(ev[i].Charge,Coefficients);
+         //En = ev[i].ChargeCal;
+      }
+      
+      
+      // Fill "energy hit pattern"
+      if(ev[i].ChargeCal>EN_THRESH) {
+         hEHitPattern->Fill(ev[i].ChannelNumber);
+      }
+   
+      //cout << "Here " << temp++ << endl;
       
       // If TIGRESS
       if(mnemonic.system == "TI") {
@@ -429,6 +465,11 @@ void InitPropXtalk() {
          hSegAddBackCloverByFold[Clover][Fold] = new TH1F(name,title,EN_SPECTRA_CHANS,0,EN_SPECTRA_MAX);
       }
    }
+   
+   // Initialise alternate gains
+   if(USE_ALT_CALIB) {
+      //SetGains();
+   }
 
 }
 
@@ -513,3 +554,19 @@ void FinalPropXtalk() {
 
 }
 
+float CalibrateEnergy(double Charge, std::vector<float> Coefficients)	{
+	if(Coefficients.size()==0)
+		return Charge;
+	
+	float TempInt = 125.0;
+	if(INTEGRATION != 0) {TempInt = INTEGRATION;}
+	
+	float Energy = 0.0;
+	//cout << "Charge: " << Charge << endl;
+	for(int i=0;i<Coefficients.size();i++){
+		Energy += Coefficients[i] * pow((Charge/TempInt),i);
+		//cout << "i, coeff: " << i << " " << Coefficients[i] << endl;
+	}
+	//cout << "Energy: " << Energy << endl;
+	return Energy;
+};

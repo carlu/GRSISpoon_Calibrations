@@ -1,8 +1,8 @@
 // Which parts of code to run:
-#define SORT_CALIB 1
+#define SORT_CALIB 0
 #define SORT_EFF   0
 #define SORT_WAVES 0
-#define SORT_PROP  0
+#define SORT_PROP  1
 #define SORT_DIFF  0
 
 #define PRINT_OUTPUT 1

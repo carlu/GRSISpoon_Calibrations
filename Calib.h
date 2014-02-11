@@ -22,6 +22,9 @@
 #define PLOT_CALIB_SUMMARY 1 // Plot and histo of calibration values
 
 // Charge spectra stuff
+//#define INTEGRATION 125 // Integration factor applied to charge values
+      // This definition moved to main.h
+      
 #define INTEGRATION 125 // Integration factor applied to charge values
 #define CHARGE_BINS 16384  
 #define CHARGE_MAX 1500000 
@@ -40,7 +43,7 @@
 #define NUM_LINES 8 // Number of lines to fit 
 
 // Extra calibration point at 0 ch = 0 keV
-#define INCLUDE_ZERO 1  // Add an extra calibration point at 0ch = 0 keV
+#define INCLUDE_ZERO 0  // Add an extra calibration point at 0ch = 0 keV
 #define ZERO_ERR 0.01
 
 // Peak Fitting

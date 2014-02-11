@@ -7,3 +7,8 @@
 //#define EN_THRESH 10 // keV minimum to count as a hit in a segment
 
 #define PLOT_ON 0
+
+// Stuf for alternate calibration
+#define USE_ALT_CALIB 1
+#define INTEGRATION 125 // Integration factor applied to charge values
+#define NUM_ALT_COEFFS 34

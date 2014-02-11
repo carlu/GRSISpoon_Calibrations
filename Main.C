@@ -56,6 +56,7 @@ using namespace std;
 // My libraries
 // #include "CoincEff.h"
 #include "Main.h"
+//#include "Gains.h"
 
 // For tracking real time
 TStopwatch watch;
@@ -119,8 +120,7 @@ int main(int argc, char **argv) {
    if(SORT_PROP)  {
       cout << "Initialising Cross-talk Spectra..." << endl;
       InitPropXtalk();
-   }
-   
+   }   
    
    TChain *Chain = new TChain("FragmentTree");
    
