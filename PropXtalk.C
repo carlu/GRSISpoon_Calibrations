@@ -582,9 +582,9 @@ void FinalPropXtalk() {
       for(Fold=0;Fold<SEGS;Fold++) {
          hSegAddBackCloverByFold[Clover][Fold]->Write();
       }
-      for(Seg=0; Seg<SEGS; Seg++) {
+      for(Crystal=0; Crystal<CRYSTALS; Crystal++) {
          for(Fold=0;Fold<SEGS;Fold++) {
-            //hSegAddBackCrystalByFold[Clover][Crystal][Fold]->Write();
+            hSegAddBackCrystalByFold[Clover][Crystal][Fold]->Write();
          }
       }
    }
