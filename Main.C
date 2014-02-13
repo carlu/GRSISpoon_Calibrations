@@ -30,6 +30,7 @@ using namespace std;
 #include <cstdlib>
 #include <time.h>
 #include <math.h>
+#include <fstream>
 
 // ROOT libraries:
 #include <TFile.h>
@@ -58,6 +59,8 @@ using namespace std;
 #include "Main.h"
 //#include "Gains.h"
 
+#include "CalibrationManager.h"
+
 // For tracking real time
 TStopwatch watch;
 
@@ -69,9 +72,14 @@ int EventCount = 0;
 int FragCount  = 0;
 int BadEventCount = 0;
 
+// Storing alternate Calibration
+vector<string> CalibNames;
+vector<vector<float>> CalibValues;
+
 // Functions
 void SortTree(const char* fn);
 void IncSpectra();
+int ReadCalibrationFile(std::string filename);
 
 void CoincEff(std::vector<TTigFragment> &ev);
 void InitCoincEff();
@@ -107,6 +115,19 @@ int main(int argc, char **argv) {
    TStopwatch StopWatch;
 	StopWatch.Start();
   
+   // Load any extra configuration information 
+   //vector<string> CalibNames;
+   //vector<vector<float>> CalibValues;
+   std::string CalFile = "Cal_run27401_quad_w0.txt";
+   int NumCal;
+   NumCal = ReadCalibrationFile(CalFile);
+   //cout << "Hello " << NumCal << endl;
+   for(i=0; i<NumCal; i++) {
+      cout << i ;
+      cout << ": " << CalibNames.at(i); 
+      cout << " " << CalibValues.at(i)[0] << " " << CalibValues[i][1] << " " << CalibValues[i][2] << endl;
+   }
+   
    
    // Initialise spectra   
    if(SORT_EFF)   {
@@ -306,5 +327,49 @@ char Num2Col(int Crystal) {
       default:
          return 'X';
    }
+}
+
+int ReadCalibrationFile(std::string filename) {
+
+   printf("Reading calibration file %s...\t", filename.c_str());
+   
+   ifstream file;
+   file.open(filename);
+   if (!file) {
+      printf("could not open file.\n");
+      return -1;
+   }
+   else {
+      printf("File opened.\n");
+   }
+   
+   
+   std::string line;
+   char name[16];
+   float g0, g1, g2;
+   int n = 0;
+   
+   //vector<string> CalibNames;
+   //vector<vector<float>> CalibValues;
+   
+   while(getline(file,line)) {
+      //cout << line << endl;
+      sscanf(line.c_str(),"%s %f %f %f",name,&g0, &g1, &g2);
+      //cout << name << " " << g0 << " " << g1 << " " << g2 << endl; 
+      vector<float> GainTemp;
+      GainTemp.push_back(g0);
+      GainTemp.push_back(g1);
+      GainTemp.push_back(g2);
+      CalibValues.push_back(GainTemp);
+      CalibNames.push_back(name);
+      
+      //cout << CalibNames[n] << endl;
+      //cout << CalibValues[n][0] << endl;
+      
+      n += 1;
+   }   
+   
+   return n;
+
 }
 

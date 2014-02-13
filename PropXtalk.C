@@ -38,6 +38,9 @@ using namespace std;
 #include "PropXtalk.h"
 //#include "Gains.h"
 
+// Gain arrays
+//#include "Gains.h"
+
 // stuff
 extern TApplication* App;
 static TCanvas* cXtalk1;
@@ -86,9 +89,6 @@ static TH2F *hXTalk[CLOVERS];
 // Storing xtalk
 static int XtalkCount[CLOVERS][(SEGS+2)*CRYSTALS]; // Count corsstalk events for each channel in each clover
 static float XTalkFrac[CLOVERS][(SEGS+2)*CRYSTALS][(SEGS+2)*CRYSTALS]; // Record crosstalk events for 
-
-// Gain arrays
-#include "Gains.h"
 
 // Functions
 void InitPropXtalk();
@@ -159,16 +159,17 @@ void PropXtalk(std::vector<TTigFragment> &ev) {
          int NewCoeffFound = 0;
          std::vector<float> Coefficients;
          for(CalChan=0;CalChan<NUM_ALT_COEFFS;CalChan++) {
-            if(strncmp(CoeffNames[CalChan],Name.c_str(),9)==0) {
-               Coefficients.push_back(CoeffValues[CalChan][0]);
-               Coefficients.push_back(CoeffValues[CalChan][1]);
-               Coefficients.push_back(CoeffValues[CalChan][2]);
+            if(strncmp(CalibNames[CalChan].c_str(),Name.c_str(),9)==0) {  
+               //Coefficients.push_back(CoeffValues[CalChan][0]);
+               //Coefficients.push_back(CoeffValues[CalChan][1]);
+               //Coefficients.push_back(CoeffValues[CalChan][2]);
                NewCoeffFound = 1;
                break;
             }
          }
          if(NewCoeffFound==1) {  // If a new set of coeffs was found, then calibrate
-            En = CalibrateEnergy(ev[i].Charge,Coefficients);
+            //En = CalibrateEnergy(ev[i].Charge,Coefficients);
+            En = CalibrateEnergy(ev[i].Charge,CalibValues.at(CalChan));
          }
          else {   // else use the existing calibration
             En = ev[i].ChargeCal;  

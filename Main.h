@@ -39,6 +39,10 @@ struct Mnemonic	{
    std::string outputsensor;
 };
 
+// Storing alternate Calibration
+extern vector<string> CalibNames;
+extern vector<vector<float>> CalibValues;
+
 // Function to parse Mnemonic name:
 void ParseMnemonic(std::string *name,Mnemonic *mnemonic);
 int Col2Num(char Colour);
