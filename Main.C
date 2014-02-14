@@ -118,16 +118,17 @@ int main(int argc, char **argv) {
    // Load any extra configuration information 
    //vector<string> CalibNames;
    //vector<vector<float>> CalibValues;
-   std::string CalFile = "Cal_run27401_quad_w0.txt";
-   int NumCal;
-   NumCal = ReadCalibrationFile(CalFile);
-   //cout << "Hello " << NumCal << endl;
-   for(i=0; i<NumCal; i++) {
-      cout << i ;
-      cout << ": " << CalibNames.at(i); 
-      cout << " " << CalibValues.at(i)[0] << " " << CalibValues[i][1] << " " << CalibValues[i][2] << endl;
+   if(USE_ALT_CALIB) {
+      std::string CalFile = "Cal_run27401_w0_Quad_FixedW04.txt"; //"Cal_run27401_quad_w0.txt";
+      int NumCal;
+      NumCal = ReadCalibrationFile(CalFile);
+      //cout << "Hello " << NumCal << endl;
+      for(i=0; i<NumCal; i++) {
+         cout << i ;
+         cout << ": " << CalibNames.at(i); 
+         cout << " " << CalibValues.at(i)[0] << " " << CalibValues[i][1] << " " << CalibValues[i][2] << endl;
+      }
    }
-   
    
    // Initialise spectra   
    if(SORT_EFF)   {
@@ -354,19 +355,18 @@ int ReadCalibrationFile(std::string filename) {
    
    while(getline(file,line)) {
       //cout << line << endl;
-      sscanf(line.c_str(),"%s %f %f %f",name,&g0, &g1, &g2);
-      //cout << name << " " << g0 << " " << g1 << " " << g2 << endl; 
-      vector<float> GainTemp;
-      GainTemp.push_back(g0);
-      GainTemp.push_back(g1);
-      GainTemp.push_back(g2);
-      CalibValues.push_back(GainTemp);
-      CalibNames.push_back(name);
-      
-      //cout << CalibNames[n] << endl;
-      //cout << CalibValues[n][0] << endl;
-      
-      n += 1;
+      if(line.c_str()[0]!='#') {
+         sscanf(line.c_str(),"%s %f %f %f",name,&g0, &g1, &g2);
+         //cout << name << " " << g0 << " " << g1 << " " << g2 << endl; 
+         vector<float> GainTemp;
+         GainTemp.push_back(g0);
+         GainTemp.push_back(g1);
+         GainTemp.push_back(g2);
+         CalibValues.push_back(GainTemp);
+         CalibNames.push_back(name);
+
+         n += 1;
+      }
    }   
    
    return n;

@@ -23,7 +23,7 @@ using namespace std;
 #include <TCanvas.h>
 #include <TApplication.h>
 
-#include "TRandom.h"
+#include "TRandom3.h"  // TRandom3 is less correlated than TRandom and almost as fast.  ls 
 
 // TriScope libraries
 #include "TTigFragment.h"
@@ -45,7 +45,7 @@ using namespace std;
 extern TApplication* App;
 static TCanvas* cXtalk1;
 
-static TRandom rand1;
+static TRandom3 rand1;
 
 
 // File pointers:
@@ -84,7 +84,7 @@ static TH1F *hFold1CoreEn[CLOVERS][CRYSTALS][SEGS+1];             // Core energy
 static TH1F *hSegAddBackCloverByFold[CLOVERS][SEGS];           // Sum of segs, over clover, for each event, by seg fold
 static TH1F *hSegAddBackCrystalByFold[CLOVERS][CRYSTALS][SEGS]; // Sum od segs, over crystal, for each event, by seg fold
 
-static TH2F *hXTalk[CLOVERS]; 
+static TH2F *hXTalk[CLOVERS];   // Matrices for dumping XTalk values for inspection
 
 // Storing xtalk
 static int XtalkCount[CLOVERS][(SEGS+2)*CRYSTALS]; // Count corsstalk events for each channel in each clover
@@ -116,12 +116,17 @@ void PropXtalk(std::vector<TTigFragment> &ev) {
    
    int CalChan;
    
-   int Hits[CLOVERS][CRYSTALS][SEGS+2];
-   int CloverCoreFold[CLOVERS];  // + 1 for each core hit in each clover
-   int CrystalSegFold[CLOVERS][CRYSTALS]; // +1 for each seg hit in each crystal
+   int Hits[CLOVERS][CRYSTALS][SEGS+2] = {0};
+   int CloverCoreFold[CLOVERS] = {0};  // + 1 for each core hit in each clover
+   int CrystalSegFold[CLOVERS][CRYSTALS] = {0}; // +1 for each seg hit in each crystal
    
-   float Energies[CLOVERS][CRYSTALS][SEGS+2];
-   float SegABEn[CLOVERS][CRYSTALS];
+   float Energies[CLOVERS][CRYSTALS][SEGS+2] = {0.0};
+   float SegABEn[CLOVERS][CRYSTALS] = {0.0};
+   
+   int Charges[CLOVERS][CRYSTALS][SEGS+2] = {0};
+   
+   int CloverHitList[CLOVERS] = {0};
+   int CloverHitListGood[CLOVERS] = {0};
    
    // Reset stuff
    memset(Hits,           0,    CLOVERS*CRYSTALS*(SEGS+2)     *sizeof(int));
@@ -131,6 +136,10 @@ void PropXtalk(std::vector<TTigFragment> &ev) {
    memset(SegABEn,        0.0,  CLOVERS*CRYSTALS              *sizeof(float));
    
    //cout << "Here " << temp++ << " " << ev.size() << endl;
+   
+   // --------------------------------------------------------------- //
+   // --- First section loops fragments and fills E and hit arrays -- //
+   // --------------------------------------------------------------- //
    
    for (i=0; i < ev.size(); i++) {
       Slave = ((ev[i].ChannelAddress & 0x00F00000) >> 20);
@@ -148,6 +157,7 @@ void PropXtalk(std::vector<TTigFragment> &ev) {
    
       // Fill "Port Hit Pattern"
       hHitPattern->Fill(ev[i].ChannelNumber);
+
       
       // Get calibrated charge
       
@@ -158,11 +168,8 @@ void PropXtalk(std::vector<TTigFragment> &ev) {
       else {
          int NewCoeffFound = 0;
          std::vector<float> Coefficients;
-         for(CalChan=0;CalChan<NUM_ALT_COEFFS;CalChan++) {
+         for(CalChan=0;CalChan<CalibNames.size();CalChan++) {
             if(strncmp(CalibNames[CalChan].c_str(),Name.c_str(),9)==0) {  
-               //Coefficients.push_back(CoeffValues[CalChan][0]);
-               //Coefficients.push_back(CoeffValues[CalChan][1]);
-               //Coefficients.push_back(CoeffValues[CalChan][2]);
                NewCoeffFound = 1;
                break;
             }
@@ -202,6 +209,12 @@ void PropXtalk(std::vector<TTigFragment> &ev) {
          
          // First record hit pattern, Count Fold, increment raw and sum spectra
          Energies[Clover-1][Crystal][Seg] = En;
+         Charges[Clover-1][Crystal][Seg] = ev[i].Charge;
+         CloverHitList[Clover-1] |= 1;
+         if(En > EN_THRESH) {
+            CloverHitListGood[Clover-1] |= 1;
+         }
+         
          switch(Seg) {
             case 0:
                if(En > EN_THRESH) {
@@ -236,31 +249,66 @@ void PropXtalk(std::vector<TTigFragment> &ev) {
       }     
    }
    
-   // Print stuff to check hit detection and ab
-   if(0) {
-      cout << endl << "-------------------" << endl << "Hits and Energies" << endl << "------------------" << endl;
+   
+   // --------------------------------------------------------------- //
+   // --- Debug section.  Checks hits, energies, add-back          -- //
+   // --------------------------------------------------------------- //
+   
+   if(DEBUG_HITS) {
+      cout << endl << "-------------------" << endl << " Clover Hits"<< endl << "------------------" << endl;
+      cout << "Hit:\t";
       for(Clover=0; Clover<CLOVERS; Clover++) {
-         cout << endl;
-         for(Crystal=0; Crystal<CRYSTALS; Crystal++) {
-            cout << "Clover " << Clover << " Crystal " << Crystal << endl;
-            for(Seg=0; Seg<SEGS+2; Seg++) {
-               cout << Energies[Clover][Crystal][Seg] << "\t";
-            }
-            cout << endl;
-            for(Seg=0; Seg<SEGS+2; Seg++) {
-               cout << Hits[Clover][Crystal][Seg] << "\t";
-            }
-            cout << endl;
-         }
+         if(CloverHitList[Clover]==1) {cout << "1\t";}
+         else {cout << "0\t";}
       }
       cout << endl;
-   }
+      cout << "GoodE:\t";
+      for(Clover=0; Clover<CLOVERS; Clover++) {
+         if(CloverHitListGood[Clover]==1) {cout << "1\t";}
+         else {cout << "0\t";}
+      }
+      cout << endl;
+   
+      cout << endl << "-------------------" << endl << "Segment Hits and Energies" << endl << "------------------" << endl;
+      for(Clover=0; Clover<CLOVERS; Clover++) {
+         if(CloverHitList[Clover]==1) {
+            cout << endl;
+            for(Crystal=0; Crystal<CRYSTALS; Crystal++) {
+               cout << "Clover " << Clover+1 << " Crystal " << Crystal << endl;
+               for(Seg=0; Seg<SEGS+2; Seg++) {
+                  cout << Charges[Clover][Crystal][Seg] << "\t\t";
+               }
+               cout << endl;
+               for(Seg=0; Seg<SEGS+2; Seg++) {
+                  cout << Energies[Clover][Crystal][Seg] << "\t";
+               }
+               cout << endl;
+               for(Seg=0; Seg<SEGS+2; Seg++) {
+                  cout << Hits[Clover][Crystal][Seg] << "\t\t";
+               }
+               cout << endl;
+            }
+         }   
+      }
+      cout << endl;
+   } // End of hit debugging section
+   
+   
+   
+   
    //cout << "Hello" << endl;
    // Loop hit patterns, calculate folds, fill addback and fold spectra
    CrystalFoldTig = 0;
    SegFoldTig = 0; 
    CloverFoldTig = 0;
    CoreABTig= 0.0;
+   
+   
+   // --------------------------------------------------------------- //
+   // --- Final section loops detector elements, calculates        -- //
+   // ---    derrived quantities like fold, applies gates,         -- //
+   // ---    calculates crosstalk                                  -- //
+   // --------------------------------------------------------------- //
    
    for(Clover=0; Clover<CLOVERS; Clover++){
    
@@ -336,13 +384,9 @@ void PropXtalk(std::vector<TTigFragment> &ev) {
                   XTalkFrac[Clover][XTalkNum][(Crystal*(SEGS+2))+Seg] = ((XTalkFrac[Clover][XTalkNum][(Crystal*(SEGS+2))+Seg]*Count)+XTalkTemp)/(Count+1);
                }
             }
-            
             XtalkCount[Clover][(HitCrystal*4)+HitSeg] += 1;
             
-            
          }
-         
-        
          
       }
    }

@@ -28,6 +28,8 @@
 
 #define PI 3.14159265359
 
+#define USE_ALT_CALIB 1
+
 // Structure to hold Mnemonic
 struct Mnemonic	{
    int arrayposition;
