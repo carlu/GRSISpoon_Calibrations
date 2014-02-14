@@ -25,7 +25,6 @@
 //#define INTEGRATION 125 // Integration factor applied to charge values
       // This definition moved to main.h
       
-#define INTEGRATION 125 // Integration factor applied to charge values
 #define CHARGE_BINS 16384  
 #define CHARGE_MAX 1500000 
 

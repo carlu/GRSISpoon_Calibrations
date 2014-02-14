@@ -9,7 +9,6 @@
 #define PLOT_ON 0
 
 // Stuf for alternate calibration
-#define INTEGRATION 125 // Integration factor applied to charge values
 //#define NUM_ALT_COEFFS 34
 
 #define DEBUG_HITS 1

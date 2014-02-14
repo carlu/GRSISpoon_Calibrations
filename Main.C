@@ -45,6 +45,7 @@ using namespace std;
 #include <TH2F.h>
 #include <TApplication.h>
 #include <TStyle.h>
+#include "TRandom3.h"  // TRandom3 is less correlated than TRandom and almost as fast.  ls 
 
 // TriScope libraries
 #include "TTigFragment.h"
@@ -65,6 +66,9 @@ using namespace std;
 TStopwatch watch;
 
 TApplication* App;  // Pointer to root environment for plotting etc
+
+// Rand for gain matching
+static TRandom3 rand1;
 
 // Counters
 int FileCount  = 0;
@@ -333,29 +337,22 @@ char Num2Col(int Crystal) {
 int ReadCalibrationFile(std::string filename) {
 
    printf("Reading calibration file %s...\t", filename.c_str());
-   
    ifstream file;
    file.open(filename);
    if (!file) {
       printf("could not open file.\n");
       return -1;
    }
-   else {
-      printf("File opened.\n");
-   }
-   
+   else {printf("File opened.\n");}
    
    std::string line;
    char name[16];
    float g0, g1, g2;
    int n = 0;
-   
-   //vector<string> CalibNames;
-   //vector<vector<float>> CalibValues;
-   
+  
    while(getline(file,line)) {
       //cout << line << endl;
-      if(line.c_str()[0]!='#') {
+      if(line.c_str()[0]!='#') {  // skip commented lines
          sscanf(line.c_str(),"%s %f %f %f",name,&g0, &g1, &g2);
          //cout << name << " " << g0 << " " << g1 << " " << g2 << endl; 
          vector<float> GainTemp;
@@ -364,12 +361,25 @@ int ReadCalibrationFile(std::string filename) {
          GainTemp.push_back(g2);
          CalibValues.push_back(GainTemp);
          CalibNames.push_back(name);
-
          n += 1;
       }
-   }   
-   
+   }     
    return n;
-
 }
+
+
+float CalibrateEnergy(int Charge, std::vector<float> Coefficients)	{
+
+   float ChargeF = (float)Charge + rand1.Uniform();
+   float TempInt = 125.0;
+   float Energy = 0.0;
+	if(Coefficients.size()==0) {return ChargeF;}
+	if(INTEGRATION != 0) {TempInt = INTEGRATION;}
+	for(int i=0;i<Coefficients.size();i++){
+		Energy += Coefficients[i] * pow((ChargeF/TempInt),i);
+	}
+	return Energy;
+};
+
+
 

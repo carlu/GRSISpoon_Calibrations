@@ -23,8 +23,6 @@ using namespace std;
 #include <TCanvas.h>
 #include <TApplication.h>
 
-#include "TRandom3.h"  // TRandom3 is less correlated than TRandom and almost as fast.  ls 
-
 // TriScope libraries
 #include "TTigFragment.h"
 //#include "TFSPC_Info.h"
@@ -44,9 +42,6 @@ using namespace std;
 // stuff
 extern TApplication* App;
 static TCanvas* cXtalk1;
-
-static TRandom3 rand1;
-
 
 // File pointers:
 static TFile *outfile = 0;
@@ -640,25 +635,7 @@ void FinalPropXtalk() {
    
    outfile->Close();
 
-   
-
 }
 
-float CalibrateEnergy(int Charge, std::vector<float> Coefficients)	{
 
-   float ChargeF = (float)Charge + rand1.Uniform();
-	if(Coefficients.size()==0)
-		return ChargeF;
-	
-	float TempInt = 125.0;
-	if(INTEGRATION != 0) {TempInt = INTEGRATION;}
-	
-	float Energy = 0.0;
-	//cout << "Charge: " << Charge << endl;
-	for(int i=0;i<Coefficients.size();i++){
-		Energy += Coefficients[i] * pow((ChargeF/TempInt),i);
-		//cout << "i, coeff: " << i << " " << Coefficients[i] << endl;
-	}
-	//cout << "Energy: " << Energy << endl;
-	return Energy;
-};
+
