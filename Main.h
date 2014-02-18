@@ -3,16 +3,16 @@
 // --------------------------------------------------------
 
 // Which parts of code to run:
-#define SORT_CALIB 0
+#define SORT_CALIB 1
 #define SORT_EFF   0
 #define SORT_WAVES 0
-#define SORT_PROP  1
+#define SORT_PROP  0
 #define SORT_DIFF  0
 // Printing info
 #define PRINT_OUTPUT 1
-#define PRINT_FREQ 10000
+#define PRINT_FREQ 1000
 // Main loop control
-#define MAX_EVENTS 0
+#define MAX_EVENTS 5000
 #define DEBUG_TREE_LOOP 0
 // ROOT Stuff
 #define ROOT_VIRT_SIZE    500000000  //  500MB 
@@ -26,7 +26,8 @@
 #define USE_ALT_CALIB 1
 // Constants
 #define PI 3.14159265359
-
+// Plotting
+#define PLOT_CALCWAVECHARGE 0
 
 // --------------------------------------------------------
 // Data:
@@ -46,6 +47,8 @@ struct Mnemonic	{
 extern vector<string> CalibNames;
 extern vector<vector<float>> CalibValues;
 
+//extern TCanvas *cWave1, *ctemp;
+
 // --------------------------------------------------------
 // Functions:
 // --------------------------------------------------------
@@ -57,6 +60,6 @@ int Col2Num(char Colour);
 char Num2Col(int Crystal);
 // Calibration
 float CalibrateEnergy(int Charge, std::vector<float> Coefficients);
-// 
-
+// Waveform energy
+float CalcWaveCharge(std::vector<int>  wavebuffer);
 

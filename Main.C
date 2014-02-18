@@ -45,7 +45,8 @@ using namespace std;
 #include <TH2F.h>
 #include <TApplication.h>
 #include <TStyle.h>
-#include "TRandom3.h"  // TRandom3 is less correlated than TRandom and almost as fast.  ls 
+#include <TRandom3.h>  // TRandom3 is less correlated than TRandom and almost as fast.  ls 
+#include <TCanvas.h>
 
 // TriScope libraries
 #include "TTigFragment.h"
@@ -99,17 +100,11 @@ void FinalPropXtalk();
 
 int main(int argc, char **argv) {
 
+   // Set options for histo stats
 	gStyle->SetOptStat("iouRMen");
-	
-	
-   //TTreePlayer *TTP = new TTreePlayer();	// This line is needed for the libraries required 
-	                                       // to read the event index to be correctly loaded.
-	                                       // without it the compiler thinks we don't need it and skips - CU 26 Aug 13 
-	                                        
-	//TFSPC_Info  *TFSPC = new TFSPC_Info(); // Similarily this causes the library for reading and storing  odb info 
-	                                       // to be loaded correctly - CU 27 Aug 13        
    
-   App= new TApplication("Output", 0, NULL);  // creates root environment for interacting with plots etc
+   // create root environment for interacting with plots etc
+   App= new TApplication("Output", 0, NULL);  
    
    
    // Variables, Constants, etc
@@ -118,10 +113,8 @@ int main(int argc, char **argv) {
    // Timing
    TStopwatch StopWatch;
 	StopWatch.Start();
-  
+
    // Load any extra configuration information 
-   //vector<string> CalibNames;
-   //vector<vector<float>> CalibValues;
    if(USE_ALT_CALIB) {
       std::string CalFile = "Cal_run27401_w0_Quad_FixedW04.txt"; //"Cal_run27401_quad_w0.txt";
       int NumCal;
@@ -235,7 +228,7 @@ int main(int argc, char **argv) {
 		   
 		   //cout << "HERE!!!!! " << endl;
 		   
-		   if(FragNum < 2) {  // Init to 1, incremented on first GetEntryWithIndex, so should be at least 3 if any frags found      
+		   if(FragNum < 3) {  // Init to 1, incremented on first GetEntryWithIndex, so should be at least 3 if any frags found      
 		      BadEventCount++;
 		      //cout << "HERE!!!!! " << BadEventCount << endl;
 		      continue;
@@ -256,13 +249,13 @@ int main(int argc, char **argv) {
 	    
 	      // Print info to stdout
          if ( PRINT_OUTPUT && (j % PRINT_FREQ) == 0) {   
-            cout << "--------------------------------------------------" << endl;  
+            cout << "----------------------------------------------------------" << endl;  
             cout << "  Tree  " << TreeNum+1 << " / " << nTrees << endl;
-            cout << "  Event " << EventCount+BadEventCount << " / " << NumChainEvents << "   (" << EventCount << " good, " << BadEventCount << " bad)" << endl;
+            cout << "  Event " << EventCount+BadEventCount << " / " << NumChainEvents << "   (" << EventCount << " good, " << BadEventCount << " empty)" << endl;
             cout << "  Frag  " << FragCount  << " / " << NumChainEntries << endl;
             cout << "\t  in " << StopWatch.RealTime() << " seconds."  << endl;
             StopWatch.Continue();       
-            cout << "--------------------------------------------------" << endl;
+            cout << "----------------------------------------------------------" << endl;
          }         
 		   
 		}
@@ -368,7 +361,7 @@ int ReadCalibrationFile(std::string filename) {
 }
 
 
-float CalibrateEnergy(int Charge, std::vector<float> Coefficients)	{
+float CalibrateEnergy(int Charge, std::vector<float> Coefficients) {
 
    float ChargeF = (float)Charge + rand1.Uniform();
    float TempInt = 125.0;
@@ -379,7 +372,24 @@ float CalibrateEnergy(int Charge, std::vector<float> Coefficients)	{
 		Energy += Coefficients[i] * pow((ChargeF/TempInt),i);
 	}
 	return Energy;
-};
+}
 
+float CalcWaveCharge(std::vector<int>  wavebuffer) {
+   
+   int Samp, Length;
+   float Charge = 0.0;
+   char name[512], title[512];
+   Length = wavebuffer.size();
+   
+   cout << "Printing Wave (" << Length << " samples): " << endl;
+   for(Samp=0;Samp<Length;Samp++) {
+      cout << wavebuffer.at(Samp) << " ";
+   }
+   cout << endl;
+   
+   
+   
+   return Charge;
+}
 
 

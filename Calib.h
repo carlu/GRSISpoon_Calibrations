@@ -3,7 +3,7 @@
 #define TIME_BINS 500  // timed energy spectra to collect data for this many seconds
 #define TIME_BIN_SIZE MAX_TIME/TIME_BINS
 #define FIT_TEMP_SPECTRA 1 // 1= find and fit peaks when time bin changes.  0= do not.
-#define FIT_FINAL_SPECTRA 1 // 1 = fit final spectra  
+#define FIT_FINAL_SPECTRA 0 // 1 = fit final spectra  
 
 // General options
 #define NOTIFY_TIME_BIN 1   // print to stdout when spectra are reset
@@ -19,7 +19,7 @@
 #define PLOT_SEG 0  //  1-10
 #define PLOT_CALIB 0 // Plot calibration 
 #define PLOT_RESIDUAL 0 
-#define PLOT_CALIB_SUMMARY 1 // Plot and histo of calibration values
+#define PLOT_CALIB_SUMMARY 0 // Plot and histo of calibration values
 
 // Charge spectra stuff
 //#define INTEGRATION 125 // Integration factor applied to charge values
@@ -27,6 +27,11 @@
       
 #define CHARGE_BINS 16384  
 #define CHARGE_MAX 1500000 
+
+// Use waveform energy
+#define USE_WAVE_EN 1
+#define PLOT_WAVE 1
+
 
 // Peak Search stuff
 #define SEARCH_THRESH 0.0028  // minimum peak height for search as frac of max peak height

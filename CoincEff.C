@@ -313,8 +313,7 @@ void FitPeak(TH1F* Histo, float Min, float Max, FitResult* FitRes) {
       
       cout << FitRes->Const << " " << FitRes->dConst << " " << FitRes->Mean << " " << FitRes->dMean << " " << FitRes->Sigma << " " << FitRes->dSigma << endl; 
    }
-   
-   
+     
 }
 
 

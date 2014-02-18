@@ -52,6 +52,8 @@ static TH1F *hCrystalChargeTemp[CRYSTALS][CLOVERS] = {};  // Only doing these gu
 static TH1F *hCrystalGain[CRYSTALS * CLOVERS] = {};    
 static TH1F *hCrystalOffset[CRYSTALS * CLOVERS] = {};
 
+static TH1F *WaveHist = 0;
+
 // Functions called from main:   
 void InitCalib();
 void Calib(std::vector<TTigFragment> &ev);
@@ -67,7 +69,7 @@ float Sources[3][10] = {
    {344.2785, 1408.006, 121.7817, 244.6975, 411.116, 778.9040, 964.079, 1112.074}
 };
 
-TCanvas *cCalib1, *cCalib2, *ctemp;
+TCanvas *cCalib1, *cCalib2, *cWave1, *ctemp;
 
 void InitCalib() {
  
@@ -112,6 +114,12 @@ void InitCalib() {
    sprintf(name,"Midas Time");
    sprintf(title,"Midas Timestamps (s)");
    hMidasTime = new TH1F(name,title,TIME_BINS,0,MAX_TIME);
+   
+   if(PLOT_CALCWAVECHARGE) {
+      sprintf(name,"Wavetemp");
+      sprintf(title,"Temporary wave histogram");
+      WaveHist = new TH1F(name,title,512,0,512);
+   }
 
    cout << "Searching for core Peaks: " << Sources[SOURCE_NUM_CORE][0] << "kev and " << Sources[SOURCE_NUM_CORE][1] << "keV (Ratio " << Sources[SOURCE_NUM_CORE][0]/Sources[SOURCE_NUM_CORE][1] << ")" << endl;
    cout << "Searching for front seg peaks: " << Sources[SOURCE_NUM_FRONT][0] << "kev and " << Sources[SOURCE_NUM_FRONT][1] << "keV (Ratio " << Sources[SOURCE_NUM_FRONT][0]/Sources[SOURCE_NUM_FRONT][1] << ")" << endl;
@@ -121,6 +129,9 @@ void InitCalib() {
    if(PLOT_FITS || PLOT_CALIB) {
       cCalib1 = new TCanvas();  // Canvas for spectrum plots
       cCalib1->Divide(1,2);
+   }
+   if(PLOT_WAVE) {
+      cWave1 = new TCanvas(); 
    }
 
 }
@@ -132,6 +143,7 @@ void Calib(std::vector<TTigFragment> &ev) {
 
    //Variables
    int i, j, k;
+   int Samp, Length;
    int Slave, Port, Chan;
    int Crystal, Clover, SpecNum;
    int FitSuccess = 0;
@@ -148,6 +160,9 @@ void Calib(std::vector<TTigFragment> &ev) {
    
    int PlotOn = 0;
    int Source = 0;
+   
+   float WaveCharge = 0.0;
+   float WaveEnergy = 0.0;
    
    
    if(DEBUG) {cout << "--------- New Event ---------" << endl;}
@@ -191,6 +206,31 @@ void Calib(std::vector<TTigFragment> &ev) {
 
          // Determine Clover position
          Clover = mnemonic.arrayposition;
+         
+         // Calcualte wave energy
+         if(USE_WAVE_EN) {
+            //cout << name;// << endl;
+            Length = ev[i].wavebuffer.size();
+            //cout << " samples: " << Length << endl;  
+            /*WaveCharge=CalcWaveCharge(ev[i].wavebuffer);
+            cout << "Charge: " << WaveCharge << endl;
+            if(PLOT_WAVE) {
+               cWave1->cd();
+               
+               if(WaveHist) {
+                  cout << "Here" << endl;
+               }
+               for(Samp=0;Samp<Length;Samp++) {
+                  WaveHist->SetBinContent(Samp,ev[i].wavebuffer.at(Samp)+10000);
+               }
+               
+               WaveHist->Draw();
+               cWave1->Modified();
+               cWave1->Update();
+               App->Run();
+               //delete Wavetemp;
+            }*/
+         }
          
          // If Core
          if(mnemonic.segment == 0) {
