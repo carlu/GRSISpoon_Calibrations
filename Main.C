@@ -378,17 +378,31 @@ float CalcWaveCharge(std::vector<int>  wavebuffer) {
    
    int Samp, Length;
    float Charge = 0.0;
-   char name[512], title[512];
+   float Initial = 0.0;
+   float Final = 0.0;
    Length = wavebuffer.size();
    
-   cout << "Printing Wave (" << Length << " samples): " << endl;
-   for(Samp=0;Samp<Length;Samp++) {
-      cout << wavebuffer.at(Samp) << " ";
+   // Print Wave for debugging
+   //cout << "Printing Wave (" << Length << " samples): " << endl;
+   //for(Samp=0;Samp<Length;Samp++) {
+   //   cout << wavebuffer.at(Samp) << " ";
+   //}
+   //cout << endl << endl;
+   //cout << "Initial: " << Initial << endl;
+   
+   for(Samp=0;Samp<INITIAL_SAMPS;Samp++) {
+      Initial += wavebuffer.at(Samp);
+      //cout << Initial << " ";
    }
-   cout << endl;
-   
-   
-   
+   Initial /= INITIAL_SAMPS;
+   //cout << "Initial: " << Initial;
+   for(Samp=0;Samp<FINAL_SAMPS;Samp++) {
+      Final += wavebuffer.at(Length-Samp-1); // -1 because final sample in wbuffer seems to be spurious
+   }
+   Final /= FINAL_SAMPS;
+   //cout << " Final: " << Final;
+   Charge = Final - Initial;
+   //cout << " Charge: " << Charge << endl;
    return Charge;
 }
 

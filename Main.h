@@ -12,7 +12,7 @@
 #define PRINT_OUTPUT 1
 #define PRINT_FREQ 1000
 // Main loop control
-#define MAX_EVENTS 5000
+#define MAX_EVENTS 0
 #define DEBUG_TREE_LOOP 0
 // ROOT Stuff
 #define ROOT_VIRT_SIZE    500000000  //  500MB 
@@ -26,8 +26,11 @@
 #define USE_ALT_CALIB 1
 // Constants
 #define PI 3.14159265359
-// Plotting
-#define PLOT_CALCWAVECHARGE 0
+
+// Calculation of Energy from waveform
+#define INITIAL_SAMPS 40
+#define FINAL_SAMPS 80
+
 
 // --------------------------------------------------------
 // Data:

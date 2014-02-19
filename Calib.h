@@ -30,8 +30,9 @@
 
 // Use waveform energy
 #define USE_WAVE_EN 1
-#define PLOT_WAVE 1
-
+#define PLOT_WAVE 0
+#define WAVE_SAMPS 200
+#define WAVE_CHG_MAX 16384
 
 // Peak Search stuff
 #define SEARCH_THRESH 0.0028  // minimum peak height for search as frac of max peak height
