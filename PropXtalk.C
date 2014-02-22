@@ -198,6 +198,11 @@ void PropXtalk(std::vector<TTigFragment> &ev) {
          
          Clover  = mnemonic.arrayposition;
          Seg = mnemonic.segment; 
+         if(Seg==0) {
+            if(Chan==9) {
+               Seg=9;
+            }
+         }
          //En  = ev[i].ChargeCal;
          
          //cout << "Here " << temp++ << endl;

@@ -10,7 +10,7 @@
 #define SORT_DIFF  0
 // Printing info
 #define PRINT_OUTPUT 1
-#define PRINT_FREQ 1000
+#define PRINT_FREQ 50000
 // Main loop control
 #define MAX_EVENTS 0
 #define DEBUG_TREE_LOOP 0
@@ -23,13 +23,13 @@
 #define INTEGRATION 125 // Integration factor applied to charge values
 // Options for sorting
 #define EN_THRESH 2  // energies less than this keV ignored
-#define USE_ALT_CALIB 1
+#define USE_ALT_CALIB 0
 // Constants
 #define PI 3.14159265359
 
 // Calculation of Energy from waveform
-#define INITIAL_SAMPS 40
-#define FINAL_SAMPS 80
+#define INITIAL_SAMPS 65
+#define FINAL_SAMPS 65
 
 
 // --------------------------------------------------------

@@ -42,6 +42,7 @@ using namespace std;
 
 // File pointers:
 static TFile *outfile = 0;
+static TDirectory *dCharge, *dWaveCharge, *dTemp, *dOther = {0};
 
 extern TApplication* App;
 
@@ -79,6 +80,11 @@ void InitCalib() {
     // Initialise output file                                       
    outfile = new TFile("CalibOut.root","RECREATE");
 
+   dCharge = outfile->mkdir("Charge");
+   dWaveCharge  = outfile->mkdir("WaveCharge");
+   dTemp = outfile->mkdir("Temp");
+   dOther = outfile->mkdir("Other");
+
    char name[512], title[512];
    int Clover, Crystal, Seg, NumBins;
 
@@ -86,43 +92,51 @@ void InitCalib() {
    for(Clover=0;Clover<CLOVERS;Clover++) {
       for(Crystal=0;Crystal<CRYSTALS;Crystal++) {
          // temp charge histo
+         dTemp->cd();
          sprintf(name,"TIG%02d%c Tmp Chg",Clover+1,Colours[Crystal]);
          sprintf(title,"TIG%02d%c Temp Core Charge (arb)",Clover+1,Colours[Crystal]);
          hCrystalChargeTemp[Clover][Crystal] = new TH1F(name,title,CHARGE_BINS,0,CHARGE_MAX);
          // histo for record of calibration from temp spectra
+         dOther->cd();
          sprintf(name,"TIG%02d%c Gain",Clover+1,Colours[Crystal]);
          sprintf(title,"TIG%02d%c Gain vs Time",Clover+1,Colours[Crystal]);
          hCrystalGain[((Clover*4)+Crystal)]   = new TH1F(name,title,TIME_BINS,0,MAX_TIME);
          sprintf(name,"TIG%02d%c Offset",Clover+1,Colours[Crystal]);
          sprintf(title,"TIG%02d%c Offset vs Time",Clover+1,Colours[Crystal]);
          hCrystalOffset[((Clover*4)+Crystal)]   = new TH1F(name,title,TIME_BINS,0,MAX_TIME);
-         // Spectra for charge (both from FPGA and derived from waveform)
+         // Spectra for charge from FPGA
+         dCharge->cd();
          Seg=0;
          sprintf(name,"TIG%02d%cN%02da Chg",Clover+1,Colours[Crystal],Seg);
          sprintf(title,"TIG%02d%cN%02da Charge (arb)",Clover+1,Colours[Crystal],Seg);
-         hCharge[Clover][Crystal][Seg] = new TH1F(name,title,CHARGE_BINS,0,CHARGE_MAX);
+         hCharge[Clover][Crystal][Seg] = new TH1F(name,title,CHARGE_BINS,0,CHARGE_MAX);      
+         sprintf(name,"TIG%02d%cN%02db Chg",Clover+1,Colours[Crystal],Seg);
+         sprintf(title,"TIG%02d%cN%02db Charge (arb)",Clover+1,Colours[Crystal],Seg);
+         hCharge[Clover][Crystal][9] = new TH1F(name,title,CHARGE_BINS,0,CHARGE_MAX);       
+         for(Seg = 1; Seg<=SEGS; Seg++) {
+            //cout << "Clov,Col,Seg :" << Clover+1 << ", " << Colours[Crystal] << ", " << Seg << endl;         
+            sprintf(name,"TIG%02d%cP%02dx Chg",Clover+1,Colours[Crystal],Seg);
+            sprintf(title,"TIG%02d%cP%02dx Charge (arb)",Clover+1,Colours[Crystal],Seg);
+            hCharge[Clover][Crystal][Seg] = new TH1F(name,title,CHARGE_BINS,0,CHARGE_MAX);         
+         }       
+         // and charge derived from waveform
+         dWaveCharge->cd();
+         Seg=0;
          sprintf(name,"TIG%02d%cN%02da WaveChg",Clover+1,Colours[Crystal],Seg);
          sprintf(title,"TIG%02d%cN%02da Waveform Charge (arb)",Clover+1,Colours[Crystal],Seg);
          hWaveCharge[Clover][Crystal][Seg] = new TH1F(name,title,CHARGE_BINS,0,WAVE_CHG_MAX);
-         Seg=9;
-         sprintf(name,"TIG%02d%cN%02db Chg",Clover+1,Colours[Crystal],Seg);
-         sprintf(title,"TIG%02d%cN%02db Charge (arb)",Clover+1,Colours[Crystal],Seg);
-         hCharge[Clover][Crystal][Seg] = new TH1F(name,title,CHARGE_BINS,0,CHARGE_MAX);
          sprintf(name,"TIG%02d%cN%02db WaveChg",Clover+1,Colours[Crystal],Seg);
          sprintf(title,"TIG%02d%cN%02db Waveform Charge (arb)",Clover+1,Colours[Crystal],Seg);
-         hWaveCharge[Clover][Crystal][Seg] = new TH1F(name,title,CHARGE_BINS,0,WAVE_CHG_MAX);
+         hWaveCharge[Clover][Crystal][9] = new TH1F(name,title,CHARGE_BINS,0,WAVE_CHG_MAX);
          for(Seg = 1; Seg<=SEGS; Seg++) {
-            //cout << "Clov,Col,Seg :" << Clover+1 << ", " << Colours[Crystal] << ", " << Seg << endl;         
-            sprintf(name,"TIG%02d%cP%02d Chg",Clover+1,Colours[Crystal],Seg);
-            sprintf(title,"TIG%02d%cP%02d Charge (arb)",Clover+1,Colours[Crystal],Seg);
-            hCharge[Clover][Crystal][Seg] = new TH1F(name,title,CHARGE_BINS,0,CHARGE_MAX);
-            sprintf(name,"TIG%02d%cP%02d WaveChg",Clover+1,Colours[Crystal],Seg);
-            sprintf(title,"TIG%02d%cP%02d Waveform Charge (arb)",Clover+1,Colours[Crystal],Seg);
+            sprintf(name,"TIG%02d%cP%02dx WaveChg",Clover+1,Colours[Crystal],Seg);
+            sprintf(title,"TIG%02d%cP%02dx Waveform Charge (arb)",Clover+1,Colours[Crystal],Seg);
             hWaveCharge[Clover][Crystal][Seg] = new TH1F(name,title,CHARGE_BINS,0,WAVE_CHG_MAX);            
          }
       }
    }
    // Time stamp histo
+   dOther->cd();
    sprintf(name,"Midas Time");
    sprintf(title,"Midas Timestamps (s)");
    hMidasTime = new TH1F(name,title,TIME_BINS,0,MAX_TIME);
@@ -397,10 +411,14 @@ void FinalCalib() {
    for(Clover=0;Clover<CLOVERS;Clover++) {
       for(Crystal=0;Crystal<CRYSTALS;Crystal++) {
          for(Seg=0; Seg<=SEGS+1; Seg++) {
+            dCharge->cd();
             hCharge[Clover][Crystal][Seg]->Write();
+            dWaveCharge->cd();
             hWaveCharge[Clover][Crystal][Seg]->Write();
          }
+         dTemp->cd();
          hCrystalChargeTemp[Clover][Crystal]->Write();
+         dOther->cd();
          hCrystalGain[((Clover*4)+Crystal)]->Write();
          hCrystalOffset[((Clover*4)+Crystal)]->Write();
       }
@@ -424,7 +442,7 @@ void FinalCalib() {
    
       for(Clover=0; Clover<CLOVERS; Clover++) {
          for(Crystal=0; Crystal<CRYSTALS; Crystal++) {
-            for(Seg=0; Seg<=SEGS; Seg++){
+            for(Seg=0; Seg<=SEGS+1; Seg++){
             
                if(VERBOSE){
                   cout << endl << "--------------------------------------" << endl;
@@ -434,12 +452,17 @@ void FinalCalib() {
                
                SpectrumFit Fit = {};
                PlotOn = 0;
-               if(Seg==0) {
+               if(Seg==0 || Seg==9) {
                   Source = SOURCE_NUM_CORE;
-                  sprintf(HistName,"TIG%02d%cN%02d Chg",Clover+1,Num2Col(Crystal),Seg);
+                  if(Seg==0) {
+                     sprintf(HistName,"TIG%02d%cN%02da Chg",Clover+1,Num2Col(Crystal),Seg);
+                  }
+                  else {
+                     sprintf(HistName,"TIG%02d%cN%02db Chg",Clover+1,Num2Col(Crystal),0);
+                  }
                }
                else {
-                  sprintf(HistName,"TIG%02d%cP%02d Chg",Clover+1,Num2Col(Crystal),Seg);
+                  sprintf(HistName,"TIG%02d%cP%02dx Chg",Clover+1,Num2Col(Crystal),Seg);
                   if(Seg < 5) {
                      Source = SOURCE_NUM_FRONT;
                   }
@@ -580,6 +603,7 @@ void FinalCalib() {
    
    // Write gain histograms to file
    outfile->cd();
+   dOther->cd();
    GainPlot->Write();
    OffsetPlot->Write();
    QuadPlot->Write();

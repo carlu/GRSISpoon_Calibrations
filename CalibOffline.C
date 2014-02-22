@@ -148,7 +148,7 @@ int main(int argc, char** argv){
                      Source = SOURCE_NUM_CORE;   
                      break;
                   default:
-                     sprintf(HistName,"TIG%02d%cP%02d Chg",Clover+1,Colours[Crystal],Seg);
+                     sprintf(HistName,"TIG%02d%cP%02dx Chg",Clover+1,Colours[Crystal],Seg);
                      if(Seg<5) {
                         Source = SOURCE_NUM_FRONT;
                      }
