@@ -11,4 +11,4 @@
 // Stuf for alternate calibration
 //#define NUM_ALT_COEFFS 34
 
-#define DEBUG_HITS 1
+#define DEBUG_HITS 0
