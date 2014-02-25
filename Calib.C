@@ -372,6 +372,7 @@ void FinalCalib() {
    int i;
    ofstream GainOut;
    ofstream ReportOut;
+   ofstream WaveOut;
    char HistName[1024];
    
    TH1F *GainPlot, *OffsetPlot, *QuadPlot;
@@ -431,6 +432,9 @@ void FinalCalib() {
    }   
    if(OUTPUT_REPORT) {
       ReportOut.open("CalibrationReport.txt");
+   }
+   if(USE_WAVE_EN) {
+      WaveOut.open("WaveGainsOut.txt");
    }
    
    // Fit full-run energy spectra
@@ -503,7 +507,6 @@ void FinalCalib() {
                   QuadHist->Fill(Fit.QuadGainFit[2]);                     
                }
             
-               
                // Now print reports on results of fits and calibration.
                if(OUTPUT_GAIN) {
                   if(FitSuccess > 0) {
@@ -561,6 +564,60 @@ void FinalCalib() {
             }
          }
       }
+      
+      // Now run the fit for the waveform spectrum if required
+      if(USE_WAVE_EN) {
+         if(VERBOSE) {cout << "-------------------" << endl << "Now fitting Wave Energy Spectra" << endl << "-------------------" << endl;}
+         for(Clover=0; Clover<CLOVERS; Clover++) {
+            for(Crystal=0; Crystal<CRYSTALS; Crystal++) {
+               for(Seg=0; Seg<=SEGS+1; Seg++){
+                  
+                  SpectrumFit Fit = {};
+                  PlotOn = 0;
+                  
+                  if(VERBOSE){
+                     cout << endl << "--------------------------------------" << endl;
+                     cout << "Clover " << Clover << " Crystal " << Crystal << " Seg " << Seg << endl;
+                     cout << "--------------------------------------" << endl;
+                  }
+                  if(Seg==0 || Seg==9) {
+                     Source = SOURCE_NUM_CORE;
+                     if(Seg==0) {
+                        sprintf(HistName,"TIG%02d%cN%02da WaveChg",Clover+1,Num2Col(Crystal),Seg);
+                     }
+                     else {
+                        sprintf(HistName,"TIG%02d%cN%02db WaveChg",Clover+1,Num2Col(Crystal),0);
+                     }
+                  }
+                  else {
+                     sprintf(HistName,"TIG%02d%cP%02dx WaveChg",Clover+1,Num2Col(Crystal),Seg);
+                     if(Seg < 5) {
+                        Source = SOURCE_NUM_FRONT;
+                     }
+                     else {
+                        Source = SOURCE_NUM_BACK;
+                     }
+                  }
+                  // Perform Fit
+                  FitSuccess = FitGammaSpectrum(hWaveCharge[Clover][Crystal][Seg], &Fit, Source, PlotOn);   
+                  
+                  if(OUTPUT_GAIN) {
+                     if(FitSuccess > 0) {
+                        //GainOut << HistName << " " << Fit.LinGainFit[0] << " +/- " << Fit.dLinGainFit[0];
+                        //GainOut << " " << Fit.LinGainFit[1] << " +/- " << Fit.dLinGainFit[1] << " " <<   Fit.LinGainFit[2] << endl;
+                        WaveOut << HistName << " " << Fit.QuadGainFit[0] << " +/- " << Fit.dQuadGainFit[0] << " ";
+                        WaveOut << Fit.QuadGainFit[1] << " +/- " << Fit.dQuadGainFit[1] << " " << Fit.QuadGainFit[2] << " +/- " << Fit.dQuadGainFit[2] << endl;     
+                     }
+                  else {
+                     WaveOut << HistName << " Fail!!!" << endl;
+                  }
+               }
+               
+               }
+            }            
+         }      
+      }
+               
    
       if(OUTPUT_GAIN) {
          GainOut.close(); 
