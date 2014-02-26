@@ -11,15 +11,16 @@
 #define OUTPUT_GAIN 1 // write full-run gains to file
 #define OUTPUT_REPORT 1 // write full report including all fits and gains
 #define DEBUG 0  // PRint Debugging messages to screen
+#define FIT_EN 1 // 
 
 // Plotting
-#define PLOT_FITS 0  // plot fits, all chans plotted if below items = 0
+#define PLOT_FITS 1  // plot fits, all chans plotted if below items = 0
 #define PLOT_CLOVER 6  // select 1-16 to plot that only
 #define PLOT_CRYSTAL 0  // 1-4
 #define PLOT_SEG 0  //  1-10
 #define PLOT_CALIB 0 // Plot calibration 
 #define PLOT_RESIDUAL 0 
-#define PLOT_CALIB_SUMMARY 1 // Plot and histo of calibration values
+#define PLOT_CALIB_SUMMARY 0 // Plot and histo of calibration values
 
 // Charge spectra stuff
 //#define INTEGRATION 125 // Integration factor applied to charge values
@@ -29,7 +30,7 @@
 #define CHARGE_MAX 1500000 
 
 // Use waveform energy
-#define USE_WAVE_EN 1
+#define FIT_WAVE_EN 0
 #define PLOT_WAVE 0
 #define WAVE_SAMPS 200
 #define WAVE_CHG_MAX 16384
@@ -40,12 +41,17 @@
 #define SEARCH_SIGMA 50  // Expected sigma of peaks 
 #define MIN_GAIN 0.125 // = 0.075 / 125    // These values cover from 0.5x to 2x the typical TIGRESS gain
 #define MAX_GAIN 0.172 // 0.3 / 125  
+#define MIN_GAIN_WAVE 0.6 // = 0.075 / 125    // These values cover from 0.5x to 2x the typical TIGRESS gain
+#define MAX_GAIN_WAVE 0.7 // 0.3 / 125  
 
 // Peaks
-#define SOURCE_NUM_FRONT 0//1 // Source for front segments and core 0=60Co, 1=152Eu, 2=152Eu (no 121)
-#define SOURCE_NUM_BACK 0//2 // Source for back segments
-#define SOURCE_NUM_CORE 0//1 // Source for core
-#define NUM_LINES 2 // Number of lines to fit 
+//#define SOURCE_NUM_FRONT 0//1 // Source for front segments and core 0=60Co, 1=152Eu, 2=152Eu (no 121)
+//#define SOURCE_NUM_BACK 0//2 // Source for back segments
+//#define SOURCE_NUM_CORE 0//1 // Source for core
+#define SOURCE_NUM_FRONT 1 // Source for front segments and core 0=60Co, 1=152Eu, 2=152Eu (no 121)
+#define SOURCE_NUM_BACK 2 // Source for back segments
+#define SOURCE_NUM_CORE 1 // Source for core
+#define NUM_LINES 8 // Number of lines to fit 
 
 // Extra calibration point at 0 ch = 0 keV
 #define INCLUDE_ZERO 1  // Add an extra calibration point at 0ch = 0 keV

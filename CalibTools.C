@@ -39,11 +39,11 @@ using namespace std;
 // My libraries
 #include "Calib.h"
 #include "Main.h"
-#include "FitGammaSpectrum.h"
+//#include "FitGammaSpectrum.h"
 
 extern TApplication* App;
 
-int FitGammaSpectrum(TH1F* Histo, SpectrumFit *Fit, int Source, int PlotOn) {
+int FitGammaSpectrum(TH1F* Histo, SpectrumFit *Fit, int Source, int Integration, int PlotOn ) {
 
    int Peak, Peak1, Peak2, NumPeaks, BestPeak1, BestPeak2, PeakFound;  // for looping peaks and finding correct ones
    float Ratio, Diff, BestDiff;  // test quality of peak match
@@ -102,14 +102,14 @@ int FitGammaSpectrum(TH1F* Histo, SpectrumFit *Fit, int Source, int PlotOn) {
                if(Peak1 != Peak2) {
                   Ratio = PeakPositions[Peak1] / PeakPositions[Peak2];
                   Diff = fabs(Ratio - IdealRatio);
-                  //cout << "Calc Gain: " << PEAK_EN2/PeakPos[Peak2] << " Ratio: " << Ratio << " Diff: " << Diff << " Best: " << BestDiff << endl;
+                  cout << "Calc Gain: " << En2/PeakPositions[Peak2] << " Ratio: " << Ratio << " Diff: " << Diff << " Best: " << BestDiff << endl;
                   if(Diff < BestDiff) {  // best match so far                     
-                     if( (En2/(PeakPositions[Peak2]/INTEGRATION)) > MIN_GAIN && (En2/(PeakPositions[Peak2]/INTEGRATION)) < MAX_GAIN) { // Gain is sensible
+                     //if( (En2/(PeakPositions[Peak2]/Integration)) > MIN_GAIN && (En2/(PeakPositions[Peak2]/Integration)) < MAX_GAIN) { // Gain is sensible
                         BestDiff = Diff;
                         BestPeak1 = Peak1;
                         BestPeak2 = Peak2;
                         PeakFound = 1;
-                     }
+                     //}
                   }
                }
             }     
@@ -212,10 +212,10 @@ int FitGammaSpectrum(TH1F* Histo, SpectrumFit *Fit, int Source, int PlotOn) {
          //-------------------------------------------------------------//
          // Calculate a rough calibration                               //
          //-------------------------------------------------------------//
-         Chg1 = FitRange[0]->GetParameter(1) / INTEGRATION;
-         Chg2 = FitRange[1]->GetParameter(1) / INTEGRATION;
-         dChg1 = FitRange[0]->GetParError(1) / INTEGRATION;
-         dChg2 = FitRange[0]->GetParError(1) / INTEGRATION;
+         Chg1 = FitRange[0]->GetParameter(1) / Integration;
+         Chg2 = FitRange[1]->GetParameter(1) / Integration;
+         dChg1 = FitRange[0]->GetParError(1) / Integration;
+         dChg2 = FitRange[0]->GetParError(1) / Integration;
          
          G = (Sources[Source][1] - Sources[Source][0]) / (Chg2 - Chg1 );
          //*Gain = G;
@@ -248,7 +248,7 @@ int FitGammaSpectrum(TH1F* Histo, SpectrumFit *Fit, int Source, int PlotOn) {
          if(NUM_LINES>2) {
             for(Line=2; Line<NUM_LINES; Line++) {
                
-               FitCentre = ((Sources[Source][Line] - O)*INTEGRATION) / G;
+               FitCentre = ((Sources[Source][Line] - O)*Integration) / G;
                Min = FitCentre - FIT_WIDTH;
                Max = FitCentre + FIT_WIDTH;
                
@@ -327,8 +327,8 @@ int FitGammaSpectrum(TH1F* Histo, SpectrumFit *Fit, int Source, int PlotOn) {
                if(fabs(FitRes[Line].Sigma) > GAUS_SIGMA_MIN) {
                   if((FitRes[Line].ChiSq / FitRes[Line].NDF) < GAUS_CSPD_MAX) {
                      Energies[LinesUsed] = Sources[Source][Line];
-                     Centroids[LinesUsed] = FitRes[Line].Mean / INTEGRATION;
-                     dCentroids[LinesUsed] = FitRes[Line].dMean / INTEGRATION;
+                     Centroids[LinesUsed] = FitRes[Line].Mean / Integration;
+                     dCentroids[LinesUsed] = FitRes[Line].dMean / Integration;
                      if(VERBOSE) {
                         cout << Energies[LinesUsed] << " keV\t" << Centroids[LinesUsed] << " +/- " << dCentroids[LinesUsed] << " ch" << endl;
                      }
