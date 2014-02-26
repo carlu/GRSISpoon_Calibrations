@@ -81,7 +81,6 @@ int main(int argc, char **argv)
    ofstream WaveOut;
 
    int NumFits;
-   float Energies[NUM_LINES], Residuals[NUM_LINES];
 
    float CalibEn = 0.0;
 
@@ -107,12 +106,11 @@ int main(int argc, char **argv)
       cout << "Filename!" << endl;
       return 0;
    }
-   
+
    TFile *file = TFile::Open(argv[1]);
-   if(file->IsOpen()) {
+   if (file->IsOpen()) {
       cout << argv[1] << " opened!" << endl;
-   }
-   else {
+   } else {
       cout << "Failed to open " << argv[1] << "!" << endl;
       return 0;
    }
@@ -191,15 +189,14 @@ int main(int argc, char **argv)
                         }
                      }
                   }
-                  
                   // Perform Fit
-                  SpectrumFit Fit = {0};
+                  SpectrumFit Fit = { 0 };
                   Integration = INTEGRATION;
                   FitSuccess = FitGammaSpectrum(Histo, &Fit, Source, Integration, PlotOn);
 
                   // If fit succesful, generate output....
                   if (FitSuccess > 0) {
-                     switch (Crystal) {  // Calculate channel number (old TIGRESS DAQ numbering)
+                     switch (Crystal) { // Calculate channel number (old TIGRESS DAQ numbering)
                      case 0:
                         ItemNum = (Clover * 60) + Seg;
                         break;
@@ -231,86 +228,15 @@ int main(int argc, char **argv)
                         //GainOut << HistName << " " << Fit.LinGainFit[0] << " +/- " << Fit.dLinGainFit[0];
                         //GainOut << " " << Fit.LinGainFit[1] << " +/- " << Fit.dLinGainFit[1] << " " <<   Fit.LinGainFit[2] << endl;
                         GainOut << HistName << " " << Fit.QuadGainFit[0] << " +/- " << Fit.dQuadGainFit[0] << " ";
-                        GainOut << Fit.QuadGainFit[1] << " +/- " << Fit.
-                            dQuadGainFit[1] << " " << Fit.QuadGainFit[2] << " +/- " << Fit.dQuadGainFit[2] << endl;
+                        GainOut << Fit.QuadGainFit[1] << " +/- " << Fit.dQuadGainFit[1] << " " << Fit.
+                            QuadGainFit[2] << " +/- " << Fit.dQuadGainFit[2] << endl;
                      } else {
                         GainOut << HistName << " Fail!!!" << endl;
                      }
                   }
                   if (OUTPUT_REPORT) {
                      if (FitSuccess > 0) {
-                        // Heading for this channel
-                        ReportOut << endl << "------------------------------------------" << endl << HistName << endl <<
-                            "------------------------------------------" << endl << endl;
-                        // Peak fit info
-                        for (i = 0; i < NUM_LINES; i++) {
-                           if (Fit.FitSuccess[i] == 1) {
-                              ReportOut << Fit.PeakFits[i].Energy << " keV" << endl;
-                              ReportOut << Fit.PeakFits[i].Const << " +/- " << Fit.PeakFits[i].dConst << "\t";
-                              ReportOut << Fit.PeakFits[i].Mean << " +/- " << Fit.PeakFits[i].dMean << "\t";
-                              ReportOut << Fit.PeakFits[i].Const << " +/- " << Fit.PeakFits[i].dConst << endl;
-                              ReportOut << Fit.PeakFits[i].ChiSq << "\t" << Fit.PeakFits[i].
-                                  NDF << "\t" << Fit.PeakFits[i].ChiSq / Fit.PeakFits[i].NDF;
-                              ReportOut << endl << endl;
-                           }
-                        }
-                        // Calibration...
-                        ReportOut << "Linear Solution: Offset = " << Fit.
-                            LinGain[0] << " +/- " << Fit.dLinGain[0] << "\t";
-                        ReportOut << "Gain = " << Fit.LinGain[1] << " +/- " << Fit.dLinGain[1] << endl;
-                        ReportOut << "Linear Fit: Offset = " << Fit.
-                            LinGainFit[0] << " +/- " << Fit.dLinGainFit[0] << "\t";
-                        ReportOut << "Gain = " << Fit.LinGainFit[1] << " +/- " << Fit.dLinGainFit[1] << "\t";
-                        ReportOut << "CSPD = " << Fit.LinGainFit[2] << endl;
-                        ReportOut << "Quadratic Fit: Offset = " << Fit.
-                            QuadGainFit[0] << " +/- " << Fit.dQuadGainFit[0] << "\t";
-                        ReportOut << "Gain = " << Fit.QuadGainFit[1] << " +/- " << Fit.dQuadGainFit[1] << "\t";
-                        ReportOut << "Quad = " << Fit.QuadGainFit[2] << " +/- " << Fit.dQuadGainFit[2] << "\t";
-                        ReportOut << "CSPD = " << Fit.LinGainFit[3] << endl;
-
-                        // Residual from quadratic fit
-                        ReportOut << endl << "Check quadratic calibration...." << endl;
-                        ReportOut << "Centroid (ch)\t\tList Energy (keV)\t\tCalibration Energy (keV)\t\tResidual (keV)"
-                            << endl;
-                        for (i = 0; i < NUM_LINES; i++) {
-                           if (Fit.FitSuccess[i] == 1) {
-                              CalibEn =
-                                  Fit.QuadGainFit[0] + (Fit.QuadGainFit[1] * (Fit.PeakFits[i].Mean / INTEGRATION)) +
-                                  (pow((Fit.PeakFits[i].Mean / INTEGRATION), 2) * Fit.QuadGainFit[2]);
-                              ReportOut << Fit.PeakFits[i].Mean << "\t\t\t" << Fit.PeakFits[i].Energy << "\t\t\t";
-                              ReportOut << CalibEn << "\t\t\t" << CalibEn - Fit.PeakFits[i].Energy << endl;
-                           }
-                        }
-
-                        // Residual from linear fit
-                        NumFits = 0;
-                        ReportOut << endl << "Check linear calibration...." << endl;
-                        ReportOut << "Centroid (ch)\t\tList Energy (keV)\t\tCalibration Energy (keV)\t\tResidual (keV)"
-                            << endl;
-                        for (i = 0; i < NUM_LINES; i++) {
-                           if (Fit.FitSuccess[i] == 1) {
-                              CalibEn = Fit.LinGainFit[0] + (Fit.LinGainFit[1] * (Fit.PeakFits[i].Mean / INTEGRATION));
-                              ReportOut << Fit.PeakFits[i].Mean << "\t\t\t" << Fit.PeakFits[i].Energy << "\t\t\t";
-                              ReportOut << CalibEn << "\t\t\t" << CalibEn - Fit.PeakFits[i].Energy << endl;
-                              Energies[NumFits] = Fit.PeakFits[i].Energy;
-                              Residuals[NumFits] = CalibEn - Fit.PeakFits[i].Energy;
-                              NumFits++;
-                           }
-                        }
-                        TGraphErrors CalibResidual(NumFits, Energies, Residuals);
-                        if (PLOT_RESIDUAL) {
-                           cCalib1->cd(3);
-                           CalibResidual.SetMarkerColor(2);
-                           CalibResidual.SetMarkerStyle(20);
-                           CalibResidual.SetMarkerSize(1.0);
-                           CalibResidual.SetTitle("Residual from linear calibration");
-                           CalibResidual.Draw("AP");
-                           //CalibResidual.Draw();
-                           cCalib1->Modified();
-                           cCalib1->Update();
-                           App->Run(1);
-                           //cCalib1->cd(1);
-                        }
+                        CalibrationReport(&Fit, ReportOut, *HistName);
                      } else {
                         ReportOut << endl << "------------------------------------------" << endl << HistName << endl <<
                             "------------------------------------------" << endl << endl;
@@ -363,17 +289,19 @@ int main(int argc, char **argv)
 
                   TH1F *Histo = (TH1F *) file->FindObjectAny(HistName);
                   // Perform Fit
-                  SpectrumFit WaveFit = {};
+                  SpectrumFit WaveFit = { };
                   Integration = 1;
                   FitSuccess = FitGammaSpectrum(Histo, &WaveFit, Source, Integration, PlotOn);
 
                   if (OUTPUT_GAIN) {
                      if (FitSuccess > 0) {
                         WaveOut << HistName << " " << WaveFit.LinGainFit[0] << " +/- " << WaveFit.dLinGainFit[0];
-                        WaveOut << " " << WaveFit.LinGainFit[1] << " +/- " << WaveFit.dLinGainFit[1] << " " << WaveFit.LinGainFit[2] << endl;
-                        WaveOut << HistName << " " << WaveFit.QuadGainFit[0] << " +/- " << WaveFit.dQuadGainFit[0] << " ";
-                        WaveOut << WaveFit.QuadGainFit[1] << " +/- " << WaveFit.
-                            dQuadGainFit[1] << " " << WaveFit.QuadGainFit[2] << " +/- " << WaveFit.dQuadGainFit[2] << endl;
+                        WaveOut << " " << WaveFit.LinGainFit[1] << " +/- " << WaveFit.dLinGainFit[1] << " " << WaveFit.
+                            LinGainFit[2] << endl;
+                        WaveOut << HistName << " " << WaveFit.QuadGainFit[0] << " +/- " << WaveFit.
+                            dQuadGainFit[0] << " ";
+                        WaveOut << WaveFit.QuadGainFit[1] << " +/- " << WaveFit.dQuadGainFit[1] << " " << WaveFit.
+                            QuadGainFit[2] << " +/- " << WaveFit.dQuadGainFit[2] << endl;
                      } else {
                         WaveOut << HistName << " Fail!!!" << endl;
                      }
@@ -382,7 +310,7 @@ int main(int argc, char **argv)
             }
          }
       }
-   } 
+   }
 
    if (PLOT_CALIB_SUMMARY) {
       //cCalib2->cd();
