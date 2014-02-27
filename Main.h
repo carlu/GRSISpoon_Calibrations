@@ -31,6 +31,8 @@
 #define INITIAL_SAMPS 65
 #define FINAL_SAMPS 65
 
+//Other stuff
+#define CHAR_BUFFER_SIZE 1024
 
 // --------------------------------------------------------
 // Data:

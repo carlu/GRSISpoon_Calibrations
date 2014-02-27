@@ -1,5 +1,5 @@
 //To compile:
-// g++ Main.C CoincEff.C Calib.C PropXtalk.C FitGammaSpectrum.C -I/home/cu/Code/TIGRESS/GRSISpoon/include --std=c++0x -o Sort /home/cu/Code/TIGRESS/GRSISpoon/libraries/TigFormat/libFormat.so /home/cu/Code/TIGRESS/GRSISpoon/libraries/libCalManager.so /home/cu/Code/TIGRESS/GRSISpoon/libraries/libRootIOManager.so -O2 `root-config --cflags --libs` -lTreePlayer -lSpectrum -lgsl -lgslcblas -g
+// g++ Main.C CoincEff.C Calib.C PropXtalk.C CalibTools.C -I/home/cu/Code/TIGRESS/GRSISpoon/include --std=c++0x -o Sort /home/cu/Code/TIGRESS/GRSISpoon/libraries/TigFormat/libFormat.so /home/cu/Code/TIGRESS/GRSISpoon/libraries/libCalManager.so /home/cu/Code/TIGRESS/GRSISpoon/libraries/libRootIOManager.so -O2 `root-config --cflags --libs` -lTreePlayer -lSpectrum -lgsl -lgslcblas -g
 
 // --------------------------------------------------------------------------------
 // ----  Sort code for processing ROOT TTrees of TTigFragments                 ----
@@ -365,8 +365,11 @@ int ReadCalibrationFile(std::string filename)
    int n = 0;
 
    while (getline(file, line)) {
-      //cout << line << endl;
+      //cout << line << endl;    
       if (line.c_str()[0] != '#') {     // skip commented lines
+         g0 = 0.0;
+         g1 = 0.0;
+         g2 = 0.0;
          sscanf(line.c_str(), "%s %f %f %f", name, &g0, &g1, &g2);
          //cout << name << " " << g0 << " " << g1 << " " << g2 << endl; 
          vector < float >GainTemp;

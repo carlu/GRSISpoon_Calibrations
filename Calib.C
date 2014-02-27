@@ -37,7 +37,7 @@ using namespace std;
 // My libraries
 #include "Calib.h"
 #include "Main.h"
-#include "FitGammaSpectrum.h"
+#include "CalibTools.h"
 //#include "FitSpectrum.h"
 
 // File pointers:

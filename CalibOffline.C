@@ -1,11 +1,11 @@
-// g++ CalibOffline.C FitGammaSpectrum.C --std=c++0x -o CalibOffline -O2 `root-config --cflags --libs` -lSpectrum -lgsl -lgslcblas -g
+// g++ CalibOffline.C CalibTools.C --std=c++0x -o CalibOffline -O2 `root-config --cflags --libs` -lSpectrum -lgsl -lgslcblas -g
 
+using namespace std;
 // C/C++ libraries:
 #include <iostream>
 #include <fstream>
 #include <unordered_set>
 #include <vector>
-using namespace std;
 #include <cstdlib>
 #include <math.h>
 #include <time.h>
@@ -67,10 +67,12 @@ int main(int argc, char **argv)
    int Seg = 0;
    int Source = 0;
    int FitSuccess = 0;
-   int PlotOn = 0;
+   bool PlotOn = 0;
    int Integration = 0;
+   float Dispersion = 0.0;
    int i;
-   char HistName[1024];
+   char CharBuf[CHAR_BUFFER_SIZE];
+   string HistName;
    char Charge[10];
    char Colours[] = "BGRW";
    TH1F *GainPlot, *OffsetPlot, *QuadPlot;
@@ -155,15 +157,18 @@ int main(int argc, char **argv)
                // Set source and histogram name based on seg number
                switch (Seg) {
                case 0:
-                  sprintf(HistName, "TIG%02d%cN%02da Chg", Clover + 1, Colours[Crystal], Seg);
+                  snprintf(CharBuf, CHAR_BUFFER_SIZE,"TIG%02d%cN%02da Chg", Clover + 1, Colours[Crystal], Seg);
+                  HistName = CharBuf;
                   Source = SOURCE_NUM_CORE;
                   break;
                case 9:
-                  sprintf(HistName, "TIG%02d%cN%02db Chg", Clover + 1, Colours[Crystal], 0);
+                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db Chg", Clover + 1, Colours[Crystal], 0);
+                  HistName = CharBuf;
                   Source = SOURCE_NUM_CORE;
                   break;
                default:
-                  sprintf(HistName, "TIG%02d%cP%02dx Chg", Clover + 1, Colours[Crystal], Seg);
+                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx Chg", Clover + 1, Colours[Crystal], Seg);
+                  HistName = CharBuf;
                   if (Seg < 5) {
                      Source = SOURCE_NUM_FRONT;
                   } else {
@@ -173,7 +178,7 @@ int main(int argc, char **argv)
                }
 
                // Load histogram
-               TH1F *Histo = (TH1F *) file->FindObjectAny(HistName);
+               TH1F *Histo = (TH1F *) file->FindObjectAny(HistName.c_str());
                if (Histo) {
                   cout << endl << "------------------------------------" << endl;
                   cout << "Hist " << HistName << " loaded" << endl;
@@ -189,10 +194,19 @@ int main(int argc, char **argv)
                         }
                      }
                   }
-                  // Perform Fit
-                  SpectrumFit Fit = { 0 };
-                  Integration = INTEGRATION;
-                  FitSuccess = FitGammaSpectrum(Histo, &Fit, Source, Integration, PlotOn);
+                  // Perform Fit                  
+                  SpectrumFit Fit = { 0 };                  
+                  FitSettings Settings = { 0 };
+                  
+                  Settings.Source = Source;
+                  Settings.Integration = INTEGRATION;
+                  Settings.Dispersion = CHARGE_BINS / CHARGE_MAX;
+                  Settings.SigmaEstZero = ENERGY_SIGMA_ZERO;
+                  Settings.SigmaEst1MeV = ENERGY_SIGMA_1MEV;
+                  Settings.FitZero = INCLUDE_ZERO;
+                  Settings.PlotOn = PlotOn;
+                  
+                  FitSuccess = FitGammaSpectrum(Histo, &Fit, Settings);
 
                   // If fit succesful, generate output....
                   if (FitSuccess > 0) {
@@ -236,7 +250,7 @@ int main(int argc, char **argv)
                   }
                   if (OUTPUT_REPORT) {
                      if (FitSuccess > 0) {
-                        CalibrationReport(&Fit, ReportOut, *HistName);
+                        CalibrationReport(&Fit, ReportOut, HistName, Settings);
                      } else {
                         ReportOut << endl << "------------------------------------------" << endl << HistName << endl <<
                             "------------------------------------------" << endl << endl;
@@ -249,68 +263,92 @@ int main(int argc, char **argv)
             }
          }
       }
+   }
 
-      // Now run the fit for the waveform spectrum if required
-      if (FIT_WAVE_EN) {
-         if (VERBOSE) {
-            cout << "-------------------" << endl << "Now fitting Wave Energy Spectra" << endl << "-------------------"
-                << endl;
-         }
-         //for (Clover = 0; Clover < CLOVERS; Clover++) {
-         for (Clover = 11; Clover < 12; Clover++) {
-            for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
-               for (Seg = 0; Seg <= SEGS + 1; Seg++) {
+   // Now run the fit for the waveform spectrum if required
+   if (FIT_WAVE_EN) {
+      if (VERBOSE) {
+         cout << "-------------------" << endl << "Now fitting Wave Energy Spectra" << endl << "-------------------"
+             << endl;
+      }
+      //for (Clover = 0; Clover < CLOVERS; Clover++) {
+      for (Clover = 11; Clover < 12; Clover++) {
+         for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
+            for (Seg = 0; Seg <= SEGS + 1; Seg++) {
 
+               PlotOn = 1;
+               if (Seg == 0) {
                   PlotOn = 1;
+               }
+
+               if (VERBOSE) {
+                  cout << endl << "--------------------------------------" << endl;
+                  cout << "Clover " << Clover << " Crystal " << Crystal << " Seg " << Seg << endl;
+                  cout << "--------------------------------------" << endl;
+               }
+               if (Seg == 0 || Seg == 9) {
+                  Source = SOURCE_NUM_CORE;
                   if (Seg == 0) {
-                     PlotOn = 1;
-                  }
-
-                  if (VERBOSE) {
-                     cout << endl << "--------------------------------------" << endl;
-                     cout << "Clover " << Clover << " Crystal " << Crystal << " Seg " << Seg << endl;
-                     cout << "--------------------------------------" << endl;
-                  }
-                  if (Seg == 0 || Seg == 9) {
-                     Source = SOURCE_NUM_CORE;
-                     if (Seg == 0) {
-                        sprintf(HistName, "TIG%02d%cN%02da WaveChg", Clover + 1, Colours[Crystal], Seg);
-                     } else {
-                        sprintf(HistName, "TIG%02d%cN%02db WaveChg", Clover + 1, Colours[Crystal], 0);
-                     }
+                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da WaveChg", Clover + 1, Colours[Crystal], Seg);
+                     HistName = CharBuf;
                   } else {
-                     sprintf(HistName, "TIG%02d%cP%02dx WaveChg", Clover + 1, Colours[Crystal], Seg);
-                     if (Seg < 5) {
-                        Source = SOURCE_NUM_FRONT;
-                     } else {
-                        Source = SOURCE_NUM_BACK;
+                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db WaveChg", Clover + 1, Colours[Crystal], 0);
+                     HistName = CharBuf;
+                  }
+               } else {
+                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx WaveChg", Clover + 1, Colours[Crystal], Seg);
+                  HistName = CharBuf;
+                  if (Seg < 5) {
+                     Source = SOURCE_NUM_FRONT;
+                  } else {
+                     Source = SOURCE_NUM_BACK;
+                  }
+               }
+
+               TH1F *Histo = (TH1F *) file->FindObjectAny(HistName.c_str());
+               // Check if plot should be active for this channel
+               PlotOn = 0;
+               if (PLOT_FITS) {
+                  if (PLOT_CLOVER == 0 || (Clover + 1) == PLOT_CLOVER) {
+                     if (PLOT_CRYSTAL == 0 || (Crystal + 1) == PLOT_CRYSTAL) {
+                        if (PLOT_SEG == 0 || Seg == PLOT_SEG) {
+                           PlotOn = 1;
+                        }
                      }
                   }
+               }
+               // Perform Fit                  
+               SpectrumFit WaveFit = { 0 };                  
+               FitSettings Settings = { 0 };
+               
+               Settings.Source = Source;
+               Settings.Integration = 1;
+               Settings.Dispersion = CHARGE_BINS / WAVE_CHARGE_MAX;
+               Settings.SigmaEstZero = WAVE_SIGMA_ZERO;
+               Settings.SigmaEst1MeV = WAVE_SIGMA_1MEV;
+               Settings.FitZero = INCLUDE_ZERO;
+               Settings.PlotOn = PlotOn;
+               
+               FitSuccess = FitGammaSpectrum(Histo, &WaveFit, Settings);
 
-                  TH1F *Histo = (TH1F *) file->FindObjectAny(HistName);
-                  // Perform Fit
-                  SpectrumFit WaveFit = { };
-                  Integration = 1;
-                  FitSuccess = FitGammaSpectrum(Histo, &WaveFit, Source, Integration, PlotOn);
-
-                  if (OUTPUT_GAIN) {
-                     if (FitSuccess > 0) {
-                        WaveOut << HistName << " " << WaveFit.LinGainFit[0] << " +/- " << WaveFit.dLinGainFit[0];
-                        WaveOut << " " << WaveFit.LinGainFit[1] << " +/- " << WaveFit.dLinGainFit[1] << " " << WaveFit.
-                            LinGainFit[2] << endl;
-                        WaveOut << HistName << " " << WaveFit.QuadGainFit[0] << " +/- " << WaveFit.
-                            dQuadGainFit[0] << " ";
-                        WaveOut << WaveFit.QuadGainFit[1] << " +/- " << WaveFit.dQuadGainFit[1] << " " << WaveFit.
-                            QuadGainFit[2] << " +/- " << WaveFit.dQuadGainFit[2] << endl;
-                     } else {
-                        WaveOut << HistName << " Fail!!!" << endl;
-                     }
+               if (OUTPUT_GAIN) {
+                  if (FitSuccess > 0) {
+                     WaveOut << HistName << " " << WaveFit.LinGainFit[0] << " +/- " << WaveFit.dLinGainFit[0];
+                     WaveOut << " " << WaveFit.LinGainFit[1] << " +/- " << WaveFit.dLinGainFit[1] << " " << WaveFit.
+                         LinGainFit[2] << endl;
+                     WaveOut << HistName << " " << WaveFit.QuadGainFit[0] << " +/- " << WaveFit.
+                         dQuadGainFit[0] << " ";
+                     WaveOut << WaveFit.QuadGainFit[1] << " +/- " << WaveFit.dQuadGainFit[1] << " " << WaveFit.
+                         QuadGainFit[2] << " +/- " << WaveFit.dQuadGainFit[2] << endl;
+                  } else {
+                     WaveOut << HistName << " Fail!!!" << endl;
                   }
                }
             }
          }
       }
    }
+   
 
    if (PLOT_CALIB_SUMMARY) {
       //cCalib2->cd();
