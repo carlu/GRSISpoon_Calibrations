@@ -162,6 +162,8 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
             Centre = PeakPositions[Peak];
 
             FitSinglePeak(Histo, Line, Centre, FitRange[Line], &FitRes[Line], Settings);
+            
+            cout << "Line: " << Line <<  " FitRes[Line].Mean: " << FitRes[Line].Mean << endl;
 
          }
 
@@ -169,25 +171,31 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
          // Calculate a rough calibration                               //
          //-------------------------------------------------------------//
          
+         cout << "Here! " << endl;
+         cout << "Set.Int " << Settings.Integration << endl;
+         cout << "FitRes[0].Mean " << FitRes[0].Mean << endl;
+         cout << "FitRes[1].Mean " << FitRes[1].Mean << endl;
+         
          Chg1 = FitRes[0].Mean / Settings.Integration;
          Chg2 = FitRes[1].Mean / Settings.Integration;
          dChg1 = FitRes[0].dMean / Settings.Integration;
-         dChg2 = FitRes[0].dMean / Settings.Integration;
+         dChg2 = FitRes[1].dMean / Settings.Integration;
          
-         /*Chg1 = FitRange[0]->GetParameter(1) / Settings.Integration;
-         Chg2 = FitRange[1]->GetParameter(1) / Settings.Integration;
-         dChg1 = FitRange[0]->GetParError(1) / Settings.Integration;
-         dChg2 = FitRange[1]->GetParError(1) / Settings.Integration;*/
-
+         cout << "Chg1 " << Chg1 << endl;
+         cout << "Chg2 " << Chg2 << endl;
+         
+         cout << "Source1 " << Sources[Settings.Source][0] << endl;
+         cout << "Source2 " << Sources[Settings.Source][1] << endl;
+         
+         // Gain = (E2 - E1) / (CHG2 - CHG1)       
          G = (Sources[Settings.Source][1] - Sources[Settings.Source][0]) / (Chg2 - Chg1);
-         //*Gain = G;
+         // dGain = sqrt( dCHG1^2 + cCHG2^2 )  *  (E2 - E1)  /  (CHG2 - CHG1)^2     [assuming no error on E]
          dG = sqrt(pow(dChg1, 2) + pow(dChg2, 2)) * (1.0 / pow(Chg2 - Chg1, 2)) * (Sources[Settings.Source][1] -
                                                                                    Sources[Settings.Source][0]);
-         //*dGain = dG;
-
+         // Offset = E2 - (Gain * CHG2)
          O = Sources[Settings.Source][1] - (G * Chg2);
-         //*Offset = O;
-         dO = sqrt(pow(dG / G, 2) + pow(FitRange[1]->GetParError(1) / FitRange[1]->GetParameter(1), 2)) * O;
+         // dOffset = Offset * sqrt( (dCHG2/CHG2)^2 + (dGain/Gain)^2 )
+         dO = sqrt(pow(dG / G, 2) + pow(dChg2 / Chg2, 2)) * O;
          //*dOffset = dO;
 
          Fit->LinGain[0] = O;
@@ -398,6 +406,7 @@ int FitSinglePeak(TH1F *Histo, int Line, float Centre, TF1 *FitRange, FitResult 
       MinBin = 0;
    }
    MaxBin = int (Max * Settings.Dispersion);
+   // Estimate Const from maximum bin content
    ConstEst = 0;
    for(i=MinBin;i<=MaxBin;i++) {
       if(Histo->GetBinContent(i) > ConstEst) {
@@ -462,26 +471,26 @@ int FitSinglePeak(TH1F *Histo, int Line, float Centre, TF1 *FitRange, FitResult 
    Histo->Fit(FitRange, Opts.c_str());
    //Histo->Fit(FitRange,"R,Q");
 
-   FitRes[Line].Energy = Sources[Settings.Source][Line];
-   FitRes[Line].Const = FitRange->GetParameter(0);
-   FitRes[Line].dConst = FitRange->GetParError(0);
-   FitRes[Line].Mean = FitRange->GetParameter(1);
-   FitRes[Line].dMean = FitRange->GetParError(1);
-   FitRes[Line].Sigma = FitRange->GetParameter(2);
-   FitRes[Line].dSigma = FitRange->GetParError(2);
-   FitRes[Line].ChiSq = FitRange->GetChisquare();
-   FitRes[Line].NDF = FitRange->GetNDF();
+   FitRes->Energy = Sources[Settings.Source][Line];
+   FitRes->Const = FitRange->GetParameter(0);
+   FitRes->dConst = FitRange->GetParError(0);
+   FitRes->Mean = FitRange->GetParameter(1);
+   FitRes->dMean = FitRange->GetParError(1);
+   FitRes->Sigma = FitRange->GetParameter(2);
+   FitRes->dSigma = FitRange->GetParError(2);
+   FitRes->ChiSq = FitRange->GetChisquare();
+   FitRes->NDF = FitRange->GetNDF();
 
    if (Settings.PlotOn || VERBOSE) {
-      cout << "Peak " << Line << " Params: " << FitRes[Line].Const << " " << FitRes[Line].
-          Mean << " " << FitRes[Line].Sigma << endl;
-      cout << "Peak " << Line << " Errors: " << FitRes[Line].dConst << " " << FitRes[Line].
-          dMean << " " << FitRes[Line].dSigma << endl;
+      cout << "Peak " << Line << " Params: " << FitRes->Const << " " << FitRes->
+          Mean << " " << FitRes->Sigma << endl;
+      cout << "Peak " << Line << " Errors: " << FitRes->dConst << " " << FitRes->
+          dMean << " " << FitRes->dSigma << endl;
       if (FIT_BACKGROUND == 1) {
          cout << "Background = " << FitRange->GetParameter(3) << endl;
       }
-      cout << "ChiSq: " << FitRes[Line].ChiSq << " NDF: " << FitRes[Line].NDF << " CSPD: " << FitRes[Line].
-          ChiSq / FitRes[Line].NDF << endl;
+      cout << "ChiSq: " << FitRes->ChiSq << " NDF: " << FitRes->NDF << " CSPD: " << FitRes->
+          ChiSq / FitRes->NDF << endl;
    }
 
    if (Settings.PlotOn) {
