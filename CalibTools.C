@@ -57,7 +57,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
    int Peak, Peak1, Peak2, NumPeaks, BestPeak1, BestPeak2, PeakFound;   // for looping peaks and finding correct ones
    float Ratio, Diff, BestDiff; // test quality of peak match
    float MinkeV, MaxkeV, Min, Max, BackEst;
-   int MinBin, MaxBin, BackBins;
+   int MinBin, MaxBin, BackBins, ConstEst;
    int i;
    Float_t *PeakPositions;      // for output of root peak search
    int Line, LinesUsed;
@@ -97,7 +97,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
       // First find peaks and identify the first two lines           //
       //-------------------------------------------------------------//
 
-      NumPeaks = Spec->Search(Histo, SEARCH_SIGMA, "new", SEARCH_THRESH);
+      NumPeaks = Spec->Search(Histo, Settings.SearchSigma, "new", Settings.SearchThresh);
       PeakPositions = Spec->GetPositionX();
       if (VERBOSE) {
          cout << "\tPeaks: " << NumPeaks << endl;
@@ -153,7 +153,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
             cout << "Peaks identified, commencing fit..." << endl << endl;
          }
 
-         TF1 *FitRange[NUM_LINES];      // pointers to functions for fitting "gaus" to each line
+         TF1 *FitRange[NUM_LINES];      // pointers to functions for fitting each line
 
          for (Line = 0; Line < 2; Line++) {
             if (Line == 0) {
@@ -171,7 +171,16 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
             Max = MaxkeV * (PeakPositions[Peak] / Sources[Settings.Source][Line]);
             // In bins
             MinBin = int (Min * Settings.Dispersion);
+            if(MinBin < 0) {
+               MinBin = 0;
+            }
             MaxBin = int (Max * Settings.Dispersion);
+            ConstEst = 0;
+            for(i=MinBin;i<=MaxBin;i++) {
+               if(Histo->GetBinContent(i) > ConstEst) {
+                  ConstEst = Histo->GetBinContent(i);
+               }
+            }
             // find number of bins to be used for initial background estimate
             BackBins =
                 int (BACK_WIDTH_KEV * (PeakPositions[Peak] / Sources[Settings.Source][Line]) * Settings.Dispersion);
@@ -184,6 +193,8 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
             cout << "MaxkeV: " << MaxkeV << " Max: " << Max << " MaxBin: " << MaxBin << endl;
             cout << "BackBins: " << BackBins << endl;
             cout << "InitialSigma: " << InitialSigma << endl;
+            cout << "Initial Const: " << ConstEst << endl;
+            cout << "Dispersion: " << Settings.Dispersion << endl;
             
             
             if (VERBOSE) {
@@ -199,7 +210,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
                FitRange[Line]->SetParName(1, "Mean");
                FitRange[Line]->SetParName(2, "Sigma");
                FitRange[Line]->SetParName(3, "Background");
-               FitRange[Line]->SetParameter(0, GAUS_CONST_INITIAL);
+               FitRange[Line]->SetParameter(0, ConstEst);
                FitRange[Line]->SetParameter(1, PeakPositions[Peak]);
                if (VERBOSE) {
                   cout << "Initial Sigma: " << InitialSigma << endl;
@@ -297,7 +308,6 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
 
                // Find min and max for fit
                // In keV....
-               FitCentre = ((Sources[Settings.Source][Line] - O) * Settings.Integration) / G;
                MinkeV = FitCentre - FIT_WIDTH_KEV;
                MaxkeV = FitCentre + FIT_WIDTH_KEV;
                // In charge units
@@ -305,7 +315,16 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
                Max = ((MinkeV - O) * Settings.Integration) / G;
                // In bins
                MinBin = int (Min * Settings.Dispersion);
+               if(MinBin < 0) {
+                  MinBin = 0;
+               }
                MaxBin = int (Max * Settings.Dispersion);
+               ConstEst = 0;
+               for(i=MinBin;i<=MaxBin;i++) {
+                  if(Histo->GetBinContent(i) > ConstEst) {
+                     ConstEst = Histo->GetBinContent(i);
+                  }
+               }
                // find number of bins to be used for initial background estimate
                BackBins =
                    int (BACK_WIDTH_KEV * (PeakPositions[Peak] / Sources[Settings.Source][Line]) * Settings.Dispersion);
@@ -329,8 +348,8 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
                   FitRange[Line]->SetParName(1, "Mean");
                   FitRange[Line]->SetParName(2, "Sigma");
                   FitRange[Line]->SetParName(3, "Background");
-                  FitRange[Line]->SetParameter(0, GAUS_CONST_INITIAL);
-                  FitRange[Line]->SetParameter(1, FitCentre);
+                  FitRange[Line]->SetParameter(0, ConstEst);
+                  FitRange[Line]->SetParameter(1, PeakPositions[Peak]);
                   if (VERBOSE) {
                      cout << "Initial Sigma: " << InitialSigma << endl;
                   }
@@ -499,7 +518,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
 
 
          if (PLOT_CALIB && Settings.PlotOn) {
-            cCalib1->cd(2);
+            cCalib1a->cd(1);
             CalibPlot.SetMarkerColor(2);
             CalibPlot.SetMarkerStyle(20);
             CalibPlot.SetMarkerSize(1.0);
@@ -591,15 +610,15 @@ int CalibrationReport(SpectrumFit * Fit, ofstream & ReportOut, std::string HistN
    }
    TGraphErrors CalibResidual(NumFits, Energies, Residuals);
    if (PLOT_RESIDUAL) {
-      cCalib1->cd(3);
+      cCalib1a->cd(2);
       CalibResidual.SetMarkerColor(2);
       CalibResidual.SetMarkerStyle(20);
       CalibResidual.SetMarkerSize(1.0);
       CalibResidual.SetTitle("Residual from linear calibration");
       CalibResidual.Draw("AP");
       //CalibResidual.Draw();
-      cCalib1->Modified();
-      cCalib1->Update();
+      cCalib1a->Modified();
+      cCalib1a->Update();
       App->Run(1);
       //cCalib1->cd(1);
    }

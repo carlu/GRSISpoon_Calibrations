@@ -11,7 +11,7 @@
 #define OUTPUT_GAIN 1 // write full-run gains to file
 #define OUTPUT_REPORT 1 // write full report including all fits and gains
 #define DEBUG 0  // PRint Debugging messages to screen
-#define FIT_EN 0 // 
+#define FIT_EN 1 // 
 
 // Plotting
 #define PLOT_FITS 1  // plot fits, all chans plotted if below items = 0
@@ -36,22 +36,26 @@
 #define WAVE_CHARGE_MAX 16384
 
 // Peak Search stuff
-#define SEARCH_THRESH 0.01 //0.0028  // minimum peak height for search as frac of max peak height
+#define EN_SEARCH_THRESH 0.05 //0.0028  // minimum peak height for search as frac of max peak height
                                  // It seems as if this value needs to be much lower than the actual minimum peak height
-#define SEARCH_SIGMA 20  // Expected sigma of peaks 
+#define EN_SEARCH_SIGMA 5  //50 // Expected sigma of peaks 
+#define WAVE_SEARCH_THRESH 0.01 //0.0028  // minimum peak height for search as frac of max peak height
+                                 // It seems as if this value needs to be much lower than the actual minimum peak height
+#define WAVE_SEARCH_SIGMA 20  //50 // Expected sigma of peaks 
+
 #define MIN_GAIN 0.125 // = 0.075 / 125    // These values cover from 0.5x to 2x the typical TIGRESS gain
 #define MAX_GAIN 0.172 // 0.3 / 125  
 #define MIN_GAIN_WAVE 0.6 // = 0.075 / 125    // These values cover from 0.5x to 2x the typical TIGRESS gain
 #define MAX_GAIN_WAVE 0.7 // 0.3 / 125  
 
 // Peaks
-#define SOURCE_NUM_FRONT 0 //1 // Source for front segments and core 0=60Co, 1=152Eu, 2=152Eu (no 121)
-#define SOURCE_NUM_BACK 0 //2 // Source for back segments
-#define SOURCE_NUM_CORE 0 //1 // Source for core
-//#define SOURCE_NUM_FRONT 1 // Source for front segments and core 0=60Co, 1=152Eu, 2=152Eu (no 121)
-//#define SOURCE_NUM_BACK 2 // Source for back segments
-//#define SOURCE_NUM_CORE 1 // Source for core
-#define NUM_LINES 2 // Number of lines to fit 
+//#define SOURCE_NUM_FRONT 0 //1 // Source for front segments and core 0=60Co, 1=152Eu, 2=152Eu (no 121)
+//#define SOURCE_NUM_BACK 0 //2 // Source for back segments
+//#define SOURCE_NUM_CORE 0 //1 // Source for core
+#define SOURCE_NUM_FRONT 1 // Source for front segments and core 0=60Co, 1=152Eu, 2=152Eu (no 121)
+#define SOURCE_NUM_BACK 2 // Source for back segments
+#define SOURCE_NUM_CORE 1 // Source for core
+#define NUM_LINES 8 // Number of lines to fit 
 
 // Extra calibration point at 0 ch = 0 keV
 #define INCLUDE_ZERO 1  // Add an extra calibration point at 0ch = 0 keV
@@ -83,11 +87,13 @@
 #define INITIAL_GAIN 0.16
 
 struct FitSettings {
-   int Source;
-   int Integration;
-   float Dispersion;
-   float SigmaEstZero;
-   float SigmaEst1MeV;
+   int Source;          // Source number
+   int Integration;     // Integration used in charge evaluation
+   float Dispersion;    // Dispersion of charge spectrum i.e. bins in charge spectrum / max value in charge Spectrum
+   float SearchSigma;   // Sigma used by root in peak search, in charge units
+   float SearchThresh;  // Threshold used by root in peak search
+   float SigmaEstZero;  // used to estimate sigma for fit, in keV
+   float SigmaEst1MeV;  // "                            "
    bool FitZero;  // Included 0ch=0keV in calibration?
    bool PlotOn;   // Plot fits
 };
@@ -120,5 +126,5 @@ struct SpectrumFit   {
 // Sources
 extern float Sources[3][10];
 
-extern TCanvas *cCalib1, *cCalib2, *ctemp;
+extern TCanvas *cCalib1, *cCalib1a, *cCalib2, *ctemp;
 

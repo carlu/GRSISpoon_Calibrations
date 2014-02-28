@@ -56,7 +56,7 @@ float InitialGain = 0.16;
 
 TApplication *App;              // Pointer to root environment for plotting etc
 
-TCanvas *cCalib1, *cCalib2;     //, *cCalib3;
+TCanvas *cCalib1, *cCalib1a, *cCalib2;     //, *cCalib3;
 
 int main(int argc, char **argv)
 {
@@ -91,9 +91,12 @@ int main(int argc, char **argv)
    // Set up plots
    App = new TApplication("Output", 0, NULL);   // creates root environment for interacting with plots etc
    if (PLOT_FITS || PLOT_CALIB || PLOT_CALIB_SUMMARY || PLOT_RESIDUAL) {
-      cCalib1 = new TCanvas("cCalib1", "Fit and Calibration", 800, 600);        // Canvas for spectrum plots
-      cCalib1->Divide(1, 3);
-
+      cCalib1 = new TCanvas("cCalib1", "Fit", 800, 600);        // Canvas for spectrum plots
+      //cCalib1->Divide(1, 3);
+      
+      cCalib1a = new TCanvas("cCalib1a", "Calibration", 800, 600);        // Canvas for spectrum plots
+      cCalib1a->Divide(1, 2);
+      
       cCalib2 = new TCanvas("cCalib2", "Calibration Summary", 800, 600);        // Canvas for gain plots and histograms
       cCalib2->Divide(2, 3);
       cCalib2->Update();
@@ -200,7 +203,9 @@ int main(int argc, char **argv)
                   
                   Settings.Source = Source;
                   Settings.Integration = INTEGRATION;
-                  Settings.Dispersion = CHARGE_BINS / CHARGE_MAX;
+                  Settings.Dispersion = float(CHARGE_BINS) / float(CHARGE_MAX);
+                  Settings.SearchSigma = EN_SEARCH_SIGMA;
+                  Settings.SearchThresh = EN_SEARCH_THRESH;
                   Settings.SigmaEstZero = ENERGY_SIGMA_ZERO;
                   Settings.SigmaEst1MeV = ENERGY_SIGMA_1MEV;
                   Settings.FitZero = INCLUDE_ZERO;
@@ -323,7 +328,9 @@ int main(int argc, char **argv)
                
                Settings.Source = Source;
                Settings.Integration = 1;
-               Settings.Dispersion = CHARGE_BINS / WAVE_CHARGE_MAX;
+               Settings.Dispersion = float(CHARGE_BINS) / float(WAVE_CHARGE_MAX);
+               Settings.SearchSigma = WAVE_SEARCH_SIGMA;
+               Settings.SearchThresh = WAVE_SEARCH_THRESH;
                Settings.SigmaEstZero = WAVE_SIGMA_ZERO;
                Settings.SigmaEst1MeV = WAVE_SIGMA_1MEV;
                Settings.FitZero = INCLUDE_ZERO;
