@@ -14,7 +14,7 @@
 #define FIT_EN 1 // 
 
 // Plotting
-#define PLOT_FITS 1  // plot fits, all chans plotted if below items = 0
+#define PLOT_FITS 0 // plot fits, all chans plotted if below items = 0
 #define PLOT_CLOVER 0  // select 1-16 to plot that only
 #define PLOT_CRYSTAL 0  // 1-4
 #define PLOT_SEG 0  //  1-10
