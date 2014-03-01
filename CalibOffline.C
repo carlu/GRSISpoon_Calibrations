@@ -185,7 +185,7 @@ int main(int argc, char **argv)
                if (Histo) {
                   cout << endl << "------------------------------------" << endl;
                   cout << "Hist " << HistName << " loaded" << endl;
-
+                  cout << "------------------------------------" << endl << endl;
                   // Check if plot should be active for this channel
                   PlotOn = 0;
                   if (PLOT_FITS) {

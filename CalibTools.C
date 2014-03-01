@@ -57,7 +57,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
 
    // Variables needed:
    int Peak, Peak1, Peak2, NumPeaks, BestPeak1, BestPeak2, PeakFound;   // for looping peaks and finding correct ones
-   int i;
+   int i, temp;
    float Ratio, Diff, BestDiff; // test quality of peak match
    float Centre;
    Float_t *PeakPositions;      // for output of root peak search
@@ -114,8 +114,8 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
                if (Peak1 != Peak2) {
                   Ratio = PeakPositions[Peak1] / PeakPositions[Peak2];
                   Diff = fabs(Ratio - IdealRatio);
-                  cout << "Calc Gain: " << En2 /
-                      PeakPositions[Peak2] << " Ratio: " << Ratio << " Diff: " << Diff << " Best: " << BestDiff << endl;
+                  //cout << "Calc Gain: " << En2 /
+                    //  PeakPositions[Peak2] << " Ratio: " << Ratio << " Diff: " << Diff << " Best: " << BestDiff << endl;
                   if (Diff < BestDiff) {        // best match so far
                      //if( (En2/(PeakPositions[Peak2]/Integration)) > MIN_GAIN && (En2/(PeakPositions[Peak2]/Integration)) < MAX_GAIN) { // Gain is sensible
                      BestDiff = Diff;
@@ -160,12 +160,13 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
             }
 
             Centre = PeakPositions[Peak];
-
+            cout << "Line: " << Line << " (Energy = " << Sources[Settings.Source][Line] << " keV)" << endl;
+            cout << "-------------------------------------------------------------" << endl << endl;
             FitSinglePeak(Histo, Line, Centre, FitRange[Line], &FitRes[Line], Settings);
-            
-            cout << "Line: " << Line <<  " FitRes[Line].Mean: " << FitRes[Line].Mean << endl;
 
          }
+
+         //cin >> temp;
 
          //-------------------------------------------------------------//
          // Calculate a rough calibration                               //
@@ -218,10 +219,16 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
          if (NUM_LINES > 2) {
             for (Line = 2; Line < NUM_LINES; Line++) {
 
-               Centre = (Sources[Settings.Source][Line] - O) / G; // Get centre from energy and initial calibration
+               cout << "Line: " << Line << " (Energy = " << Sources[Settings.Source][Line] << " keV)" << endl;
+               cout << "-------------------------------------------------------------" << endl << endl;
+      
+               Centre = ((Sources[Settings.Source][Line] - O) / G) * Settings.Integration; // Get centre from energy and initial calibration
                FitSinglePeak(Histo, Line, Centre, FitRange[Line], &FitRes[Line], Settings);
             }
          }
+         
+         //cin >> temp;
+         
          //-------------------------------------------------------------//
          // Finally fit energy vs peak centroid for final calibration   //
          //-------------------------------------------------------------//
@@ -490,7 +497,7 @@ int FitSinglePeak(TH1F *Histo, int Line, float Centre, TF1 *FitRange, FitResult 
          cout << "Background = " << FitRange->GetParameter(3) << endl;
       }
       cout << "ChiSq: " << FitRes->ChiSq << " NDF: " << FitRes->NDF << " CSPD: " << FitRes->
-          ChiSq / FitRes->NDF << endl;
+          ChiSq / FitRes->NDF << endl << endl;
    }
 
    if (Settings.PlotOn) {
