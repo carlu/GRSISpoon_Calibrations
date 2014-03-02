@@ -42,23 +42,24 @@ using namespace std;
 
 // File pointers:
 static TFile *outfile = 0;
-static TDirectory *dCharge, *dWaveCharge, *dTemp, *dOther = {0};
+static TDirectory *dCharge, *dWaveCharge, *dTemp, *dOther = { 0 };
 
-extern TApplication* App;
+extern TApplication *App;
 
 // Spectra Pointers:
-static TH1F *hCharge[CLOVERS][CRYSTALS][SEGS+2] = {};  // charge from FPGA
-static TH1F *hWaveCharge[CLOVERS][CRYSTALS][SEGS+2] = {};  // charge from waveform
+static TH1F *hCharge[CLOVERS][CRYSTALS][SEGS + 2] = { };        // charge from FPGA
+static TH1F *hWaveCharge[CLOVERS][CRYSTALS][SEGS + 2] = { };    // charge from waveform
+
 static TH1F *hMidasTime = 0;
-static TH1F *hCrystalChargeTemp[CRYSTALS][CLOVERS] = {};  // Only doing these guys for the cores
-static TH1F *hCrystalGain[CRYSTALS * CLOVERS] = {};    
-static TH1F *hCrystalOffset[CRYSTALS * CLOVERS] = {};
+static TH1F *hCrystalChargeTemp[CRYSTALS][CLOVERS] = { };       // Only doing these guys for the cores
+static TH1F *hCrystalGain[CRYSTALS * CLOVERS] = { };
+static TH1F *hCrystalOffset[CRYSTALS * CLOVERS] = { };
 
 static TH1F *WaveHist = 0;
 
 // Functions called from main:   
 void InitCalib();
-void Calib(std::vector<TTigFragment> &ev);
+void Calib(std::vector < TTigFragment > &ev);
 void FinalCalib();
 // Functions called from here:
 void ResetTempSpectra();
@@ -73,15 +74,16 @@ float Sources[3][10] = {
 
 TCanvas *cCalib1, *cCalib2, *cWave1, *ctemp;
 
-void InitCalib() {
- 
+void InitCalib()
+{
+
    char Colours[] = "BGRW";
 
-    // Initialise output file                                       
-   outfile = new TFile("CalibOut.root","RECREATE");
+   // Initialise output file                                       
+   outfile = new TFile("CalibOut.root", "RECREATE");
 
    dCharge = outfile->mkdir("Charge");
-   dWaveCharge  = outfile->mkdir("WaveCharge");
+   dWaveCharge = outfile->mkdir("WaveCharge");
    dTemp = outfile->mkdir("Temp");
    dOther = outfile->mkdir("Other");
 
@@ -89,81 +91,86 @@ void InitCalib() {
    int Clover, Crystal, Seg, NumBins;
 
 
-   for(Clover=0;Clover<CLOVERS;Clover++) {
-      for(Crystal=0;Crystal<CRYSTALS;Crystal++) {
+   for (Clover = 0; Clover < CLOVERS; Clover++) {
+      for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
          // temp charge histo
          dTemp->cd();
-         sprintf(name,"TIG%02d%c Tmp Chg",Clover+1,Colours[Crystal]);
-         sprintf(title,"TIG%02d%c Temp Core Charge (arb)",Clover+1,Colours[Crystal]);
-         hCrystalChargeTemp[Clover][Crystal] = new TH1F(name,title,CHARGE_BINS,0,CHARGE_MAX);
+         sprintf(name, "TIG%02d%c Tmp Chg", Clover + 1, Colours[Crystal]);
+         sprintf(title, "TIG%02d%c Temp Core Charge (arb)", Clover + 1, Colours[Crystal]);
+         hCrystalChargeTemp[Clover][Crystal] = new TH1F(name, title, CHARGE_BINS, 0, CHARGE_MAX);
          // histo for record of calibration from temp spectra
          dOther->cd();
-         sprintf(name,"TIG%02d%c Gain",Clover+1,Colours[Crystal]);
-         sprintf(title,"TIG%02d%c Gain vs Time",Clover+1,Colours[Crystal]);
-         hCrystalGain[((Clover*4)+Crystal)]   = new TH1F(name,title,TIME_BINS,0,MAX_TIME);
-         sprintf(name,"TIG%02d%c Offset",Clover+1,Colours[Crystal]);
-         sprintf(title,"TIG%02d%c Offset vs Time",Clover+1,Colours[Crystal]);
-         hCrystalOffset[((Clover*4)+Crystal)]   = new TH1F(name,title,TIME_BINS,0,MAX_TIME);
+         sprintf(name, "TIG%02d%c Gain", Clover + 1, Colours[Crystal]);
+         sprintf(title, "TIG%02d%c Gain vs Time", Clover + 1, Colours[Crystal]);
+         hCrystalGain[((Clover * 4) + Crystal)] = new TH1F(name, title, TIME_BINS, 0, MAX_TIME);
+         sprintf(name, "TIG%02d%c Offset", Clover + 1, Colours[Crystal]);
+         sprintf(title, "TIG%02d%c Offset vs Time", Clover + 1, Colours[Crystal]);
+         hCrystalOffset[((Clover * 4) + Crystal)] = new TH1F(name, title, TIME_BINS, 0, MAX_TIME);
          // Spectra for charge from FPGA
          dCharge->cd();
-         Seg=0;
-         sprintf(name,"TIG%02d%cN%02da Chg",Clover+1,Colours[Crystal],Seg);
-         sprintf(title,"TIG%02d%cN%02da Charge (arb)",Clover+1,Colours[Crystal],Seg);
-         hCharge[Clover][Crystal][Seg] = new TH1F(name,title,CHARGE_BINS,0,CHARGE_MAX);      
-         sprintf(name,"TIG%02d%cN%02db Chg",Clover+1,Colours[Crystal],Seg);
-         sprintf(title,"TIG%02d%cN%02db Charge (arb)",Clover+1,Colours[Crystal],Seg);
-         hCharge[Clover][Crystal][9] = new TH1F(name,title,CHARGE_BINS,0,CHARGE_MAX);       
-         for(Seg = 1; Seg<=SEGS; Seg++) {
+         Seg = 0;
+         sprintf(name, "TIG%02d%cN%02da Chg", Clover + 1, Colours[Crystal], Seg);
+         sprintf(title, "TIG%02d%cN%02da Charge (arb)", Clover + 1, Colours[Crystal], Seg);
+         hCharge[Clover][Crystal][Seg] = new TH1F(name, title, CHARGE_BINS, 0, CHARGE_MAX);
+         sprintf(name, "TIG%02d%cN%02db Chg", Clover + 1, Colours[Crystal], Seg);
+         sprintf(title, "TIG%02d%cN%02db Charge (arb)", Clover + 1, Colours[Crystal], Seg);
+         hCharge[Clover][Crystal][9] = new TH1F(name, title, CHARGE_BINS, 0, CHARGE_MAX);
+         for (Seg = 1; Seg <= SEGS; Seg++) {
             //cout << "Clov,Col,Seg :" << Clover+1 << ", " << Colours[Crystal] << ", " << Seg << endl;         
-            sprintf(name,"TIG%02d%cP%02dx Chg",Clover+1,Colours[Crystal],Seg);
-            sprintf(title,"TIG%02d%cP%02dx Charge (arb)",Clover+1,Colours[Crystal],Seg);
-            hCharge[Clover][Crystal][Seg] = new TH1F(name,title,CHARGE_BINS,0,CHARGE_MAX);         
-         }       
+            sprintf(name, "TIG%02d%cP%02dx Chg", Clover + 1, Colours[Crystal], Seg);
+            sprintf(title, "TIG%02d%cP%02dx Charge (arb)", Clover + 1, Colours[Crystal], Seg);
+            hCharge[Clover][Crystal][Seg] = new TH1F(name, title, CHARGE_BINS, 0, CHARGE_MAX);
+         }
          // and charge derived from waveform
          dWaveCharge->cd();
-         Seg=0;
-         sprintf(name,"TIG%02d%cN%02da WaveChg",Clover+1,Colours[Crystal],Seg);
-         sprintf(title,"TIG%02d%cN%02da Waveform Charge (arb)",Clover+1,Colours[Crystal],Seg);
-         hWaveCharge[Clover][Crystal][Seg] = new TH1F(name,title,CHARGE_BINS,0,WAVE_CHG_MAX);
-         sprintf(name,"TIG%02d%cN%02db WaveChg",Clover+1,Colours[Crystal],Seg);
-         sprintf(title,"TIG%02d%cN%02db Waveform Charge (arb)",Clover+1,Colours[Crystal],Seg);
-         hWaveCharge[Clover][Crystal][9] = new TH1F(name,title,CHARGE_BINS,0,WAVE_CHG_MAX);
-         for(Seg = 1; Seg<=SEGS; Seg++) {
-            sprintf(name,"TIG%02d%cP%02dx WaveChg",Clover+1,Colours[Crystal],Seg);
-            sprintf(title,"TIG%02d%cP%02dx Waveform Charge (arb)",Clover+1,Colours[Crystal],Seg);
-            hWaveCharge[Clover][Crystal][Seg] = new TH1F(name,title,CHARGE_BINS,0,WAVE_CHG_MAX);            
+         Seg = 0;
+         sprintf(name, "TIG%02d%cN%02da WaveChg", Clover + 1, Colours[Crystal], Seg);
+         sprintf(title, "TIG%02d%cN%02da Waveform Charge (arb)", Clover + 1, Colours[Crystal], Seg);
+         hWaveCharge[Clover][Crystal][Seg] = new TH1F(name, title, CHARGE_BINS, 0, WAVE_CHG_MAX);
+         sprintf(name, "TIG%02d%cN%02db WaveChg", Clover + 1, Colours[Crystal], Seg);
+         sprintf(title, "TIG%02d%cN%02db Waveform Charge (arb)", Clover + 1, Colours[Crystal], Seg);
+         hWaveCharge[Clover][Crystal][9] = new TH1F(name, title, CHARGE_BINS, 0, WAVE_CHG_MAX);
+         for (Seg = 1; Seg <= SEGS; Seg++) {
+            sprintf(name, "TIG%02d%cP%02dx WaveChg", Clover + 1, Colours[Crystal], Seg);
+            sprintf(title, "TIG%02d%cP%02dx Waveform Charge (arb)", Clover + 1, Colours[Crystal], Seg);
+            hWaveCharge[Clover][Crystal][Seg] = new TH1F(name, title, CHARGE_BINS, 0, WAVE_CHG_MAX);
          }
       }
    }
    // Time stamp histo
    dOther->cd();
-   sprintf(name,"Midas Time");
-   sprintf(title,"Midas Timestamps (s)");
-   hMidasTime = new TH1F(name,title,TIME_BINS,0,MAX_TIME);
-   
-   if(PLOT_WAVE) {
-      sprintf(name,"Wavetemp");
-      sprintf(title,"Temporary wave histogram");
-      WaveHist = new TH1F(name,title,WAVE_SAMPS,0,WAVE_SAMPS);
+   sprintf(name, "Midas Time");
+   sprintf(title, "Midas Timestamps (s)");
+   hMidasTime = new TH1F(name, title, TIME_BINS, 0, MAX_TIME);
+
+   if (PLOT_WAVE) {
+      sprintf(name, "Wavetemp");
+      sprintf(title, "Temporary wave histogram");
+      WaveHist = new TH1F(name, title, WAVE_SAMPS, 0, WAVE_SAMPS);
    }
 
-   cout << "Searching for core Peaks: " << Sources[SOURCE_NUM_CORE][0] << "kev and " << Sources[SOURCE_NUM_CORE][1] << "keV (Ratio " << Sources[SOURCE_NUM_CORE][0]/Sources[SOURCE_NUM_CORE][1] << ")" << endl;
-   cout << "Searching for front seg peaks: " << Sources[SOURCE_NUM_FRONT][0] << "kev and " << Sources[SOURCE_NUM_FRONT][1] << "keV (Ratio " << Sources[SOURCE_NUM_FRONT][0]/Sources[SOURCE_NUM_FRONT][1] << ")" << endl;
-   cout << "Searching for back seg peaks: " << Sources[SOURCE_NUM_BACK][0] << "kev and " << Sources[SOURCE_NUM_BACK][1] << "keV (Ratio " << Sources[SOURCE_NUM_BACK][0]/Sources[SOURCE_NUM_BACK][1] << ")" << endl;
-         
+   cout << "Searching for core Peaks: " << Sources[SOURCE_NUM_CORE][0] << "kev and " << Sources[SOURCE_NUM_CORE][1] <<
+       "keV (Ratio " << Sources[SOURCE_NUM_CORE][0] / Sources[SOURCE_NUM_CORE][1] << ")" << endl;
+   cout << "Searching for front seg peaks: " << Sources[SOURCE_NUM_FRONT][0] << "kev and " <<
+       Sources[SOURCE_NUM_FRONT][1] << "keV (Ratio " << Sources[SOURCE_NUM_FRONT][0] /
+       Sources[SOURCE_NUM_FRONT][1] << ")" << endl;
+   cout << "Searching for back seg peaks: " << Sources[SOURCE_NUM_BACK][0] << "kev and " << Sources[SOURCE_NUM_BACK][1]
+       << "keV (Ratio " << Sources[SOURCE_NUM_BACK][0] / Sources[SOURCE_NUM_BACK][1] << ")" << endl;
 
-   if(PLOT_FITS || PLOT_CALIB) {
+
+   if (PLOT_FITS || PLOT_CALIB) {
       cCalib1 = new TCanvas();  // Canvas for spectrum plots
-      cCalib1->Divide(1,2);
+      cCalib1->Divide(1, 2);
    }
-   if(PLOT_WAVE) {
-      cWave1 = new TCanvas(); 
+   if (PLOT_WAVE) {
+      cWave1 = new TCanvas();
    }
 
 }
 
 
-void Calib(std::vector<TTigFragment> &ev) {
+void Calib(std::vector < TTigFragment > &ev)
+{
 
    //cout << "HERE!!!!!! " << ev.size() << endl;
 
@@ -174,78 +181,80 @@ void Calib(std::vector<TTigFragment> &ev) {
    int Crystal, Clover, SpecNum;
    int FitSuccess = 0;
    std::string name;
-   
-   time_t MidasTime;  
+
+   time_t MidasTime;
    static time_t StartTime;
-   static int FirstEvent=1;
+   static int FirstEvent = 1;
    double RunTimeElapsed;
    static double FitTimeElapsed = 0.0;
-   
+
    int TimeBin = 0;
    float TB = 0.0;
-   
+
    int PlotOn = 0;
    int Source = 0;
-   
+
    float WaveCharge = 0.0;
    float WaveEnergy = 0.0;
-   
-   
-   if(DEBUG) {cout << "--------- New Event ---------" << endl;}
-   
-   for(i=0;i<ev.size();i++) {
-   
+
+
+   if (DEBUG) {
+      cout << "--------- New Event ---------" << endl;
+   }
+
+   for (i = 0; i < ev.size(); i++) {
+
       //Get time of first fragment
-      if(FirstEvent==1) {
-         StartTime = ev[i].MidasTimeStamp; //ev[i].MidasTimeStamp;
+      if (FirstEvent == 1) {
+         StartTime = ev[i].MidasTimeStamp;      //ev[i].MidasTimeStamp;
          FirstEvent = 0;
          cout << "MIDAS time of first fragment: " << ctime(&StartTime) << endl;
       }
       // Insert test for time earlier than StartTime.....
-      if(ev[i].MidasTimeStamp < StartTime) {
-         StartTime = ev[i].MidasTimeStamp; //ev[i].MidasTimeStamp;
+      if (ev[i].MidasTimeStamp < StartTime) {
+         StartTime = ev[i].MidasTimeStamp;      //ev[i].MidasTimeStamp;
          cout << "Earlier event found! Updating time of first fragment to: " << ctime(&StartTime) << endl;
       }
-   
+
       Slave = ((ev[i].ChannelAddress & 0x00F00000) >> 20);
-      Port  = ((ev[i].ChannelAddress & 0x00000F00) >> 8);
-      Chan  =  (ev[i].ChannelAddress & 0x000000FF);     
-      name	=	ev[i].ChannelName;
+      Port = ((ev[i].ChannelAddress & 0x00000F00) >> 8);
+      Chan = (ev[i].ChannelAddress & 0x000000FF);
+      name = ev[i].ChannelName;
       //cout << "Slave, Port, Chan = " << Slave << ", " << Port << ", " << Chan << "\t" << name << endl;
-      
+
       Mnemonic mnemonic;
-      if(name.size() >= 10) {ParseMnemonic(&name,&mnemonic);}
-      else {
+      if (name.size() >= 10) {
+         ParseMnemonic(&name, &mnemonic);
+      } else {
          cout << "Bad mnemonic size: This shouldn't happen if the odb is correctly configured!" << endl;
-         continue;   
+         continue;
       }
-   
+
       // If TIGRESS HPGe then fill energy spectra
-      if(mnemonic.system == "TI" && mnemonic.subsystem == "G") {
+      if (mnemonic.system == "TI" && mnemonic.subsystem == "G") {
          // Determine Crystal
          char Colour = mnemonic.arraysubposition.c_str()[0];
          Crystal = Col2Num(Colour);
-         if(Crystal == -1) {
+         if (Crystal == -1) {
             cout << "Bad Colour: " << Colour << endl;
             continue;
          }
-
          // Determine Clover position
          Clover = mnemonic.arrayposition;
-         
+
          // Calcualte wave energy
-         if(USE_WAVE_EN) {
+         if (USE_WAVE_EN) {
             //cout << name;// << endl;
             Length = ev[i].wavebuffer.size();
             //cout << " samples: " << Length << endl;  
-            WaveCharge=CalcWaveCharge(ev[i].wavebuffer);
+            WaveCharge = CalcWaveCharge(ev[i].wavebuffer);
             //cout << "Charge: " << WaveCharge << endl;
-            if(PLOT_WAVE) {
+            if (PLOT_WAVE) {
                cWave1->cd();
-               for(Samp=0;Samp<Length;Samp++) {
-                  WaveHist->SetBinContent(Samp,ev[i].wavebuffer.at(Samp));
+               for (Samp = 0; Samp < Length; Samp++) {
+                  WaveHist->SetBinContent(Samp, ev[i].wavebuffer.at(Samp));
                }
-               
+
                WaveHist->Draw();
                cWave1->Modified();
                cWave1->Update();
@@ -253,96 +262,106 @@ void Calib(std::vector<TTigFragment> &ev) {
                //delete Wavetemp;
             }
          }
-         
          // If Core
-         if(mnemonic.segment == 0) {
+         if (mnemonic.segment == 0) {
             //cout << mnemonic.outputsensor << endl;
-            if(Chan==0) {
-               if(!(mnemonic.outputsensor.compare("a") == 0 || mnemonic.outputsensor.compare("A") ==0)) {  // if this is the primary core output
+            if (Chan == 0) {
+               if (!(mnemonic.outputsensor.compare("a") == 0 || mnemonic.outputsensor.compare("A") == 0)) {     // if this is the primary core output
                   cout << "Core Channel/Label mismatch" << endl;
-               }   
-               if(ev[i].Charge > 0) {
+               }
+               if (ev[i].Charge > 0) {
                   // Increment raw charge spectra
-                  if(DEBUG) {cout << "A: Filling " << Clover -1 << ", " << Crystal << ", 0, " << mnemonic.outputsensor << " with charge = " <<  ev[i].Charge << endl;}              
-                  hCharge[Clover-1][Crystal][0]->Fill(ev[i].Charge); 
-                  hCrystalChargeTemp[Clover-1][Crystal]->Fill(ev[i].Charge);
-                  hWaveCharge[Clover-1][Crystal][0]->Fill(WaveCharge);
-               }   
-            }
-            else {
-               if(Chan==9) { 
-                  if(!(mnemonic.outputsensor.compare("b") ==0 || mnemonic.outputsensor.compare("B")==0)) {  // if this is the primary core output
+                  if (DEBUG) {
+                     cout << "A: Filling " << Clover -
+                         1 << ", " << Crystal << ", 0, " << mnemonic.outputsensor << " with charge = " << ev[i].
+                         Charge << endl;
+                  }
+                  hCharge[Clover - 1][Crystal][0]->Fill(ev[i].Charge);
+                  hCrystalChargeTemp[Clover - 1][Crystal]->Fill(ev[i].Charge);
+                  hWaveCharge[Clover - 1][Crystal][0]->Fill(WaveCharge);
+               }
+            } else {
+               if (Chan == 9) {
+                  if (!(mnemonic.outputsensor.compare("b") == 0 || mnemonic.outputsensor.compare("B") == 0)) {  // if this is the primary core output
                      cout << "Core Channel/Label mismatch" << endl;
-                  }   
-                  if(ev[i].Charge > 0) {
+                  }
+                  if (ev[i].Charge > 0) {
                      // Increment raw charge spectra
-                     if(DEBUG) {cout << "B: Filling " << Clover -1 << ", " << Crystal << ", 0, " << mnemonic.outputsensor << " with charge = " <<  ev[i].Charge << endl;}
-                     hCharge[Clover-1][Crystal][9]->Fill(ev[i].Charge); 
-                     hWaveCharge[Clover-1][Crystal][9]->Fill(WaveCharge);
-                  }   
+                     if (DEBUG) {
+                        cout << "B: Filling " << Clover -
+                            1 << ", " << Crystal << ", 0, " << mnemonic.outputsensor << " with charge = " << ev[i].
+                            Charge << endl;
+                     }
+                     hCharge[Clover - 1][Crystal][9]->Fill(ev[i].Charge);
+                     hWaveCharge[Clover - 1][Crystal][9]->Fill(WaveCharge);
+                  }
                }
             }
-         }
-         else{
-            if(mnemonic.segment < 9) {
+         } else {
+            if (mnemonic.segment < 9) {
                //cout << "Clov, Crys, Seg, Chg: " << Clover << " ," << Crystal << ", " << mnemonic.segment << ", " << ev[i].Charge << endl;
-               if(ev[i].Charge > 0) {
-                  hCharge[Clover-1][Crystal][mnemonic.segment]->Fill(ev[i].Charge);  // Fill segment spectra
-                  hWaveCharge[Clover-1][Crystal][mnemonic.segment]->Fill(WaveCharge);
+               if (ev[i].Charge > 0) {
+                  hCharge[Clover - 1][Crystal][mnemonic.segment]->Fill(ev[i].Charge);   // Fill segment spectra
+                  hWaveCharge[Clover - 1][Crystal][mnemonic.segment]->Fill(WaveCharge);
                }
             }
          }
-         
+
          // Now Get time elapsed in run
          MidasTime = ev[i].MidasTimeStamp;
          //cout << "Time: " << ctime(&MidasTime) << endl;
-         RunTimeElapsed = difftime(MidasTime,StartTime);
+         RunTimeElapsed = difftime(MidasTime, StartTime);
          hMidasTime->Fill(RunTimeElapsed);
          //cout << "Time: " << ctime(&MidasTime) << endl;
          // Have we moved on to a new time period?
-         if((RunTimeElapsed - FitTimeElapsed >= TIME_BIN_SIZE) && FIT_TEMP_SPECTRA) {
-         
-            TB = ((MidasTime - StartTime)/MAX_TIME);
-            TimeBin = TB*TIME_BINS;
-            
-            cout << "MT: " << MidasTime << " ST: " << StartTime << " MT: " << MAX_TIME << " TIME_BINS: " << TIME_BINS << " TB: " << TB << " TimeBin: " << TimeBin << endl;
-            
-            if(NOTIFY_TIME_BIN) {
+         if ((RunTimeElapsed - FitTimeElapsed >= TIME_BIN_SIZE) && FIT_TEMP_SPECTRA) {
+
+            TB = ((MidasTime - StartTime) / MAX_TIME);
+            TimeBin = TB * TIME_BINS;
+
+            cout << "MT: " << MidasTime << " ST: " << StartTime << " MT: " << MAX_TIME << " TIME_BINS: " << TIME_BINS <<
+                " TB: " << TB << " TimeBin: " << TimeBin << endl;
+
+            if (NOTIFY_TIME_BIN) {
                cout << "Start Of Run:      " << ctime(&StartTime);
                cout << "Start of this fit: " << FitTimeElapsed << endl;
                cout << "Time of this frag: " << ctime(&MidasTime);
                cout << "RunTimeElapsed:" << RunTimeElapsed << endl;
-               cout << "TimeBin: " <<  TimeBin << endl;
+               cout << "TimeBin: " << TimeBin << endl;
             }
-            FitTimeElapsed = RunTimeElapsed; 
-        
+            FitTimeElapsed = RunTimeElapsed;
+
 
             // Loop crystals, fit spectra core , write gains and offsets to spectrum
-            for(j=0; j<CLOVERS; j++) {
-               for(k=0; k<CRYSTALS; k++) {
-                  if(VERBOSE){
+            for (j = 0; j < CLOVERS; j++) {
+               for (k = 0; k < CRYSTALS; k++) {
+                  if (VERBOSE) {
                      cout << "Clov: " << j << " Crys: " << k;
                   }
-                  
-                  SpectrumFit Fit = {};
+
+                  SpectrumFit Fit = { };
                   PlotOn = 0;
                   Source = SOURCE_NUM_CORE;
                   //FitSuccess = FitSpectrum(hCrystalChargeTemp[(j*4)+k], &Gains[(j*4)+k], &Offsets[(j*4)+k], &dGains[(j*4)+k], &dOffsets[(j*4)+k]);
                   FitSuccess = FitGammaSpectrum(hCrystalChargeTemp[j][k], &Fit, Source, PlotOn);
-                  
-                  if(FitSuccess > -1) {
-                     hCrystalGain[(j*4)+k]->SetBinContent(TimeBin,Fit.LinGainFit[1]);
-                     hCrystalOffset[(j*4)+k]->SetBinContent(TimeBin,Fit.LinGainFit[0]);
-                  }   
-                  else{
-                     if(VERBOSE) {
-                        switch(FitSuccess) {
-                           case -1: continue;
-                           case -2: continue;
-                           case -3: continue;
-                           case -4: continue;
-                           default: continue;
-                           break;                        
+
+                  if (FitSuccess > -1) {
+                     hCrystalGain[(j * 4) + k]->SetBinContent(TimeBin, Fit.LinGainFit[1]);
+                     hCrystalOffset[(j * 4) + k]->SetBinContent(TimeBin, Fit.LinGainFit[0]);
+                  } else {
+                     if (VERBOSE) {
+                        switch (FitSuccess) {
+                        case -1:
+                           continue;
+                        case -2:
+                           continue;
+                        case -3:
+                           continue;
+                        case -4:
+                           continue;
+                        default:
+                           continue;
+                           break;
                         }
                      }
                   }
@@ -353,15 +372,16 @@ void Calib(std::vector<TTigFragment> &ev) {
          }
       }
       // If TIGRESS suppressor
-      if(mnemonic.system == "TI" && mnemonic.subsystem == "G") {
-      
-      } 
-   }  
+      if (mnemonic.system == "TI" && mnemonic.subsystem == "G") {
+
+      }
+   }
 }
 
 
 
-void FinalCalib() {
+void FinalCalib()
+{
 
    int Clover = 0;
    int Crystal = 0;
@@ -374,44 +394,46 @@ void FinalCalib() {
    ofstream ReportOut;
    ofstream WaveOut;
    char HistName[1024];
-   
+
    TH1F *GainPlot, *OffsetPlot, *QuadPlot;
    TH1F *GainHist, *OffsetHist, *QuadHist;
    int ItemNum;
-   
-   
+
+
    float CalibEn = 0.0;
-   
-   if(PLOT_CALIB_SUMMARY) {
-      cCalib2 = new TCanvas("cCalib2", "Calibration Canvas", 800, 600);  // Canvas for gain plots and histograms
-      cCalib2->Divide(2,3);
-      cCalib2->Update();   
-      ctemp = new TCanvas("ctemp", "Temp Canvas", 100, 50);  // Canvas for gain plots and histograms
-         // Having this canvas seems to make cCalib2 division work properly.  I don't know why.  I hate root.
+
+   if (PLOT_CALIB_SUMMARY) {
+      cCalib2 = new TCanvas("cCalib2", "Calibration Canvas", 800, 600); // Canvas for gain plots and histograms
+      cCalib2->Divide(2, 3);
+      cCalib2->Update();
+      ctemp = new TCanvas("ctemp", "Temp Canvas", 100, 50);     // Canvas for gain plots and histograms
+      // Having this canvas seems to make cCalib2 division work properly.  I don't know why.  I hate root.
    }
 
-   GainPlot = new TH1F("Gains","Gain of all fitted channels",1001,-0.5,1000.5);
+   GainPlot = new TH1F("Gains", "Gain of all fitted channels", 1001, -0.5, 1000.5);
    GainPlot->GetYaxis()->SetTitle("keV/ch");
    GainPlot->GetXaxis()->SetTitle("Channel");
-   OffsetPlot = new TH1F("Offsets","Offset of all fitted channels",1001,-0.5,1000.5);
+   OffsetPlot = new TH1F("Offsets", "Offset of all fitted channels", 1001, -0.5, 1000.5);
    OffsetPlot->GetYaxis()->SetTitle("keV");
    OffsetPlot->GetXaxis()->SetTitle("Channel");
-   QuadPlot = new TH1F("Quads","Quadratic component of all fitted channels",1001,-0.5,1000.5);
+   QuadPlot = new TH1F("Quads", "Quadratic component of all fitted channels", 1001, -0.5, 1000.5);
    QuadPlot->GetYaxis()->SetTitle("keV/ch^2");
    QuadPlot->GetXaxis()->SetTitle("Channel");
-   
-   GainHist = new TH1F("Gain Histogram","Histogram of Gain of all fitted channels",512,0,0.3);
+
+   GainHist = new TH1F("Gain Histogram", "Histogram of Gain of all fitted channels", 512, 0, 0.3);
    GainHist->GetXaxis()->SetTitle("keV/ch");
-   OffsetHist = new TH1F("Offset Histogram","Histogram of Offset of all fitted channels",512,-5,5);
+   OffsetHist = new TH1F("Offset Histogram", "Histogram of Offset of all fitted channels", 512, -5, 5);
    OffsetHist->GetXaxis()->SetTitle("keV");
-   QuadHist = new TH1F("Quadratic Histogram","Histogram of Quadratic component of all fitted channels",512,-0.000001,0.000001);
+   QuadHist =
+       new TH1F("Quadratic Histogram", "Histogram of Quadratic component of all fitted channels", 512, -0.000001,
+                0.000001);
    QuadHist->GetXaxis()->SetTitle("keV/ch^2");
-   
+
    // Write spectra to file
    outfile->cd();
-   for(Clover=0;Clover<CLOVERS;Clover++) {
-      for(Crystal=0;Crystal<CRYSTALS;Crystal++) {
-         for(Seg=0; Seg<=SEGS+1; Seg++) {
+   for (Clover = 0; Clover < CLOVERS; Clover++) {
+      for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
+         for (Seg = 0; Seg <= SEGS + 1; Seg++) {
             dCharge->cd();
             hCharge[Clover][Crystal][Seg]->Write();
             dWaveCharge->cd();
@@ -420,216 +442,217 @@ void FinalCalib() {
          dTemp->cd();
          hCrystalChargeTemp[Clover][Crystal]->Write();
          dOther->cd();
-         hCrystalGain[((Clover*4)+Crystal)]->Write();
-         hCrystalOffset[((Clover*4)+Crystal)]->Write();
+         hCrystalGain[((Clover * 4) + Crystal)]->Write();
+         hCrystalOffset[((Clover * 4) + Crystal)]->Write();
       }
    }
    hMidasTime->Write();
-   
+
    // Files for gain/fit output
-   if(OUTPUT_GAIN) {
+   if (OUTPUT_GAIN) {
       GainOut.open("GainsOut.txt");
-   }   
-   if(OUTPUT_REPORT) {
+   }
+   if (OUTPUT_REPORT) {
       ReportOut.open("CalibrationReport.txt");
    }
-   if(USE_WAVE_EN) {
+   if (USE_WAVE_EN) {
       WaveOut.open("WaveGainsOut.txt");
    }
-   
    // Fit full-run energy spectra
-   if(FIT_FINAL_SPECTRA) {
-      if(VERBOSE) {
+   if (FIT_FINAL_SPECTRA) {
+      if (VERBOSE) {
          cout << endl << "Now fitting energy spectra from whole run..." << endl;
       }
-       
-   
-      for(Clover=0; Clover<CLOVERS; Clover++) {
-         for(Crystal=0; Crystal<CRYSTALS; Crystal++) {
-            for(Seg=0; Seg<=SEGS+1; Seg++){
-            
-               if(VERBOSE){
+
+
+      for (Clover = 0; Clover < CLOVERS; Clover++) {
+         for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
+            for (Seg = 0; Seg <= SEGS + 1; Seg++) {
+
+               if (VERBOSE) {
                   cout << endl << "--------------------------------------" << endl;
                   cout << "Clover " << Clover << " Crystal " << Crystal << " Seg " << Seg << endl;
                   cout << "--------------------------------------" << endl;
                }
-               
-               SpectrumFit Fit = {};
+
+               SpectrumFit Fit = { };
                PlotOn = 0;
-               if(Seg==0 || Seg==9) {
+               if (Seg == 0 || Seg == 9) {
                   Source = SOURCE_NUM_CORE;
-                  if(Seg==0) {
-                     sprintf(HistName,"TIG%02d%cN%02da Chg",Clover+1,Num2Col(Crystal),Seg);
+                  if (Seg == 0) {
+                     sprintf(HistName, "TIG%02d%cN%02da Chg", Clover + 1, Num2Col(Crystal), Seg);
+                  } else {
+                     sprintf(HistName, "TIG%02d%cN%02db Chg", Clover + 1, Num2Col(Crystal), 0);
                   }
-                  else {
-                     sprintf(HistName,"TIG%02d%cN%02db Chg",Clover+1,Num2Col(Crystal),0);
-                  }
-               }
-               else {
-                  sprintf(HistName,"TIG%02d%cP%02dx Chg",Clover+1,Num2Col(Crystal),Seg);
-                  if(Seg < 5) {
+               } else {
+                  sprintf(HistName, "TIG%02d%cP%02dx Chg", Clover + 1, Num2Col(Crystal), Seg);
+                  if (Seg < 5) {
                      Source = SOURCE_NUM_FRONT;
-                  }
-                  else {
+                  } else {
                      Source = SOURCE_NUM_BACK;
                   }
                }
-               
+
                // Perform Fit
                FitSuccess = FitGammaSpectrum(hCharge[Clover][Crystal][Seg], &Fit, Source, PlotOn);
-               
+
                // Increment fit param plots
-               if(FitSuccess > 0) {
-                  switch(Crystal) {
-                     case 0:
-                        ItemNum = (Clover*60)+Seg; 
-                        break;
-                     case 1:
-                        ItemNum = (Clover*60)+20+Seg;
-                        break;
-                     case 2:
-                        ItemNum = (Clover*60)+30+Seg;
-                        break;
-                     case 3:
-                        ItemNum = (Clover*60)+50+Seg;
-                        break;
-                     default:
-                        ItemNum = 1000;
-                        break;
-                  }                 
+               if (FitSuccess > 0) {
+                  switch (Crystal) {
+                  case 0:
+                     ItemNum = (Clover * 60) + Seg;
+                     break;
+                  case 1:
+                     ItemNum = (Clover * 60) + 20 + Seg;
+                     break;
+                  case 2:
+                     ItemNum = (Clover * 60) + 30 + Seg;
+                     break;
+                  case 3:
+                     ItemNum = (Clover * 60) + 50 + Seg;
+                     break;
+                  default:
+                     ItemNum = 1000;
+                     break;
+                  }
                   //cout << "C,C,S = " << Clover << ", " << Crystal << ", " << Seg << "  ItemNum = " << ItemNum << endl;
-                  GainPlot->SetBinContent( ItemNum+1, Fit.QuadGainFit[1]);  // ItemNum+1 to skip bin 0 which is underflow
-                  OffsetPlot->SetBinContent( ItemNum+1, Fit.QuadGainFit[0]);
-                  QuadPlot->SetBinContent( ItemNum+1, Fit.QuadGainFit[2]);   
-                  
+                  GainPlot->SetBinContent(ItemNum + 1, Fit.QuadGainFit[1]);     // ItemNum+1 to skip bin 0 which is underflow
+                  OffsetPlot->SetBinContent(ItemNum + 1, Fit.QuadGainFit[0]);
+                  QuadPlot->SetBinContent(ItemNum + 1, Fit.QuadGainFit[2]);
+
                   GainHist->Fill(Fit.QuadGainFit[1]);
                   OffsetHist->Fill(Fit.QuadGainFit[0]);
-                  QuadHist->Fill(Fit.QuadGainFit[2]);                     
+                  QuadHist->Fill(Fit.QuadGainFit[2]);
                }
-            
                // Now print reports on results of fits and calibration.
-               if(OUTPUT_GAIN) {
-                  if(FitSuccess > 0) {
+               if (OUTPUT_GAIN) {
+                  if (FitSuccess > 0) {
                      //GainOut << HistName << " " << Fit.LinGainFit[0] << " +/- " << Fit.dLinGainFit[0];
                      //GainOut << " " << Fit.LinGainFit[1] << " +/- " << Fit.dLinGainFit[1] << " " <<   Fit.LinGainFit[2] << endl;
                      GainOut << HistName << " " << Fit.QuadGainFit[0] << " +/- " << Fit.dQuadGainFit[0] << " ";
-                     GainOut << Fit.QuadGainFit[1] << " +/- " << Fit.dQuadGainFit[1] << " " << Fit.QuadGainFit[2] << " +/- " << Fit.dQuadGainFit[2] << endl;     
-                  }
-                  else {
+                     GainOut << Fit.QuadGainFit[1] << " +/- " << Fit.dQuadGainFit[1] << " " << Fit.
+                         QuadGainFit[2] << " +/- " << Fit.dQuadGainFit[2] << endl;
+                  } else {
                      GainOut << HistName << " Fail!!!" << endl;
                   }
                }
-               if(OUTPUT_REPORT) {
-                  if(FitSuccess > 0) {
+               if (OUTPUT_REPORT) {
+                  if (FitSuccess > 0) {
                      // Heading for channel
-                     ReportOut << endl << "------------------------------------------" << endl << HistName << endl << "------------------------------------------" << endl << endl;
-                     for(i=0; i<NUM_LINES; i++) {
-                        if(Fit.FitSuccess[i]==1) {
+                     ReportOut << endl << "------------------------------------------" << endl << HistName << endl <<
+                         "------------------------------------------" << endl << endl;
+                     for (i = 0; i < NUM_LINES; i++) {
+                        if (Fit.FitSuccess[i] == 1) {
                            ReportOut << Fit.PeakFits[i].Energy << " keV" << endl;
-                           ReportOut << Fit.PeakFits[i].Const << " +/- " <<  Fit.PeakFits[i].dConst << "\t";
-                           ReportOut << Fit.PeakFits[i].Mean << " +/- " <<  Fit.PeakFits[i].dMean << "\t";
-                           ReportOut << Fit.PeakFits[i].Const << " +/- " <<  Fit.PeakFits[i].dConst << endl;
-                           ReportOut << Fit.PeakFits[i].ChiSq << "\t" << Fit.PeakFits[i].NDF << "\t" << Fit.PeakFits[i].ChiSq/Fit.PeakFits[i].NDF;
+                           ReportOut << Fit.PeakFits[i].Const << " +/- " << Fit.PeakFits[i].dConst << "\t";
+                           ReportOut << Fit.PeakFits[i].Mean << " +/- " << Fit.PeakFits[i].dMean << "\t";
+                           ReportOut << Fit.PeakFits[i].Const << " +/- " << Fit.PeakFits[i].dConst << endl;
+                           ReportOut << Fit.PeakFits[i].ChiSq << "\t" << Fit.PeakFits[i].NDF << "\t" << Fit.PeakFits[i].
+                               ChiSq / Fit.PeakFits[i].NDF;
                            ReportOut << endl << endl;
-                        }   
+                        }
                      }
                      ReportOut << "Linear Solution: Offset = " << Fit.LinGain[0] << " +/- " << Fit.dLinGain[0] << "\t";
-                     ReportOut <<  "Gain = " << Fit.LinGain[1] << " +/- " << Fit.dLinGain[1] << endl;
+                     ReportOut << "Gain = " << Fit.LinGain[1] << " +/- " << Fit.dLinGain[1] << endl;
                      ReportOut << "Linear Fit: Offset = " << Fit.LinGainFit[0] << " +/- " << Fit.dLinGainFit[0] << "\t";
                      ReportOut << "Gain = " << Fit.LinGainFit[1] << " +/- " << Fit.dLinGainFit[1] << "\t";
                      ReportOut << "CSPD = " << Fit.LinGainFit[2] << endl;
-                     ReportOut << "Quadratic Fit: Offset = " << Fit.QuadGainFit[0] << " +/- " << Fit.dQuadGainFit[0] << "\t";
+                     ReportOut << "Quadratic Fit: Offset = " << Fit.QuadGainFit[0] << " +/- " << Fit.
+                         dQuadGainFit[0] << "\t";
                      ReportOut << "Gain = " << Fit.QuadGainFit[1] << " +/- " << Fit.dQuadGainFit[1] << "\t";
                      ReportOut << "Quad = " << Fit.QuadGainFit[2] << " +/- " << Fit.dQuadGainFit[2] << "\t";
                      ReportOut << "CSPD = " << Fit.LinGainFit[3] << endl;
-                              
+
                      ReportOut << endl << "Check calibration...." << endl;
-                        ReportOut << "Centroid (ch)\t\tList Energy (keV)\t\tCalibration Energy (keV)\t\tResidual (keV)" << endl;
-                        for(i=0; i<NUM_LINES; i++) {
-                           if(Fit.FitSuccess[i]==1) {
-                              CalibEn = Fit.QuadGainFit[0] + (Fit.QuadGainFit[1]*(Fit.PeakFits[i].Mean/INTEGRATION)) + (pow((Fit.PeakFits[i].Mean/INTEGRATION),2)*Fit.QuadGainFit[2]);
-                              ReportOut << Fit.PeakFits[i].Mean << "\t\t\t" << Fit.PeakFits[i].Energy << "\t\t\t";
-                              ReportOut << CalibEn << "\t\t\t" << CalibEn -  Fit.PeakFits[i].Energy << endl;
-                           }
-                        }           
-                              
-                  }
-                  else {
-                     ReportOut << endl << "------------------------------------------" << endl << HistName << endl << "------------------------------------------" << endl << endl;
+                     ReportOut << "Centroid (ch)\t\tList Energy (keV)\t\tCalibration Energy (keV)\t\tResidual (keV)" <<
+                         endl;
+                     for (i = 0; i < NUM_LINES; i++) {
+                        if (Fit.FitSuccess[i] == 1) {
+                           CalibEn =
+                               Fit.QuadGainFit[0] + (Fit.QuadGainFit[1] * (Fit.PeakFits[i].Mean / INTEGRATION)) +
+                               (pow((Fit.PeakFits[i].Mean / INTEGRATION), 2) * Fit.QuadGainFit[2]);
+                           ReportOut << Fit.PeakFits[i].Mean << "\t\t\t" << Fit.PeakFits[i].Energy << "\t\t\t";
+                           ReportOut << CalibEn << "\t\t\t" << CalibEn - Fit.PeakFits[i].Energy << endl;
+                        }
+                     }
+
+                  } else {
+                     ReportOut << endl << "------------------------------------------" << endl << HistName << endl <<
+                         "------------------------------------------" << endl << endl;
                      ReportOut << "Fail Fail Fail! The calibration has failed!" << endl;
-                     
+
                   }
-              
+
                }
             }
          }
       }
-      
+
       // Now run the fit for the waveform spectrum if required
-      if(USE_WAVE_EN) {
-         if(VERBOSE) {cout << "-------------------" << endl << "Now fitting Wave Energy Spectra" << endl << "-------------------" << endl;}
-         for(Clover=0; Clover<CLOVERS; Clover++) {
-            for(Crystal=0; Crystal<CRYSTALS; Crystal++) {
-               for(Seg=0; Seg<=SEGS+1; Seg++){
-                  
-                  SpectrumFit Fit = {};
+      if (USE_WAVE_EN) {
+         if (VERBOSE) {
+            cout << "-------------------" << endl << "Now fitting Wave Energy Spectra" << endl << "-------------------"
+                << endl;
+         }
+         for (Clover = 0; Clover < CLOVERS; Clover++) {
+            for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
+               for (Seg = 0; Seg <= SEGS + 1; Seg++) {
+
+                  SpectrumFit Fit = { };
                   PlotOn = 0;
-                  
-                  if(VERBOSE){
+
+                  if (VERBOSE) {
                      cout << endl << "--------------------------------------" << endl;
                      cout << "Clover " << Clover << " Crystal " << Crystal << " Seg " << Seg << endl;
                      cout << "--------------------------------------" << endl;
                   }
-                  if(Seg==0 || Seg==9) {
+                  if (Seg == 0 || Seg == 9) {
                      Source = SOURCE_NUM_CORE;
-                     if(Seg==0) {
-                        sprintf(HistName,"TIG%02d%cN%02da WaveChg",Clover+1,Num2Col(Crystal),Seg);
+                     if (Seg == 0) {
+                        sprintf(HistName, "TIG%02d%cN%02da WaveChg", Clover + 1, Num2Col(Crystal), Seg);
+                     } else {
+                        sprintf(HistName, "TIG%02d%cN%02db WaveChg", Clover + 1, Num2Col(Crystal), 0);
                      }
-                     else {
-                        sprintf(HistName,"TIG%02d%cN%02db WaveChg",Clover+1,Num2Col(Crystal),0);
-                     }
-                  }
-                  else {
-                     sprintf(HistName,"TIG%02d%cP%02dx WaveChg",Clover+1,Num2Col(Crystal),Seg);
-                     if(Seg < 5) {
+                  } else {
+                     sprintf(HistName, "TIG%02d%cP%02dx WaveChg", Clover + 1, Num2Col(Crystal), Seg);
+                     if (Seg < 5) {
                         Source = SOURCE_NUM_FRONT;
-                     }
-                     else {
+                     } else {
                         Source = SOURCE_NUM_BACK;
                      }
                   }
                   // Perform Fit
-                  FitSuccess = FitGammaSpectrum(hWaveCharge[Clover][Crystal][Seg], &Fit, Source, PlotOn);   
-                  
-                  if(OUTPUT_GAIN) {
-                     if(FitSuccess > 0) {
+                  FitSuccess = FitGammaSpectrum(hWaveCharge[Clover][Crystal][Seg], &Fit, Source, PlotOn);
+
+                  if (OUTPUT_GAIN) {
+                     if (FitSuccess > 0) {
                         //GainOut << HistName << " " << Fit.LinGainFit[0] << " +/- " << Fit.dLinGainFit[0];
                         //GainOut << " " << Fit.LinGainFit[1] << " +/- " << Fit.dLinGainFit[1] << " " <<   Fit.LinGainFit[2] << endl;
                         WaveOut << HistName << " " << Fit.QuadGainFit[0] << " +/- " << Fit.dQuadGainFit[0] << " ";
-                        WaveOut << Fit.QuadGainFit[1] << " +/- " << Fit.dQuadGainFit[1] << " " << Fit.QuadGainFit[2] << " +/- " << Fit.dQuadGainFit[2] << endl;     
+                        WaveOut << Fit.QuadGainFit[1] << " +/- " << Fit.dQuadGainFit[1] << " " << Fit.
+                            QuadGainFit[2] << " +/- " << Fit.dQuadGainFit[2] << endl;
+                     } else {
+                        WaveOut << HistName << " Fail!!!" << endl;
                      }
-                  else {
-                     WaveOut << HistName << " Fail!!!" << endl;
                   }
+
                }
-               
-               }
-            }            
-         }      
+            }
+         }
       }
-               
-   
-      if(OUTPUT_GAIN) {
-         GainOut.close(); 
+
+
+      if (OUTPUT_GAIN) {
+         GainOut.close();
       }
-      if(OUTPUT_REPORT) {
+      if (OUTPUT_REPORT) {
          ReportOut.close();
       }
-      
-      
+
+
    }
-  
-   if(PLOT_CALIB_SUMMARY) {
+
+   if (PLOT_CALIB_SUMMARY) {
       cCalib2->cd(1);
       OffsetPlot->Draw();
       cCalib2->Modified();
@@ -651,13 +674,12 @@ void FinalCalib() {
       cCalib2->Modified();
       cCalib2->Update();
       cCalib2->cd(6);
-      QuadHist->Draw();               
+      QuadHist->Draw();
       cCalib2->Modified();
       cCalib2->Update();
-      
+
       App->Run();
    }
-   
    // Write gain histograms to file
    outfile->cd();
    dOther->cd();
@@ -666,25 +688,21 @@ void FinalCalib() {
    QuadPlot->Write();
    GainHist->Write();
    OffsetHist->Write();
-   QuadHist->Write();   
-   
+   QuadHist->Write();
+
    outfile->Close();
-   
+
 }
 
 
 // 
 
-void ResetTempSpectra() {
-   int Clover,Crystal;
-   for(Clover=0;Clover<CLOVERS;Clover++) {
-      for(Crystal=0;Crystal<CRYSTALS;Crystal++) {
+void ResetTempSpectra()
+{
+   int Clover, Crystal;
+   for (Clover = 0; Clover < CLOVERS; Clover++) {
+      for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
          hCrystalChargeTemp[Clover][Crystal]->Reset();
       }
    }
 }
-
-
-
-
-

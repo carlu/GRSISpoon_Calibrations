@@ -56,7 +56,7 @@ float InitialGain = 0.16;
 
 TApplication *App;              // Pointer to root environment for plotting etc
 
-TCanvas *cCalib1, *cCalib1a, *cCalib2;     //, *cCalib3;
+TCanvas *cCalib1, *cCalib1a, *cCalib2;  //, *cCalib3;
 
 int main(int argc, char **argv)
 {
@@ -81,6 +81,7 @@ int main(int argc, char **argv)
    ofstream GainOut;
    ofstream ReportOut;
    ofstream WaveOut;
+   ofstream WaveReportOut;
 
    int NumFits;
 
@@ -93,10 +94,10 @@ int main(int argc, char **argv)
    if (PLOT_FITS || PLOT_CALIB || PLOT_CALIB_SUMMARY || PLOT_RESIDUAL) {
       cCalib1 = new TCanvas("cCalib1", "Fit", 800, 600);        // Canvas for spectrum plots
       //cCalib1->Divide(1, 3);
-      
-      cCalib1a = new TCanvas("cCalib1a", "Calibration", 800, 600);        // Canvas for spectrum plots
+
+      cCalib1a = new TCanvas("cCalib1a", "Calibration", 800, 600);      // Canvas for spectrum plots
       cCalib1a->Divide(1, 2);
-      
+
       cCalib2 = new TCanvas("cCalib2", "Calibration Summary", 800, 600);        // Canvas for gain plots and histograms
       cCalib2->Divide(2, 3);
       cCalib2->Update();
@@ -104,7 +105,7 @@ int main(int argc, char **argv)
       //cCalib3 = new TCanvas("cCalib3", "Calibration Residual", 800, 600);  // Canvas for residual plit
       //cCalib3->Update();   
 
-      cCalib1->cd(1);
+      cCalib1->cd();
    }
    // Files
    if (argc < 2) {
@@ -128,6 +129,7 @@ int main(int argc, char **argv)
    }
    if (FIT_WAVE_EN) {
       WaveOut.open("WaveGainsOut.txt");
+      WaveReportOut.open("WaveCalibrationReport.txt");
    }
    // Histograms
    GainPlot = new TH1F("Gains", "Gain of all fitted channels", 1001, -0.5, 1000.5);
@@ -140,7 +142,7 @@ int main(int argc, char **argv)
    QuadPlot->GetYaxis()->SetTitle("keV/ch^2");
    QuadPlot->GetXaxis()->SetTitle("Channel");
 
-   GainHist = new TH1F("Gain Histogram", "Histogram of Gain of all fitted channels", 512, 0, 0.3);
+   GainHist = new TH1F("Gain Histogram", "Histogram of Gain of all fitted channels", 512, 0, 0.5);
    GainHist->GetXaxis()->SetTitle("keV/ch");
    OffsetHist = new TH1F("Offset Histogram", "Histogram of Offset of all fitted channels", 512, -5, 5);
    OffsetHist->GetXaxis()->SetTitle("keV");
@@ -160,7 +162,7 @@ int main(int argc, char **argv)
                // Set source and histogram name based on seg number
                switch (Seg) {
                case 0:
-                  snprintf(CharBuf, CHAR_BUFFER_SIZE,"TIG%02d%cN%02da Chg", Clover + 1, Colours[Crystal], Seg);
+                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da Chg", Clover + 1, Colours[Crystal], Seg);
                   HistName = CharBuf;
                   Source = SOURCE_NUM_CORE;
                   break;
@@ -193,24 +195,25 @@ int main(int argc, char **argv)
                         if (PLOT_CRYSTAL == 0 || (Crystal + 1) == PLOT_CRYSTAL) {
                            if (PLOT_SEG == 0 || Seg == PLOT_SEG) {
                               PlotOn = 1;
+                              cCalib1->cd();
                            }
                         }
                      }
                   }
                   // Perform Fit                  
-                  SpectrumFit Fit = { 0 };                  
+                  SpectrumFit Fit = { 0 };
                   FitSettings Settings = { 0 };
-                  
+
                   Settings.Source = Source;
                   Settings.Integration = INTEGRATION;
-                  Settings.Dispersion = float(CHARGE_BINS) / float(CHARGE_MAX);
+                  Settings.Dispersion = float (CHARGE_BINS) / float (CHARGE_MAX);
                   Settings.SearchSigma = EN_SEARCH_SIGMA;
                   Settings.SearchThresh = EN_SEARCH_THRESH;
                   Settings.SigmaEstZero = ENERGY_SIGMA_ZERO;
                   Settings.SigmaEst1MeV = ENERGY_SIGMA_1MEV;
                   Settings.FitZero = INCLUDE_ZERO;
                   Settings.PlotOn = PlotOn;
-                  
+
                   FitSuccess = FitGammaSpectrum(Histo, &Fit, Settings);
 
                   // If fit succesful, generate output....
@@ -244,11 +247,15 @@ int main(int argc, char **argv)
                   // Now print reports on results of fits and calibration.
                   if (OUTPUT_GAIN) {
                      if (FitSuccess > 0) {
-                        //GainOut << HistName << " " << Fit.LinGainFit[0] << " +/- " << Fit.dLinGainFit[0];
-                        //GainOut << " " << Fit.LinGainFit[1] << " +/- " << Fit.dLinGainFit[1] << " " <<   Fit.LinGainFit[2] << endl;
-                        GainOut << HistName << " " << Fit.QuadGainFit[0] << " +/- " << Fit.dQuadGainFit[0] << " ";
-                        GainOut << Fit.QuadGainFit[1] << " +/- " << Fit.dQuadGainFit[1] << " " << Fit.
-                            QuadGainFit[2] << " +/- " << Fit.dQuadGainFit[2] << endl;
+                        if (FitSuccess < 3  || FORCE_LINEAR) {
+                           GainOut << HistName << " " << Fit.LinGainFit[0] << " +/- " << Fit.dLinGainFit[0];
+                           GainOut << " " << Fit.LinGainFit[1] << " +/- " << Fit.dLinGainFit[1] << " " << Fit.
+                               LinGainFit[2] << endl;
+                        } else {
+                           GainOut << HistName << " " << Fit.QuadGainFit[0] << " +/- " << Fit.dQuadGainFit[0] << " ";
+                           GainOut << Fit.QuadGainFit[1] << " +/- " << Fit.
+                               dQuadGainFit[1] << " " << Fit.QuadGainFit[2] << " +/- " << Fit.dQuadGainFit[2] << endl;
+                        }
                      } else {
                         GainOut << HistName << " Fail!!!" << endl;
                      }
@@ -269,7 +276,6 @@ int main(int argc, char **argv)
          }
       }
    }
-
    // Now run the fit for the waveform spectrum if required
    if (FIT_WAVE_EN) {
       if (VERBOSE) {
@@ -323,39 +329,53 @@ int main(int argc, char **argv)
                   }
                }
                // Perform Fit                  
-               SpectrumFit WaveFit = { 0 };                  
+               SpectrumFit WaveFit = { 0 };
                FitSettings Settings = { 0 };
-               
+
                Settings.Source = Source;
                Settings.Integration = 1;
-               Settings.Dispersion = float(CHARGE_BINS) / float(WAVE_CHARGE_MAX);
+               Settings.Dispersion = float (CHARGE_BINS) / float (WAVE_CHARGE_MAX);
                Settings.SearchSigma = WAVE_SEARCH_SIGMA;
                Settings.SearchThresh = WAVE_SEARCH_THRESH;
                Settings.SigmaEstZero = WAVE_SIGMA_ZERO;
                Settings.SigmaEst1MeV = WAVE_SIGMA_1MEV;
                Settings.FitZero = INCLUDE_ZERO;
                Settings.PlotOn = PlotOn;
-               
+
                FitSuccess = FitGammaSpectrum(Histo, &WaveFit, Settings);
 
                if (OUTPUT_GAIN) {
                   if (FitSuccess > 0) {
-                     WaveOut << HistName << " " << WaveFit.LinGainFit[0] << " +/- " << WaveFit.dLinGainFit[0];
-                     WaveOut << " " << WaveFit.LinGainFit[1] << " +/- " << WaveFit.dLinGainFit[1] << " " << WaveFit.
-                         LinGainFit[2] << endl;
-                     WaveOut << HistName << " " << WaveFit.QuadGainFit[0] << " +/- " << WaveFit.
-                         dQuadGainFit[0] << " ";
-                     WaveOut << WaveFit.QuadGainFit[1] << " +/- " << WaveFit.dQuadGainFit[1] << " " << WaveFit.
-                         QuadGainFit[2] << " +/- " << WaveFit.dQuadGainFit[2] << endl;
+                     if (FitSuccess < 3 || FORCE_LINEAR) {
+                        WaveOut << HistName << " " << WaveFit.LinGainFit[0] << " +/- " << WaveFit.dLinGainFit[0];
+                        WaveOut << " " << WaveFit.LinGainFit[1] << " +/- " << WaveFit.
+                            dLinGainFit[1] << " " << WaveFit.LinGainFit[2] << endl;
+                     } else {
+                        WaveOut << HistName << " " << WaveFit.
+                            QuadGainFit[0] << " +/- " << WaveFit.dQuadGainFit[0] << " ";
+                        WaveOut << WaveFit.QuadGainFit[1] << " +/- " << WaveFit.
+                            dQuadGainFit[1] << " " << WaveFit.QuadGainFit[2] << " +/- " << WaveFit.
+                            dQuadGainFit[2] << endl;
+                     }
                   } else {
                      WaveOut << HistName << " Fail!!!" << endl;
+                  }
+               }
+
+               if (OUTPUT_REPORT) {
+                  if (FitSuccess > 0) {
+                     CalibrationReport(&WaveFit, WaveReportOut, HistName, Settings);
+                  } else {
+                     ReportOut << endl << "------------------------------------------" << endl << HistName << endl <<
+                         "------------------------------------------" << endl << endl;
+                     ReportOut << "Fail Fail Fail! The calibration has failed!" << endl;
                   }
                }
             }
          }
       }
    }
-   
+
 
    if (PLOT_CALIB_SUMMARY) {
       //cCalib2->cd();
