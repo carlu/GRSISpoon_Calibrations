@@ -38,6 +38,11 @@ using namespace std;
 #include "CalibTools.h"
 //#include "FitGammaSpectrumWave.h"
 
+//Functions
+// Convert crystal Name/number
+int Col2Num(char Colour);
+char Num2Col(int Crystal);
+
 // Sources
 float Sources[3][10] = {
    {1173.237, 1332.501},
@@ -417,4 +422,37 @@ int main(int argc, char **argv)
 
    return 0;
 
+}
+
+
+int Col2Num(char Colour)
+{
+   switch (Colour) {
+   case 'B':
+      return 0;
+   case 'G':
+      return 1;
+   case 'R':
+      return 2;
+   case 'W':
+      return 3;
+   default:
+      return -1;
+   }
+}
+
+char Num2Col(int Crystal)
+{
+   switch (Crystal) {
+   case 0:
+      return 'B';
+   case 1:
+      return 'G';
+   case 2:
+      return 'R';
+   case 3:
+      return 'W';
+   default:
+      return 'X';
+   }
 }
