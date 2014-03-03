@@ -3,10 +3,10 @@
 // --------------------------------------------------------
 
 // Which parts of code to run:
-#define SORT_CALIB 1
+#define SORT_CALIB 0
 #define SORT_EFF   0
 #define SORT_WAVES 0
-#define SORT_PROP  0
+#define SORT_PROP  1
 #define SORT_DIFF  0
 // Printing info
 #define PRINT_OUTPUT 1
@@ -23,11 +23,12 @@
 #define INTEGRATION 125 // Integration factor applied to charge values
 // Options for sorting
 #define EN_THRESH 2  // energies less than this keV ignored
-#define USE_ALT_CALIB 0
+#define USE_ALT_CALIB 1
 // Constants
 #define PI 3.14159265359
 
 // Calculation of Energy from waveform
+#define WAVE_SAMPS 200
 #define INITIAL_SAMPS 65
 #define FINAL_SAMPS 65
 

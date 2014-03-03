@@ -117,7 +117,7 @@ int main(int argc, char **argv)
 
    // Load any extra configuration information 
    if (USE_ALT_CALIB) {
-      std::string CalFile = "Cal_run27401_w0_Quad_FixedW04.txt";        //"Cal_run27401_quad_w0.txt";
+      std::string CalFile = "/media/data1/Experiments/tigress/TigTest/Calibrations/Feb2014_TIG12/CombinedGainsFormatted.txt";        //"Cal_run27401_quad_w0.txt";
       int NumCal;
       NumCal = ReadCalibrationFile(CalFile);
       //cout << "Hello " << NumCal << endl;
@@ -419,6 +419,10 @@ float CalcWaveCharge(std::vector < int >wavebuffer)
    //}
    //cout << endl << endl;
    //cout << "Initial: " << Initial << endl;
+   
+   if(wavebuffer.size() < INITIAL_SAMPS + FINAL_SAMPS) {
+      return 0.0;  // return 0 if wave too short
+   }
 
    for (Samp = 0; Samp < INITIAL_SAMPS; Samp++) {
       Initial += wavebuffer.at(Samp);

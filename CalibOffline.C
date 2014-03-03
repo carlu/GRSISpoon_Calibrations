@@ -162,17 +162,17 @@ int main(int argc, char **argv)
                // Set source and histogram name based on seg number
                switch (Seg) {
                case 0:
-                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da Chg", Clover + 1, Colours[Crystal], Seg);
+                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da Chg", Clover + 1,Num2Col(Crystal), Seg);
                   HistName = CharBuf;
                   Source = SOURCE_NUM_CORE;
                   break;
                case 9:
-                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db Chg", Clover + 1, Colours[Crystal], 0);
+                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db Chg", Clover + 1, Num2Col(Crystal), 0);
                   HistName = CharBuf;
                   Source = SOURCE_NUM_CORE;
                   break;
                default:
-                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx Chg", Clover + 1, Colours[Crystal], Seg);
+                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx Chg", Clover + 1, Num2Col(Crystal), Seg);
                   HistName = CharBuf;
                   if (Seg < 5) {
                      Source = SOURCE_NUM_FRONT;
