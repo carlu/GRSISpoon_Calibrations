@@ -426,14 +426,6 @@ void FinalCalib()
 
    float CalibEn = 0.0;
 
-   if (PLOT_CALIB_SUMMARY) {
-      cCalib2 = new TCanvas("cCalib2", "Calibration Canvas", 800, 600); // Canvas for gain plots and histograms
-      cCalib2->Divide(2, 3);
-      cCalib2->Update();
-      ctemp = new TCanvas("ctemp", "Temp Canvas", 100, 50);     // Canvas for gain plots and histograms
-      // Having this canvas seems to make cCalib2 division work properly.  I don't know why.  I hate root.
-   }
-
    GainPlot = new TH1F("Gains", "Gain of all fitted channels", 1001, -0.5, 1000.5);
    GainPlot->GetYaxis()->SetTitle("keV/ch");
    GainPlot->GetXaxis()->SetTitle("Channel");
@@ -621,7 +613,7 @@ void FinalCalib()
       // Now run the fit for the waveform spectrum if required
       if (FIT_WAVE_EN) {
          if (VERBOSE) {
-            cout << "-------------------" << endl << "Now fitting Wave Energy Spectra" << endl << "-------------------"
+            cout << "----------------------------------" << endl << "Now fitting Wave Energy Spectra" << endl << "----------------------------------"
                 << endl;
          }
         

@@ -48,12 +48,12 @@
 #define MAX_GAIN_WAVE 0.7       // 0.3 / 125
 
 // Peaks
-//#define SOURCE_NUM_FRONT 0      //1 // Source for front segments and core 0=60Co, 1=152Eu, 2=152Eu (no 121)
-//#define SOURCE_NUM_BACK 0       //2 // Source for back segments
-//#define SOURCE_NUM_CORE 0       //1 // Source for core
-#define SOURCE_NUM_FRONT 1 // Source for front segments and core 0=60Co, 1=152Eu, 2=152Eu (no 121)
-#define SOURCE_NUM_BACK 2 // Source for back segments
-#define SOURCE_NUM_CORE 1 // Source for core
+#define SOURCE_NUM_FRONT 0      //1 // Source for front segments and core 0=60Co, 1=152Eu, 2=152Eu (no 121)
+#define SOURCE_NUM_BACK 0       //2 // Source for back segments
+#define SOURCE_NUM_CORE 0       //1 // Source for core
+//#define SOURCE_NUM_FRONT 1 // Source for front segments and core 0=60Co, 1=152Eu, 2=152Eu (no 121)
+//#define SOURCE_NUM_BACK 2 // Source for back segments
+//#define SOURCE_NUM_CORE 1 // Source for core
 #define NUM_LINES 8             // Number of lines to fit
 
 // Extra calibration point at 0 ch = 0 keV
