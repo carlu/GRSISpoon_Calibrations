@@ -45,7 +45,7 @@ static TCanvas *cXtalk1;
 
 // File pointers:
 static TFile *outfile = 0;
-static TDirectory *dRaw, *dSum, *dAddBack, *dFold, *dOther = { 0 };
+static TDirectory *dRaw, *dWave, *dSum, *dAddBack, *dFold, *dOther = { 0 };
 
 // Spectra pointers  
 // for complex spectra naming is h[ITEM][ACTION][RANGE]
@@ -55,6 +55,7 @@ static TDirectory *dRaw, *dSum, *dAddBack, *dFold, *dOther = { 0 };
 
 // Raw
 static TH1F *hEn[CLOVERS][CRYSTALS][SEGS + 2];  // energy for each individual channel, both cores and segs
+static TH1F *hWaveEn[CLOVERS][CRYSTALS][SEGS + 2];  // as above but energy is derived from waveform
 static TH1F *hHitPattern;       // record hit counts by TIGRESS DAQ channel numbering
 static TH1F *hEHitPattern;      // record above thresh hit counts by TIGRESS DAQ channel numbering
 // Sums
@@ -446,8 +447,28 @@ void InitPropXtalk()
          hEn[Clover][Crystal][Seg] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
       }
    }
-   dSum->cd();
+   // Waveform energy
+   dWave->cd();
+   for (Clover = 0; Clover < CLOVERS; Clover++) {
+      for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
+         Seg = 0;
+         sprintf(name, "TIG%02d%c%02dA Core WaveEn", Clover + 1, Colours[Crystal], Seg);
+         sprintf(title, "TIG%02d%c%02dA Core A Waveform Energy (keV)", Clover + 1, Colours[Crystal], Seg);
+         hWaveEn[Clover][Crystal][Seg] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
+         for (Seg = 1; Seg <= SEGS; Seg++) {
+            sprintf(name, "TIG%02d%c%02dx Seg WaveEn", Clover + 1, Colours[Crystal], Seg);
+            sprintf(title, "TIG%02d%c%02dx Seg Waveform Energy (keV)", Clover + 1, Colours[Crystal], Seg);
+            hWaveEn[Clover][Crystal][Seg] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
+         }
+         Seg = SEGS + 1;
+         sprintf(name, "TIG%02d%c%02dB Core WaveEn", Clover + 1, Colours[Crystal], 0);
+         sprintf(title, "TIG%02d%c%02dB Core B Waveform Energy (keV)", Clover + 1, Colours[Crystal], 0);
+         hWaveEn[Clover][Crystal][Seg] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
+      }
+   }
+   
    //Sum
+   dSum->cd();
    sprintf(name, "TIGRESS Core Sum");
    sprintf(title, "TIGRESS Core Sum Energy (keV)");
    hCoreSumTig = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
@@ -590,6 +611,15 @@ void FinalPropXtalk()
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
          for (Seg = 0; Seg < SEGS + 2; Seg++) {
             hEn[Clover][Crystal][Seg]->Write();
+         }
+      }
+   }
+   // Waveform energy
+   dWave->cd();
+   for (Clover = 0; Clover < CLOVERS; Clover++) {
+      for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
+         for (Seg = 0; Seg < SEGS + 2; Seg++) {
+            hWaveEn[Clover][Crystal][Seg]->Write();
          }
       }
    }
