@@ -50,8 +50,11 @@ struct Mnemonic	{
    std::string outputsensor;
 };
 // Storing alternate Calibration
-extern vector<string> CalibNames;
-extern vector<vector<float>> CalibValues;
+extern vector<string> EnCalibNames;
+extern vector<vector<float>> EnCalibValues;
+// Waveform calibration
+extern vector < string > WaveCalibNames;
+extern vector < vector < float >> WaveCalibValues;
 
 //extern TCanvas *cWave1, *ctemp;
 

@@ -165,15 +165,15 @@ void PropXtalk(std::vector < TTigFragment > &ev)
       } else {
          int NewCoeffFound = 0;
          std::vector < float >Coefficients;
-         for (CalChan = 0; CalChan < CalibNames.size(); CalChan++) {
-            if (strncmp(CalibNames[CalChan].c_str(), Name.c_str(), 9) == 0) {
+         for (CalChan = 0; CalChan < EnCalibNames.size(); CalChan++) {
+            if (strncmp(EnCalibNames[CalChan].c_str(), Name.c_str(), 9) == 0) {
                NewCoeffFound = 1;
                break;
             }
          }
          if (NewCoeffFound == 1) {      // If a new set of coeffs was found, then calibrate
             //En = CalibrateEnergy(ev[i].Charge,Coefficients);
-            En = CalibrateEnergy(ev[i].Charge, CalibValues.at(CalChan));
+            En = CalibrateEnergy(ev[i].Charge, EnCalibValues.at(CalChan));
          } else {               // else use the existing calibration
             En = ev[i].ChargeCal;
          }
