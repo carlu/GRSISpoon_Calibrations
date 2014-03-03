@@ -419,6 +419,23 @@ float CalibrateEnergy(int Charge, std::vector < float >Coefficients)
    return Energy;
 }
 
+
+float CalibrateWaveEnergy(float Charge, std::vector < float >Coefficients)
+{
+
+   Charge = Charge + rand1.Uniform();
+   float Energy = 0.0;
+   if (Coefficients.size() == 0) {
+      return Charge;
+   }
+   for (int i = 0; i < Coefficients.size(); i++) {
+      Energy += Coefficients[i] * pow((ChargeF / TempInt), i);
+   }
+   return Energy;
+}
+
+
+
 float CalcWaveCharge(std::vector < int >wavebuffer)
 {
 
