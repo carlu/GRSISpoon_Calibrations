@@ -78,13 +78,16 @@ int FragCount = 0;
 int BadEventCount = 0;
 
 // Storing alternate Calibration
-vector < string > CalibNames;
-vector < vector < float >>CalibValues;
+vector < string > EnCalibNames;
+vector < vector < float >> EnCalibValues;
+// Waveform calibration
+vector < string > WaveCalibNames;
+vector < vector < float >> WaveCalibValues;
 
 // Functions
 void SortTree(const char *fn);
 void IncSpectra();
-int ReadCalibrationFile(std::string filename);
+int ReadCalibrationFile(std::string filename, vector < string > *EnCalibNames,vector < vector < float >> *EnCalibValues);
 
 void CoincEff(std::vector < TTigFragment > &ev);
 void InitCoincEff();
@@ -117,14 +120,30 @@ int main(int argc, char **argv)
 
    // Load any extra configuration information 
    if (USE_ALT_CALIB) {
+      
+
       std::string CalFile = "/media/data1/Experiments/tigress/TigTest/Calibrations/Feb2014_TIG12/CombinedGainsFormatted.txt";        //"Cal_run27401_quad_w0.txt";
       int NumCal;
-      NumCal = ReadCalibrationFile(CalFile);
+      NumCal = ReadCalibrationFile(CalFile, &EnCalibNames, &EnCalibValues);
       //cout << "Hello " << NumCal << endl;
+      cout << "Alternate energy calibratrion values: " << endl;
       for (i = 0; i < NumCal; i++) {
          cout << i;
-         cout << ": " << CalibNames.at(i);
-         cout << " " << CalibValues.at(i)[0] << " " << CalibValues[i][1] << " " << CalibValues[i][2] << endl;
+         cout << ": " << EnCalibNames.at(i);
+         cout << " " << EnCalibValues.at(i)[0] << " " << EnCalibValues[i][1] << " " << EnCalibValues[i][2] << endl;
+      }
+   }
+   // Load gain coefficients for waveforms
+   if(1) {
+      std::string CalFile = "/media/data1/Experiments/tigress/TigTest/Calibrations/Feb2014_TIG12/WaveGainsOut_run27498_List.txt";        //"Cal_run27401_quad_w0.txt";
+      int NumCal;
+      NumCal = ReadCalibrationFile(CalFile, &WaveCalibNames, &WaveCalibValues);
+      cout << "Wave energy calibratrion values: " << endl;
+      cout << WaveCalibNames.size() << endl << WaveCalibValues.size() << endl;
+      for (i = 0; i < NumCal; i++) {
+         cout << i;
+         cout << ": " << WaveCalibNames.at(i);
+         cout << " " << WaveCalibValues.at(i)[0] << " " << WaveCalibValues[i][1] << " " << WaveCalibValues[i][2] << endl;
       }
    }
    // Initialise spectra   
@@ -346,7 +365,7 @@ char Num2Col(int Crystal)
    }
 }
 
-int ReadCalibrationFile(std::string filename)
+int ReadCalibrationFile(std::string filename,vector < string > *CalibNames,vector < vector < float >> *CalibValues)
 {
 
    printf("Reading calibration file %s...\t", filename.c_str());
@@ -376,11 +395,12 @@ int ReadCalibrationFile(std::string filename)
          GainTemp.push_back(g0);
          GainTemp.push_back(g1);
          GainTemp.push_back(g2);
-         CalibValues.push_back(GainTemp);
-         CalibNames.push_back(name);
+         CalibValues->push_back(GainTemp);
+         CalibNames->push_back(name);
          n += 1;
       }
    }
+   
    return n;
 }
 
@@ -402,6 +422,23 @@ float CalibrateEnergy(int Charge, std::vector < float >Coefficients)
    }
    return Energy;
 }
+
+
+float CalibrateWaveEnergy(float Charge, std::vector < float >Coefficients)
+{
+
+   Charge = Charge + rand1.Uniform();
+   float Energy = 0.0;
+   if (Coefficients.size() == 0) {
+      return Charge;
+   }
+   for (int i = 0; i < Coefficients.size(); i++) {
+      Energy += Coefficients[i] * pow(Charge, i);
+   }
+   return Energy;
+}
+
+
 
 float CalcWaveCharge(std::vector < int >wavebuffer)
 {

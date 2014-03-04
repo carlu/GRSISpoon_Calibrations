@@ -45,7 +45,7 @@ static TCanvas *cXtalk1;
 
 // File pointers:
 static TFile *outfile = 0;
-static TDirectory *dRaw, *dSum, *dAddBack, *dFold, *dOther = { 0 };
+static TDirectory *dRaw, *dWave, *dSum, *dAddBack, *dFold, *dOther = { 0 };
 
 // Spectra pointers  
 // for complex spectra naming is h[ITEM][ACTION][RANGE]
@@ -55,6 +55,7 @@ static TDirectory *dRaw, *dSum, *dAddBack, *dFold, *dOther = { 0 };
 
 // Raw
 static TH1F *hEn[CLOVERS][CRYSTALS][SEGS + 2];  // energy for each individual channel, both cores and segs
+static TH1F *hWaveEn[CLOVERS][CRYSTALS][SEGS + 2];  // as above but energy is derived from waveform
 static TH1F *hHitPattern;       // record hit counts by TIGRESS DAQ channel numbering
 static TH1F *hEHitPattern;      // record above thresh hit counts by TIGRESS DAQ channel numbering
 // Sums
@@ -102,6 +103,7 @@ void PropXtalk(std::vector < TTigFragment > &ev)
    int Clover, Crystal, Seg, Fold;
    int CloverFoldTig, CrystalFoldTig, SegFoldTig, CrystalFoldClover, SegFoldClover, SegFoldCrystal;
    float CoreABTig, CoreABClover, SegABClover, SegABCrystal;
+   float WaveCharge, WaveEnergy;
    char Colour;
    int Slave, Port, Chan;
    float En;
@@ -117,6 +119,7 @@ void PropXtalk(std::vector < TTigFragment > &ev)
    int CrystalSegFold[CLOVERS][CRYSTALS] = { 0 };       // +1 for each seg hit in each crystal
 
    float Energies[CLOVERS][CRYSTALS][SEGS + 2] = { 0.0 };
+   float WaveEnergies[CLOVERS][CRYSTALS][SEGS + 2] = { 0.0 };
    float SegABEn[CLOVERS][CRYSTALS] = { 0.0 };
 
    int Charges[CLOVERS][CRYSTALS][SEGS + 2] = { 0 };
@@ -129,6 +132,7 @@ void PropXtalk(std::vector < TTigFragment > &ev)
    memset(CloverCoreFold, 0, CLOVERS * sizeof(int));
    memset(CrystalSegFold, 0, CLOVERS * CRYSTALS * sizeof(int));
    memset(Energies, 0.0, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(float));
+   memset(WaveEnergies, 0.0, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(float));
    memset(SegABEn, 0.0, CLOVERS * CRYSTALS * sizeof(float));
 
    //cout << "Here " << temp++ << " " << ev.size() << endl;
@@ -142,7 +146,8 @@ void PropXtalk(std::vector < TTigFragment > &ev)
       Port = ((ev[i].ChannelAddress & 0x00000F00) >> 8);
       Chan = (ev[i].ChannelAddress & 0x000000FF);
       Name = ev[i].ChannelName;
-
+      WaveCharge = 0.0;
+      WaveEnergy = 0.0;
       // Parse name
       Mnemonic mnemonic;
       if (Name.size() >= 10) {
@@ -155,35 +160,56 @@ void PropXtalk(std::vector < TTigFragment > &ev)
       // Fill "Port Hit Pattern"
       hHitPattern->Fill(ev[i].ChannelNumber);
 
-
       // Get calibrated charge
-
       if (!USE_ALT_CALIB) {
          //cout << "Using standard calibration..." << endl;
          En = ev[i].ChargeCal;
       } else {
          int NewCoeffFound = 0;
          std::vector < float >Coefficients;
-         for (CalChan = 0; CalChan < CalibNames.size(); CalChan++) {
-            if (strncmp(CalibNames[CalChan].c_str(), Name.c_str(), 9) == 0) {
+         for (CalChan = 0; CalChan < EnCalibNames.size(); CalChan++) {
+            if (strncmp(EnCalibNames[CalChan].c_str(), Name.c_str(), 9) == 0) {  // bug!  this will match the first core
+                  // name it finds to either a OR b.  Compare 10 chars woud work but then case sensitivity isses on the x/a/b 
+                  // at the end.  Don't really need second core energy right now so I will come back to this later
                NewCoeffFound = 1;
                break;
             }
          }
          if (NewCoeffFound == 1) {      // If a new set of coeffs was found, then calibrate
             //En = CalibrateEnergy(ev[i].Charge,Coefficients);
-            En = CalibrateEnergy(ev[i].Charge, CalibValues.at(CalChan));
+            En = CalibrateEnergy(ev[i].Charge, EnCalibValues.at(CalChan));
          } else {               // else use the existing calibration
             En = ev[i].ChargeCal;
          }
       }
 
-
       // Fill "energy hit pattern"
       if (En > EN_THRESH) {
          hEHitPattern->Fill(ev[i].ChannelNumber);
       }
-      //cout << "Here " << temp++ << endl;
+      
+      // Get Calibrated "WaveCharge"
+      if(ev[i].wavebuffer.size() > INITIAL_SAMPS + FINAL_SAMPS) {
+         int NewCoeffFound = 0;
+         std::vector < float >Coefficients;
+         for (CalChan = 0; CalChan < WaveCalibNames.size(); CalChan++) {
+            if (strncmp(WaveCalibNames[CalChan].c_str(), Name.c_str(), 9) == 0) {  // bug!  this will match the first core
+                  // name it finds to either a OR b.  Compare 10 chars woud work but then case sensitivity isses on the x/a/b 
+                  // at the end.  Don't really need second core energy right now so I will come back to this later
+               NewCoeffFound = 1;
+               break;
+            }
+         }
+         if (NewCoeffFound == 1) {      // If a new set of coeffs was found, then calibrate
+            WaveCharge = CalcWaveCharge(ev[i].wavebuffer);        
+            WaveEnergy = CalibrateWaveEnergy(WaveCharge,WaveCalibValues.at(CalChan));
+         }
+      }
+      else {
+         WaveCharge = 0.0;
+         WaveEnergy = 0.0;
+      }
+
 
       // If TIGRESS
       if (mnemonic.system == "TI") {
@@ -208,11 +234,13 @@ void PropXtalk(std::vector < TTigFragment > &ev)
 
          // First record hit pattern, Count Fold, increment raw and sum spectra
          Energies[Clover - 1][Crystal][Seg] = En;
+         WaveEnergies[Clover - 1][Crystal][Seg] = WaveEnergy;
          Charges[Clover - 1][Crystal][Seg] = ev[i].Charge;
          CloverHitList[Clover - 1] |= 1;
          if (En > EN_THRESH) {
             CloverHitListGood[Clover - 1] |= 1;
          }
+         
 
          switch (Seg) {
          case 0:
@@ -223,11 +251,17 @@ void PropXtalk(std::vector < TTigFragment > &ev)
                hCoreSumClover[Clover - 1]->Fill(En);
                hEn[Clover - 1][Crystal][Seg]->Fill(En);
             }
+            if (WaveEnergy > EN_THRESH) {
+               hWaveEn[Clover - 1][Crystal][Seg]->Fill(WaveEnergy);
+            }
             break;
          case 9:
             if (En > EN_THRESH) {
                Hits[Clover - 1][Crystal][Seg] += 1;
                hEn[Clover - 1][Crystal][Seg]->Fill(En);
+            }
+            if (WaveEnergy > EN_THRESH) {
+               hWaveEn[Clover - 1][Crystal][Seg]->Fill(WaveEnergy);
             }
             break;
          default:              // Should catch segs only
@@ -241,6 +275,9 @@ void PropXtalk(std::vector < TTigFragment > &ev)
                hEn[Clover - 1][Crystal][Seg]->Fill(En);
                hSegSumClover[Clover - 1]->Fill(En);
                hSegSumCrystal[Clover - 1][Crystal]->Fill(En);
+            }
+            if (WaveEnergy > EN_THRESH) {
+               hWaveEn[Clover - 1][Crystal][Seg]->Fill(WaveEnergy);
             }
             break;
 
@@ -419,6 +456,7 @@ void InitPropXtalk()
    dAddBack = outfile->mkdir("Add-Back");
    dFold = outfile->mkdir("Fold");
    dOther = outfile->mkdir("Other");
+   dWave  = outfile->mkdir("Wave");
    // Initialise spectra
    // Raw
    dRaw->cd();
@@ -446,8 +484,28 @@ void InitPropXtalk()
          hEn[Clover][Crystal][Seg] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
       }
    }
-   dSum->cd();
+   // Waveform energy
+   dWave->cd();
+   for (Clover = 0; Clover < CLOVERS; Clover++) {
+      for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
+         Seg = 0;
+         sprintf(name, "TIG%02d%c%02dA Core WaveEn", Clover + 1, Colours[Crystal], Seg);
+         sprintf(title, "TIG%02d%c%02dA Core A Waveform Energy (keV)", Clover + 1, Colours[Crystal], Seg);
+         hWaveEn[Clover][Crystal][Seg] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
+         for (Seg = 1; Seg <= SEGS; Seg++) {
+            sprintf(name, "TIG%02d%c%02dx Seg WaveEn", Clover + 1, Colours[Crystal], Seg);
+            sprintf(title, "TIG%02d%c%02dx Seg Waveform Energy (keV)", Clover + 1, Colours[Crystal], Seg);
+            hWaveEn[Clover][Crystal][Seg] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
+         }
+         Seg = SEGS + 1;
+         sprintf(name, "TIG%02d%c%02dB Core WaveEn", Clover + 1, Colours[Crystal], 0);
+         sprintf(title, "TIG%02d%c%02dB Core B Waveform Energy (keV)", Clover + 1, Colours[Crystal], 0);
+         hWaveEn[Clover][Crystal][Seg] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
+      }
+   }
+   
    //Sum
+   dSum->cd();
    sprintf(name, "TIGRESS Core Sum");
    sprintf(title, "TIGRESS Core Sum Energy (keV)");
    hCoreSumTig = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
@@ -590,6 +648,15 @@ void FinalPropXtalk()
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
          for (Seg = 0; Seg < SEGS + 2; Seg++) {
             hEn[Clover][Crystal][Seg]->Write();
+         }
+      }
+   }
+   // Waveform energy
+   dWave->cd();
+   for (Clover = 0; Clover < CLOVERS; Clover++) {
+      for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
+         for (Seg = 0; Seg < SEGS + 2; Seg++) {
+            hWaveEn[Clover][Crystal][Seg]->Write();
          }
       }
    }

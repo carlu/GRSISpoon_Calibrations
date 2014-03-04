@@ -11,13 +11,13 @@
 #define OUTPUT_GAIN 1           // write full-run gains to file
 #define OUTPUT_REPORT 1         // write full report including all fits and gains
 #define DEBUG 0                 // PRint Debugging messages to screen
-#define FIT_EN 1                //
+#define FIT_EN 0                //
 
 // Plotting
 #define PLOT_FITS 0             // plot fits, all chans plotted if below items = 0
 #define PLOT_CLOVER 0           // select 1-16 to plot that only
-#define PLOT_CRYSTAL 1          // 1-4
-#define PLOT_SEG 8              //  1-10
+#define PLOT_CRYSTAL 0          // 1-4
+#define PLOT_SEG 0              //  1-10
 #define PLOT_CALIB 0            // Plot calibration
 #define PLOT_RESIDUAL 0
 #define PLOT_CALIB_SUMMARY 1    // Plot and histo of calibration values
@@ -48,13 +48,15 @@
 #define MAX_GAIN_WAVE 0.7       // 0.3 / 125
 
 // Peaks
-#define SOURCE_NUM_FRONT 0      //1 // Source for front segments and core 0=60Co, 1=152Eu, 2=152Eu (no 121)
-#define SOURCE_NUM_BACK 0       //2 // Source for back segments
-#define SOURCE_NUM_CORE 0       //1 // Source for core
-//#define SOURCE_NUM_FRONT 1 // Source for front segments and core 0=60Co, 1=152Eu, 2=152Eu (no 121)
-//#define SOURCE_NUM_BACK 2 // Source for back segments
-//#define SOURCE_NUM_CORE 1 // Source for core
+//#define SOURCE_NUM_FRONT 0      //1 // Source for front segments and core 0=60Co, 1=152Eu, 2=152Eu (no 121)
+//#define SOURCE_NUM_BACK 0       //2 // Source for back segments
+//#define SOURCE_NUM_CORE 0       //1 // Source for core
+#define SOURCE_NUM_FRONT 1 // Source for front segments and core 0=60Co, 1=152Eu, 2=152Eu (no 121)
+#define SOURCE_NUM_BACK 2 // Source for back segments
+#define SOURCE_NUM_CORE 1 // Source for core
+
 #define NUM_LINES 8             // Number of lines to fit
+
 
 // Extra calibration point at 0 ch = 0 keV
 #define INCLUDE_ZERO 0          // Add an extra calibration point at 0ch = 0 keV
@@ -63,10 +65,8 @@
 
 // Peak Fitting
 #define MIN_FIT_COUNTS 500      // Minimum counts in whole spectrum for fit to be attempted
-#define FIT_WIDTH 14000         // Range either side of peak to be fitted (value, not channels)
 #define FIT_WIDTH_KEV 15
 #define FIT_BACKGROUND 1        // 1 = yes, 0 = no.  Should be best to use this all the time but left option there just in case.
-#define BACK_WIDTH 1000         // range for background estimate from either side of fit width. (value, not channels)
 #define BACK_WIDTH_KEV 10
 
 // Initial values for custom fit functions
