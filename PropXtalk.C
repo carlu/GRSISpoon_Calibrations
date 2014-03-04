@@ -81,6 +81,7 @@ static TH1F *hSegAddBackCloverByFold[CLOVERS][SEGS];    // Sum of segs, over clo
 static TH1F *hSegAddBackCrystalByFold[CLOVERS][CRYSTALS][SEGS]; // Sum od segs, over crystal, for each event, by seg fold
 
 static TH2F *hXTalk[CLOVERS];   // Matrices for dumping XTalk values for inspection
+//static TH2F *hXTalkLow[CLOVERS];   // Matrices for dumping XTalk values for inspection
 
 // Storing xtalk
 static int XtalkCount[CLOVERS][(SEGS + 2) * CRYSTALS];  // Count corsstalk events for each channel in each clover
@@ -376,7 +377,7 @@ void PropXtalk(std::vector < TTigFragment > &ev)
             HitClover = Clover;
             HitCrystal = Crystal;
          }
-         for (Seg = 1; Seg <= SEGS + 1; Seg++) {
+         for (Seg = 1; Seg <= SEGS; Seg++) {
             if (Hits[Clover][Crystal][Seg] > 0) {
                SegFoldTig += 1;
                SegFoldClover += 1;
@@ -414,7 +415,8 @@ void PropXtalk(std::vector < TTigFragment > &ev)
          // Energy Gate
          if (Energies[Clover][HitCrystal][HitSeg] > 100.0) {
             // Check CoreE = SegE, CoreABCloverE = CoreE    
-
+            //cout << "Cl: " << Clover << " Cr: " << HitCrystal << " HS: " << HitSeg << " En: " << Energies[Clover][HitCrystal][HitSeg] << " CoreEn: " << Energies[Clover][HitCrystal][0] << endl;
+            //cout << "Cl: " << Clover << " Cr: " << HitCrystal <<" HS: " << HitSeg << " WEn: " << WaveEnergies[Clover][HitCrystal][HitSeg] << " CorewEn: " << WaveEnergies[Clover][HitCrystal][0] << endl << endl;
             // Count Events
 
             Count = XtalkCount[Clover][(HitCrystal * 4) + HitSeg];
@@ -422,7 +424,7 @@ void PropXtalk(std::vector < TTigFragment > &ev)
             // Loop and record crosstalk
             for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
                for (Seg = 0; Seg < SEGS + 2; Seg++) {
-                  XTalkTemp = Energies[Clover][Crystal][Seg] / Energies[Clover][HitCrystal][HitSeg];
+                  XTalkTemp = WaveEnergies[Clover][Crystal][Seg] / Energies[Clover][HitCrystal][HitSeg];
                   XTalkNum = (HitCrystal * (SEGS + 2)) + HitSeg;
                   XTalkFrac[Clover][XTalkNum][(Crystal * (SEGS + 2)) + Seg] =
                       ((XTalkFrac[Clover][XTalkNum][(Crystal * (SEGS + 2)) + Seg] * Count) + XTalkTemp) / (Count + 1);
@@ -602,6 +604,12 @@ void InitPropXtalk()
       hXTalk[Clover] =
           new TH2F(name, title, (CRYSTALS * (SEGS + 2)), 0, (CRYSTALS * (SEGS + 2)), (CRYSTALS * (SEGS + 2)), 0,
                    (CRYSTALS * (SEGS + 2)));
+      printf(name, "TIG%02d XtalkLow", Clover + 1);
+      sprintf(title, "TIG%02d Fractional Crosstalk (Low values)", Clover + 1);
+      //hXTalkLow[Clover] =
+        //  new TH2F(name, title, (CRYSTALS * (SEGS + 2)), 0, (CRYSTALS * (SEGS + 2)), (CRYSTALS * (SEGS + 2)), 0,
+          //         (CRYSTALS * (SEGS + 2)));
+      
    }
 
    // Initialise alternate gains
@@ -632,7 +640,8 @@ void FinalPropXtalk()
       for (HitSegment = 0; HitSegment < ((SEGS + 2) * CRYSTALS); HitSegment++) {
          for (OtherSegment = 0; OtherSegment < ((SEGS + 2) * CRYSTALS); OtherSegment++) {
             XTalkOut << XTalkFrac[Clover][HitSegment][OtherSegment] << " ";
-            hXTalk[Clover]->SetBinContent(HitSegment, OtherSegment, XTalkFrac[Clover][HitSegment][OtherSegment]);
+            hXTalk[Clover]->SetBinContent(HitSegment+1, OtherSegment+1, XTalkFrac[Clover][HitSegment][OtherSegment]);
+            //hXTalkLow[Clover]->SetBinContent(HitSegment+1, OtherSegment+1, XTalkFrac[Clover][HitSegment][OtherSegment]);
          }
          XTalkOut << endl;
       }
@@ -716,6 +725,7 @@ void FinalPropXtalk()
 
    for (Clover = 0; Clover < CLOVERS; Clover++) {
       hXTalk[Clover]->Write();
+      //hXTalkLow[Clover]->Write();
    }
 
    outfile->Close();
