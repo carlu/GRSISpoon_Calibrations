@@ -23,7 +23,7 @@
 #define INTEGRATION 125 // Integration factor applied to charge values
 // Options for sorting
 #define EN_THRESH 2  // energies less than this keV ignored
-#define USE_ALT_CALIB 1
+#define USE_ALT_CALIB 0
 // Constants
 #define PI 3.14159265359
 
@@ -71,4 +71,4 @@ char Num2Col(int Crystal);
 float CalibrateEnergy(int Charge, std::vector<float> Coefficients);
 // Waveform energy
 float CalcWaveCharge(std::vector<int>  wavebuffer);
-
+float CalibrateWaveEnergy(float Charge, std::vector<float> Coefficients);
