@@ -1,0 +1,10 @@
+*.o
+!words.o
+*.a
+*.so
+/bin/*
+*Dict.[c,h]*
+*~
+*#*#
+CalibOffline
+Sort

@@ -122,7 +122,8 @@ int main(int argc, char **argv)
    if (USE_ALT_CALIB) {
       
 
-      std::string CalFile = "/media/data1/Experiments/tigress/TigTest/Calibrations/Feb2014_TIG12/CombinedGainsFormatted.txt";        //"Cal_run27401_quad_w0.txt";
+      //std::string CalFile = "/media/data1/Experiments/tigress/TigTest/Calibrations/Feb2014_TIG12/CombinedGainsFormatted.txt";        //"Cal_run27401_quad_w0.txt";
+      std::string CalFile = "/media/data1/Experiments/tigress/TigTest/Calibrations/Feb2014_TIG12/CombinedGains_run27495-8_List.txt";
       int NumCal;
       NumCal = ReadCalibrationFile(CalFile, &EnCalibNames, &EnCalibValues);
       //cout << "Hello " << NumCal << endl;
