@@ -541,29 +541,41 @@ int ReadCommandLineSettings(int argc, char **argv) {
       return -1;
    }
    
-   for(i = 0; i < argc; i++) { // loop all args
+   for(i = 0; i < argc; i++) { // loop all args 
       // Run files
-      if(strncmp(argv[i],"-f",2)<1) { // if inputfile is specified
-         n = 0;
-         if(i>=argc-1) {
+      // -------------------------------------------
+      if(strncmp(argv[i],"-f",2)<1) { // if option is input file
+         if(i>=argc-1) {  // return error if no file
             cout << "No file specified after \"-f\" option." << endl;
-            return -1;
+            return -1;  
          }
-         while(strncmp(argv[i+1],"-",1)>0) {
-            Config.files.push_back(argv[++i]);
-            n += 1;
-            if(i>=argc-1) {
-               break;
+         while(strncmp(argv[i+1],"-",1)>0) {  // loop files 
+            Config.files.push_back(argv[++i]);  // add to vector and increment i
+            if(i>=argc-1) {  
+               break;  // break if at last item in arg list
             }
          }
-         cout << "Input files:" << endl;
-         for (j=0; j<n; j++) {
+         cout << "Input files:" << endl;  
+         for (j=0; j<Config.files.size(); j++) {  // print list of files back to screen
             cout << Config.files.at(j) << endl;
-         }
-            
+         }           
       }
+      // Energy Calibration file
+      // -------------------------------------------
       
       
+      
+      
+      // Waveform Calibration file
+      // -------------------------------------------
+            
+      // Source specification
+      // -------------------------------------------
+      
+      // General Configuration file
+      // -------------------------------------------
+
+
    }
    
    
