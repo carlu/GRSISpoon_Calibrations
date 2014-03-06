@@ -52,6 +52,9 @@ struct Mnemonic	{
 };
 
 struct RunConfig {
+
+   std::vector < std::string > files;
+
    bool RunCalibration;
    bool RunEfficiency;
    bool RunPropCrosstalk;

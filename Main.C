@@ -1,6 +1,7 @@
 //To compile:
 // g++ Main.C CoincEff.C Calib.C PropXtalk.C CalibTools.C -I/home/cu/Code/TIGRESS/GRSISpoon/include --std=c++0x -o Sort /home/cu/Code/TIGRESS/GRSISpoon/libraries/TigFormat/libFormat.so /home/cu/Code/TIGRESS/GRSISpoon/libraries/libCalManager.so /home/cu/Code/TIGRESS/GRSISpoon/libraries/libRootIOManager.so -O2 `root-config --cflags --libs` -lTreePlayer -lSpectrum -lgsl -lgslcblas -g
-
+//To run:
+// ./Sort -f InFile1 InFile2...
 // --------------------------------------------------------------------------------
 // ----  Sort code for processing ROOT TTrees of TTigFragments                 ----
 // ----  (as produced by GRSISPoon code from TIGRESS data)                     ----
@@ -112,7 +113,10 @@ int main(int argc, char **argv)
 
    // Set default and read custom options
    LoadDefaultSettings();
-   ReadCommandLineSettings(argc, argv);
+   if(ReadCommandLineSettings(argc, argv) < 0) {
+      cout << "Failed to configure the run - exiting!" << endl;
+      return -1;
+   }
 
 
    // Set options for histo stats
@@ -174,10 +178,8 @@ int main(int argc, char **argv)
    TChain *Chain = new TChain("FragmentTree");
 
    // Setup input file list                                        
-   std::vector < std::string > files;
-   for (i = 1; i < argc; i++) {
-      files.push_back(argv[i]);
-      Chain->Add(argv[i]);
+   for (i = 0; i < Config.files.size(); i++) {
+      Chain->Add(Config.files.at(i).c_str());
       FileCount++;
    }
 
@@ -515,14 +517,55 @@ int LoadDefaultSettings() {
 int ReadCommandLineSettings(int argc, char **argv) {
    
    // -f : input files
-   // -c : CalFile
+   // -e : EnergyCalFile
    // -w : WaveCalFile
    // -s : specify source 60Co 152Eu...
-   // -o : specify config options file  #COMMENT\nNAME VALUE\nNAME VALUE
+   // -c : specify config options file  #COMMENT\nNAME VALUE\nNAME VALUE
+   // -o : output path (prepended to all output files)
+   // -h : print help and exit
    
    // --cal : run calibration
    // --eff : run efficiency
    // --prop: run propxtalk
+   
+   int i, j,n;
+   
+   cout << "List of arguments (" << argc << " total)" << endl;
+   for(i=0;i<argc;i++) {
+      cout << i << ": " << argv[i] << "\t";
+   }
+   cout << endl << endl;
+   
+   if(argc < 2) {
+      cout << "I at least need to know which file to process!" << endl;
+      return -1;
+   }
+   
+   for(i = 0; i < argc; i++) { // loop all args
+      // Run files
+      if(strncmp(argv[i],"-f",2)<1) { // if inputfile is specified
+         n = 0;
+         if(i>=argc-1) {
+            cout << "No file specified after \"-f\" option." << endl;
+            return -1;
+         }
+         while(strncmp(argv[i+1],"-",1)>0) {
+            Config.files.push_back(argv[++i]);
+            n += 1;
+            if(i>=argc-1) {
+               break;
+            }
+         }
+         cout << "Input files:" << endl;
+         for (j=0; j<n; j++) {
+            cout << Config.files.at(j) << endl;
+         }
+            
+      }
+      
+      
+   }
+   
    
    return 0;
 }
