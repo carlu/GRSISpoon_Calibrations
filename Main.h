@@ -39,7 +39,7 @@
 // Data:
 // --------------------------------------------------------
 
-// Structure to hold Mnemonic
+// Structure to hold TIGRESS channel name Mnemonic
 struct Mnemonic	{
    int arrayposition;
    int	segment;
@@ -49,6 +49,31 @@ struct Mnemonic	{
    std::string collectedcharge;
    std::string outputsensor;
 };
+
+struct RunConfig {
+   bool RunCalibration;
+   bool RunEfficiency;
+   bool RunPropCrosstalk;
+   bool RunWaveform;
+   bool RunDiffCrosstalk;
+   
+   bool PrintBasic;
+   int PrintFrequency;
+   bool PrintVerbose;
+   
+   int EventLimit;
+
+   int WaveformSamples;
+   int WaveInitialSamples;
+   int WaveFinalSamples;
+   
+   std::string EnergyCalibrationFile;
+   std::string WaveCalibrationFile;
+};
+
+// Storing run settings
+extern RunConfig Config;
+
 // Storing alternate Calibration
 extern vector<string> EnCalibNames;
 extern vector<vector<float>> EnCalibValues;

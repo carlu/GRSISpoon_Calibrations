@@ -77,6 +77,9 @@ int EventCount = 0;
 int FragCount = 0;
 int BadEventCount = 0;
 
+// Storing run settings
+RunConfig Config;
+
 // Storing alternate Calibration
 vector < string > EnCalibNames;
 vector < vector < float >> EnCalibValues;
@@ -85,6 +88,9 @@ vector < string > WaveCalibNames;
 vector < vector < float >> WaveCalibValues;
 
 // Functions
+int LoadDefaultSettings();
+int ReadCommandLineSettings(int argc, char **argv);
+
 void SortTree(const char *fn);
 void IncSpectra();
 int ReadCalibrationFile(std::string filename, vector < string > *EnCalibNames,vector < vector < float >> *EnCalibValues);
@@ -104,6 +110,11 @@ void FinalPropXtalk();
 int main(int argc, char **argv)
 {
 
+   // Set default and read custom options
+   LoadDefaultSettings();
+   ReadCommandLineSettings(argc, argv);
+
+
    // Set options for histo stats
    gStyle->SetOptStat("iouRMen");
 
@@ -120,8 +131,6 @@ int main(int argc, char **argv)
 
    // Load any extra configuration information 
    if (USE_ALT_CALIB) {
-      
-
       //std::string CalFile = "/media/data1/Experiments/tigress/TigTest/Calibrations/Feb2014_TIG12/CombinedGainsFormatted.txt";        //"Cal_run27401_quad_w0.txt";
       std::string CalFile = "/media/data1/Experiments/tigress/TigTest/Calibrations/Feb2014_TIG12/CombinedGains_run27495-8_List.txt";
       int NumCal;
@@ -477,3 +486,18 @@ float CalcWaveCharge(std::vector < int >wavebuffer)
    //cout << " Charge: " << Charge << endl;
    return Charge;
 }
+
+
+int LoadDefaultSettings() {
+   Config.RunCalibration = SORT_CALIB;
+   Config.RunEfficiency = SORT_EFF;
+   Config.RunPropCrosstalk = SORT_PROP;
+   Config.RunWaveform = SORT_WAVES;
+   Config.RunDiffCrosstalk = SORT_DIFF;
+   return 0;
+}
+
+int ReadCommandLineSettings(int argc, char **argv) {
+   return 0;
+}
+
