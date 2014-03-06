@@ -10,6 +10,7 @@
 #define SORT_DIFF  0
 // Printing info
 #define PRINT_OUTPUT 1
+#define PRINT_VERBOSE 0
 #define PRINT_FREQ 50000
 // Main loop control
 #define MAX_EVENTS 0

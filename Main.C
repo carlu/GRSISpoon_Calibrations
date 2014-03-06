@@ -157,15 +157,16 @@ int main(int argc, char **argv)
       }
    }
    // Initialise spectra   
-   if (SORT_EFF) {
+
+   if (Config.RunEfficiency) {
       cout << "Initialising Efficiency Spectra..." << endl;
       InitCoincEff();
    }
-   if (SORT_CALIB) {
+   if (Config.RunCalibration) {
       cout << "Initialising Calibration Spectra..." << endl;
       InitCalib();
    }
-   if (SORT_PROP) {
+   if (Config.RunPropCrosstalk) {
       cout << "Initialising Cross-talk Spectra..." << endl;
       InitPropXtalk();
    }
@@ -307,13 +308,14 @@ int main(int argc, char **argv)
    }
 
    // Now finalise sorts and write spectra to files....  
-   if (SORT_EFF) {
+
+   if (Config.RunEfficiency) {
       FinalCoincEff();
    }
-   if (SORT_CALIB) {
+   if (Config.RunCalibration) {
       FinalCalib();
    }
-   if (SORT_PROP) {
+   if (Config.RunPropCrosstalk) {
       FinalPropXtalk();
    }
 
@@ -494,10 +496,46 @@ int LoadDefaultSettings() {
    Config.RunPropCrosstalk = SORT_PROP;
    Config.RunWaveform = SORT_WAVES;
    Config.RunDiffCrosstalk = SORT_DIFF;
+   
+   Config.PrintBasic = PRINT_OUTPUT;
+   Config.PrintFrequency = PRINT_FREQ;
+   Config.PrintVerbose = PRINT_VERBOSE;
+   
+   Config.EventLimit = MAX_EVENTS;
+
+   Config.WaveformSamples = WAVE_SAMPS;
+   Config.WaveInitialSamples = INITIAL_SAMPS;
+   Config.WaveFinalSamples = FINAL_SAMPS;
+   
+   Config.EnergyCalibrationFile = "./ECal.txt";
+   Config.WaveCalibrationFile = "./WCal.txt";
    return 0;
 }
 
 int ReadCommandLineSettings(int argc, char **argv) {
+   
+   // -f : input files
+   // -c : CalFile
+   // -w : WaveCalFile
+   // -s : specify source 60Co 152Eu...
+   // -o : specify config options file  #COMMENT\nNAME VALUE\nNAME VALUE
+   
+   // --cal : run calibration
+   // --eff : run efficiency
+   // --prop: run propxtalk
+   
    return 0;
 }
+
+int ReadOptionsFile(std::string filename ) {
+   cout << filename << endl;
+   return 0;
+}
+
+
+
+
+
+
+
 
