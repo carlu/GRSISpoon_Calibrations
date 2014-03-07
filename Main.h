@@ -36,6 +36,17 @@
 //Other stuff
 #define CHAR_BUFFER_SIZE 1024
 
+// Source information for calib and eff
+// Peaks
+#define SOURCE_NUM_FRONT 0      //1 // Source for front segments and core 0=60Co, 1=152Eu, 2=152Eu (no 121)
+#define SOURCE_NUM_BACK 0       //2 // Source for back segments
+#define SOURCE_NUM_CORE 0       //1 // Source for core
+//#define SOURCE_NUM_FRONT 1 // Source for front segments and core 0=60Co, 1=152Eu, 2=152Eu (no 121)
+//#define SOURCE_NUM_BACK 2 // Source for back segments
+//#define SOURCE_NUM_CORE 1 // Source for core
+#define NUM_LINES 2             // Number of lines to fit
+
+
 // --------------------------------------------------------
 // Data:
 // --------------------------------------------------------
@@ -51,32 +62,45 @@ struct Mnemonic	{
    std::string outputsensor;
 };
 
-struct RunConfig {
+struct RunConfig {  // this struct will hold all information 
+                     // required to run the code
 
+   // Input file paths
    std::vector < std::string > files;
 
+   // Which parts of code to run
    bool RunCalibration;
    bool RunEfficiency;
    bool RunPropCrosstalk;
    bool RunWaveform;
    bool RunDiffCrosstalk;
    
+   // What to print and how often
    bool PrintBasic;
    int PrintFrequency;
    bool PrintVerbose;
    
+   // Limit on number of events
    int EventLimit;
 
+   // Properties of waveforms stored in the data
    int WaveformSamples;
    int WaveInitialSamples;
    int WaveFinalSamples;
    
+   // Information on energy and wave calibration files
    std::string EnergyCalibrationFile;
-   bool UseAltEnergyCalibration;
+   bool HaveAltEnergyCalibration;
    std::string WaveCalibrationFile;
    bool HaveWaveCalibration;
    
+   // source Information
    std::vector< std::vector< float>> Sources;
+   int SourceNumCore;
+   int SourceNumFront;
+   int SourceNumBack;
+   
+   
 };
 
 // Storing run settings

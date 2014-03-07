@@ -66,11 +66,11 @@ void ResetTempSpectra();
 //int FitSpectrum(TH1F* Histo, float* Gain, float* Offset, float* dGain, float* dOffset);
 //int FitGammaSpectrum(TH1F* Histo, SpectrumFit *Fit, int Source , int PlotOn);
 
-float Sources[3][10] = {
+/*float Sources[3][10] = {
    {1173.237, 1332.501},
    {121.7817, 1408.006, 244.6975, 344.2785, 411.116, 778.9040, 964.079, 1112.074},
    {344.2785, 1408.006, 121.7817, 244.6975, 411.116, 778.9040, 964.079, 1112.074}
-};
+};*/
 
 TCanvas *cCalib1, *cCalib1a, *cCalib2, *cWave1, *ctemp;
 
@@ -149,13 +149,13 @@ void InitCalib()
       WaveHist = new TH1F(name, title, WAVE_SAMPS, 0, WAVE_SAMPS);
    }
 
-   cout << "Searching for core Peaks: " << Sources[SOURCE_NUM_CORE][0] << "kev and " << Sources[SOURCE_NUM_CORE][1] <<
-       "keV (Ratio " << Sources[SOURCE_NUM_CORE][0] / Sources[SOURCE_NUM_CORE][1] << ")" << endl;
-   cout << "Searching for front seg peaks: " << Sources[SOURCE_NUM_FRONT][0] << "kev and " <<
-       Sources[SOURCE_NUM_FRONT][1] << "keV (Ratio " << Sources[SOURCE_NUM_FRONT][0] /
-       Sources[SOURCE_NUM_FRONT][1] << ")" << endl;
-   cout << "Searching for back seg peaks: " << Sources[SOURCE_NUM_BACK][0] << "kev and " << Sources[SOURCE_NUM_BACK][1]
-       << "keV (Ratio " << Sources[SOURCE_NUM_BACK][0] / Sources[SOURCE_NUM_BACK][1] << ")" << endl;
+   cout << "Searching for core Peaks: " << Config.Sources[Config.SourceNumCore][0] << "kev and " << Config.Sources[Config.SourceNumCore][1] <<
+       "keV (Ratio " << Config.Sources[Config.SourceNumCore][0] / Config.Sources[Config.SourceNumCore][1] << ")" << endl;
+   cout << "Searching for front seg peaks: " << Config.Sources[Config.SourceNumFront][0] << "kev and " <<
+       Config.Sources[Config.SourceNumFront][1] << "keV (Ratio " << Config.Sources[Config.SourceNumFront][0] /
+       Config.Sources[Config.SourceNumFront][1] << ")" << endl;
+   cout << "Searching for back seg peaks: " << Config.Sources[Config.SourceNumBack][0] << "kev and " << Config.Sources[Config.SourceNumBack][1]
+       << "keV (Ratio " << Config.Sources[Config.SourceNumBack][0] / Config.Sources[Config.SourceNumBack][1] << ")" << endl;
 
 
    if (PLOT_FITS || PLOT_CALIB || PLOT_CALIB_SUMMARY || PLOT_RESIDUAL) {
@@ -355,7 +355,7 @@ void Calib(std::vector < TTigFragment > &ev)
                   SpectrumFit Fit = { 0 };
                   FitSettings Settings = { 0 };
 
-                  Settings.Source = Source;
+                  Settings.Source = Config.SourceNumCore;  
                   Settings.Integration = INTEGRATION;
                   Settings.Dispersion = float (CHARGE_BINS) / float (CHARGE_MAX);
                   Settings.SearchSigma = EN_SEARCH_SIGMA;
@@ -497,20 +497,20 @@ void FinalCalib()
                case 0:
                   snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da Chg", Clover + 1, Num2Col(Crystal), Seg);
                   HistName = CharBuf;
-                  Source = SOURCE_NUM_CORE;
+                  Source = Config.SourceNumCore;
                   break;
                case 9:
                   snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db Chg", Clover + 1, Num2Col(Crystal), 0);
                   HistName = CharBuf;
-                  Source = SOURCE_NUM_CORE;
+                  Source = Config.SourceNumCore;
                   break;
                default:
                   snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx Chg", Clover + 1, Num2Col(Crystal), Seg);
                   HistName = CharBuf;
                   if (Seg < 5) {
-                     Source = SOURCE_NUM_FRONT;
+                     Source = Config.SourceNumFront;
                   } else {
-                     Source = SOURCE_NUM_BACK;
+                     Source = Config.SourceNumBack;
                   }
                   break;
                }

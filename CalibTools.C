@@ -63,16 +63,16 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
    Float_t *PeakPositions;      // for output of root peak search
    int Line, LinesUsed;
    float FitCentre, G, O, dG, dO;       // Fits and values for fast 2 point calibration.
-   float Energies[NUM_LINES + 1], dEnergies[NUM_LINES + 1], Centroids[NUM_LINES + 1], dCentroids[NUM_LINES + 1];        // Data for full calibration
+   float Energies[MAX_LINES + 1], dEnergies[MAX_LINES + 1], Centroids[MAX_LINES + 1], dCentroids[MAX_LINES + 1];        // Data for full calibration
    float En1, En2;              // line energies for two point calib
-   En1 = Sources[Settings.Source][0];
-   En2 = Sources[Settings.Source][1];
+   En1 = Config.Sources[Settings.Source][0];
+   En2 = Config.Sources[Settings.Source][1];
    float IdealRatio = En1 / En2;
    float Chg1, Chg2, dChg1, dChg2;      // charge and erros for 2 point
-   FitResult FitRes[NUM_LINES]; // store full fit results
+   FitResult FitRes[MAX_LINES]; // store full fit results
    int Integral;                // counts in spectrum
    TSpectrum *Spec = new TSpectrum();
-   TF1 *FitRange[NUM_LINES];    // pointers to functions for fitting each line
+   TF1 *FitRange[MAX_LINES];    // pointers to functions for fitting each line
    float InitialGain = 0.16;
    // Fitting stuff
    std::string FitOptions = ("RQEM");
@@ -165,7 +165,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
             }
 
             Centre = PeakPositions[Peak];
-            cout << "Line: " << Line << " (Energy = " << Sources[Settings.Source][Line] << " keV)" << endl;
+            cout << "Line: " << Line << " (Energy = " << Config.Sources[Settings.Source][Line] << " keV)" << endl;
             cout << "-------------------------------------------------------------" << endl << endl;
             FitSinglePeak(Histo, Line, Centre, FitRange[Line], &FitRes[Line], Settings);
 
@@ -194,12 +194,12 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
             cout << "Source2 " << Sources[Settings.Source][1] << endl; */
 
          // Gain = (E2 - E1) / (CHG2 - CHG1)       
-         G = (Sources[Settings.Source][1] - Sources[Settings.Source][0]) / (Chg2 - Chg1);
+         G = (Config.Sources[Settings.Source][1] - Config.Sources[Settings.Source][0]) / (Chg2 - Chg1);
          // dGain = sqrt( dCHG1^2 + cCHG2^2 )  *  (E2 - E1)  /  (CHG2 - CHG1)^2     [assuming no error on E]
-         dG = sqrt(pow(dChg1, 2) + pow(dChg2, 2)) * (1.0 / pow(Chg2 - Chg1, 2)) * (Sources[Settings.Source][1] -
-                                                                                   Sources[Settings.Source][0]);
+         dG = sqrt(pow(dChg1, 2) + pow(dChg2, 2)) * (1.0 / pow(Chg2 - Chg1, 2)) * (Config.Sources[Settings.Source][1] -
+                                                                                   Config.Sources[Settings.Source][0]);
          // Offset = E2 - (Gain * CHG2)
-         O = Sources[Settings.Source][1] - (G * Chg2);
+         O = Config.Sources[Settings.Source][1] - (G * Chg2);
          // dOffset = Offset * sqrt( (dCHG2/CHG2)^2 + (dGain/Gain)^2 )
          dO = sqrt(pow(dG / G, 2) + pow(dChg2 / Chg2, 2)) * O;
          //*dOffset = dO;
@@ -222,14 +222,14 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
          //-------------------------------------------------------------//
          // Loop the remaining lines and fit them                       //
          //-------------------------------------------------------------//
-         if (NUM_LINES > 2) {
-            for (Line = 2; Line < NUM_LINES; Line++) {
+         if (Config.Sources[Settings.Source].size() > 2) {
+            for (Line = 2; Line < Config.Sources[Settings.Source].size(); Line++) {
 
                if (VERBOSE) {
-                  cout << "Line: " << Line << " (Energy = " << Sources[Settings.Source][Line] << " keV)" << endl;
+                  cout << "Line: " << Line << " (Energy = " << Config.Sources[Settings.Source][Line] << " keV)" << endl;
                   cout << "-------------------------------------------------------------" << endl << endl;
                }
-               Centre = ((Sources[Settings.Source][Line] - O) / G) * Settings.Integration;      // Get centre from energy and initial calibration
+               Centre = ((Config.Sources[Settings.Source][Line] - O) / G) * Settings.Integration;      // Get centre from energy and initial calibration
                FitSinglePeak(Histo, Line, Centre, FitRange[Line], &FitRes[Line], Settings);
             }
          }
@@ -245,13 +245,13 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
             cCalib1a->cd(1);
          }
 
-         memset(&Energies, 0.0, sizeof(float) * (NUM_LINES + 1));
-         memset(&dEnergies, 0.0, sizeof(float) * (NUM_LINES + 1));
-         memset(&Centroids, 0.0, sizeof(float) * (NUM_LINES + 1));
-         memset(&dCentroids, 0.0, sizeof(float) * (NUM_LINES + 1));
+         memset(&Energies, 0.0, sizeof(float) * (MAX_LINES + 1));
+         memset(&dEnergies, 0.0, sizeof(float) * (MAX_LINES + 1));
+         memset(&Centroids, 0.0, sizeof(float) * (MAX_LINES + 1));
+         memset(&dCentroids, 0.0, sizeof(float) * (MAX_LINES + 1));
 
          LinesUsed = 0;
-         for (Line = 0; Line < NUM_LINES; Line++) {
+         for (Line = 0; Line < Config.Sources[Settings.Source].size(); Line++) {
 
             //  Check on these conditions:
 
@@ -261,7 +261,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
                //cout << "Here!!" << endl;
                if ((FitRes[Line].ChiSq / FitRes[Line].NDF) < GAUS_CSPD_MAX) {
                   //cout << "Here!!!" << endl;
-                  Energies[LinesUsed] = Sources[Settings.Source][Line];
+                  Energies[LinesUsed] = Config.Sources[Settings.Source][Line];
                   Centroids[LinesUsed] = FitRes[Line].Mean / Settings.Integration;
                   dCentroids[LinesUsed] = FitRes[Line].dMean / Settings.Integration;
                   if (VERBOSE) {
@@ -289,16 +289,16 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
                cout << Energies[LinesUsed] << " keV\t" << Centroids[LinesUsed] << " +/- " << dCentroids[LinesUsed] <<
                    " ch" << endl;
             }
-            Fit->PeakFits[NUM_LINES].Energy = 0.0;
-            Fit->PeakFits[NUM_LINES].Const = 0.0;
-            Fit->PeakFits[NUM_LINES].dConst = 0.0;
-            Fit->PeakFits[NUM_LINES].Mean = 0.0;
-            Fit->PeakFits[NUM_LINES].dMean = 1.0;
-            Fit->PeakFits[NUM_LINES].Sigma = 0.0;
-            Fit->PeakFits[NUM_LINES].dSigma = 0.0;
-            Fit->PeakFits[NUM_LINES].ChiSq = 0.0;
-            Fit->PeakFits[NUM_LINES].NDF = 1;
-            Fit->FitSuccess[Line] = 1;
+            Fit->PeakFits[Config.Sources[Settings.Source].size()].Energy = 0.0;
+            Fit->PeakFits[Config.Sources[Settings.Source].size()].Const = 0.0;
+            Fit->PeakFits[Config.Sources[Settings.Source].size()].dConst = 0.0;
+            Fit->PeakFits[Config.Sources[Settings.Source].size()].Mean = 0.0;
+            Fit->PeakFits[Config.Sources[Settings.Source].size()].dMean = 1.0;
+            Fit->PeakFits[Config.Sources[Settings.Source].size()].Sigma = 0.0;
+            Fit->PeakFits[Config.Sources[Settings.Source].size()].dSigma = 0.0;
+            Fit->PeakFits[Config.Sources[Settings.Source].size()].ChiSq = 0.0;
+            Fit->PeakFits[Config.Sources[Settings.Source].size()].NDF = 1;
+            Fit->FitSuccess[Line+1] = 1;
             LinesUsed += 1;
          }
          Fit->LinesUsed = LinesUsed;
@@ -411,11 +411,11 @@ int FitSinglePeak(TH1F * Histo, int Line, float Centre, TF1 * FitRange, FitResul
 
    // Find min, max, and other things needed for the fit
    // In keV....
-   MinkeV = float (Sources[Settings.Source][Line] - FIT_WIDTH_KEV);
-   MaxkeV = float (Sources[Settings.Source][Line] + FIT_WIDTH_KEV);
+   MinkeV = float (Config.Sources[Settings.Source][Line] - FIT_WIDTH_KEV);
+   MaxkeV = float (Config.Sources[Settings.Source][Line] + FIT_WIDTH_KEV);
    // In charge/ADC units
-   Min = MinkeV * (Centre / Sources[Settings.Source][Line]);
-   Max = MaxkeV * (Centre / Sources[Settings.Source][Line]);
+   Min = MinkeV * (Centre / Config.Sources[Settings.Source][Line]);
+   Max = MaxkeV * (Centre / Config.Sources[Settings.Source][Line]);
    // In bins
    MinBin = int (Min * Settings.Dispersion);
    if (MinBin < 0) {
@@ -430,11 +430,11 @@ int FitSinglePeak(TH1F * Histo, int Line, float Centre, TF1 * FitRange, FitResul
       }
    }
    // find number of bins to be used for initial background estimate
-   BackBins = int (BACK_WIDTH_KEV * (Centre / Sources[Settings.Source][Line]) * Settings.Dispersion);
+   BackBins = int (BACK_WIDTH_KEV * (Centre / Config.Sources[Settings.Source][Line]) * Settings.Dispersion);
    // Find the estimate for sigma
-   SigmaZero = (Settings.SigmaEstZero * (Centre / Sources[Settings.Source][Line]));
-   Sigma1MeV = (Settings.SigmaEst1MeV * (Centre / Sources[Settings.Source][Line]));
-   InitialSigma = SigmaZero + ((Sources[Settings.Source][Line] / 1000.0) * Sigma1MeV);
+   SigmaZero = (Settings.SigmaEstZero * (Centre / Config.Sources[Settings.Source][Line]));
+   Sigma1MeV = (Settings.SigmaEst1MeV * (Centre / Config.Sources[Settings.Source][Line]));
+   InitialSigma = SigmaZero + ((Config.Sources[Settings.Source][Line] / 1000.0) * Sigma1MeV);
 
    /*cout << "MinkeV: " << MinkeV << " Min: " << Min << " MinBin: " << MinBin << endl;
       cout << "MaxkeV: " << MaxkeV << " Max: " << Max << " MaxBin: " << MaxBin << endl;
@@ -488,7 +488,7 @@ int FitSinglePeak(TH1F * Histo, int Line, float Centre, TF1 * FitRange, FitResul
    Histo->Fit(FitRange, Opts.c_str());
    //Histo->Fit(FitRange,"R,Q");
 
-   FitRes->Energy = Sources[Settings.Source][Line];
+   FitRes->Energy = Config.Sources[Settings.Source][Line];
    FitRes->Const = FitRange->GetParameter(0);
    FitRes->dConst = FitRange->GetParError(0);
    FitRes->Mean = FitRange->GetParameter(1);
@@ -524,7 +524,7 @@ int CalibrationReport(SpectrumFit * Fit, ofstream & ReportOut, std::string HistN
 {
 
    int i, NumFits;
-   float Energies[NUM_LINES], Residuals[NUM_LINES];
+   float Energies[MAX_LINES], Residuals[MAX_LINES];
    float CalibEn;
 
    //char HistName[1024];
@@ -537,7 +537,7 @@ int CalibrationReport(SpectrumFit * Fit, ofstream & ReportOut, std::string HistN
    ReportOut << Fit->LinesUsed << " lines used in calibration." << endl;
    ReportOut << "Individual fit results:" << endl;
    ReportOut << "(Const +/- err\tMean +/- err\tSigma +/- err\nChiSq\tNDF\tCSPD)" << endl << endl;
-   for (i = 0; i <= NUM_LINES; i++) {
+   for (i = 0; i <= Config.Sources[Settings.Source].size(); i++) {
       if (Fit->FitSuccess[i] == 1) {
          ReportOut << Fit->PeakFits[i].Energy << " keV" << endl;
          ReportOut << Fit->PeakFits[i].Const << " +/- " << Fit->PeakFits[i].dConst << "\t";
@@ -562,7 +562,7 @@ int CalibrationReport(SpectrumFit * Fit, ofstream & ReportOut, std::string HistN
    ReportOut << endl << "Quadratic calibration residuals...." << endl;
    ReportOut << "Centroid (ch)\t\tList Energy (keV)\t\tCalibration Energy (keV)\t\tResidual (keV)" << endl;
    NumFits = 0;
-   for (i = 0; i <= NUM_LINES; i++) {
+   for (i = 0; i <= Config.Sources[Settings.Source].size(); i++) {
       if (Fit->FitSuccess[i] == 1) {
          CalibEn = Fit->QuadGainFit[0] + (Fit->QuadGainFit[1] * (Fit->PeakFits[i].Mean / Settings.Integration)) +
              (pow((Fit->PeakFits[i].Mean / Settings.Integration), 2) * Fit->QuadGainFit[2]);
@@ -576,7 +576,7 @@ int CalibrationReport(SpectrumFit * Fit, ofstream & ReportOut, std::string HistN
    NumFits = 0;
    ReportOut << endl << "Linear calibration residuals...." << endl;
    ReportOut << "Centroid (ch)\t\tList Energy (keV)\t\tCalibration Energy (keV)\t\tResidual (keV)" << endl;
-   for (i = 0; i <= NUM_LINES; i++) {
+   for (i = 0; i <= Config.Sources[Settings.Source].size(); i++) {
       if (Fit->FitSuccess[i] == 1) {
          CalibEn = Fit->LinGainFit[0] + (Fit->LinGainFit[1] * (Fit->PeakFits[i].Mean / Settings.Integration));
          ReportOut << Fit->PeakFits[i].Mean << "\t\t\t" << Fit->PeakFits[i].Energy << "\t\t\t";

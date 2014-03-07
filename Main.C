@@ -138,7 +138,7 @@ int main(int argc, char **argv)
    StopWatch.Start();
 
    // Load any extra configuration information 
-   if (Config.UseAltEnergyCalibration) {
+   if (Config.HaveAltEnergyCalibration) {
       int NumCal;
       NumCal = ReadCalibrationFile(Config.EnergyCalibrationFile, &EnCalibNames, &EnCalibValues);
       cout << "Alternate energy calibratrion values: " << endl;
@@ -512,7 +512,7 @@ int LoadDefaultSettings() {
 
    
    Config.EnergyCalibrationFile = "./ECal.txt";
-   Config.UseAltEnergyCalibration = 0;
+   Config.HaveAltEnergyCalibration = 0;
    Config.WaveCalibrationFile = "./WCal.txt";
    Config.HaveWaveCalibration = 0;
    
@@ -537,7 +537,16 @@ int LoadDefaultSettings() {
       SourceTemp.push_back(Sources[2][i]);
    }
    Config.Sources.push_back(SourceTemp);
+   
+   Config.SourceNumCore = SOURCE_NUM_CORE;
+   Config.SourceNumFront = SOURCE_NUM_FRONT;
+   Config.SourceNumBack = SOURCE_NUM_BACK;
+   
+   
    return 0;
+   
+   
+   
 }
 
 int ReadCommandLineSettings(int argc, char **argv) {
@@ -549,12 +558,15 @@ int ReadCommandLineSettings(int argc, char **argv) {
    // -c : specify config options file  #COMMENT\nNAME VALUE\nNAME VALUE
    // -o : output path (prepended to all output files)
    // -h : print help and exit
+   // -v : verbose
+   // -n : max number of events
    
    // --cal : run calibration
    // --eff : run efficiency
    // --prop: run propxtalk
    
    int i, j,n;
+   bool test;
    
    cout << "List of arguments (" << argc << " total)" << endl;
    for(i=0;i<argc;i++) {
@@ -596,7 +608,7 @@ int ReadCommandLineSettings(int argc, char **argv) {
             return -1;  
          }
          Config.EnergyCalibrationFile = argv[++i]; // otherwise set filename
-         Config.UseAltEnergyCalibration = 1;
+         Config.HaveAltEnergyCalibration = 1;
          cout << "Energy calibration to be loaded from " << Config.EnergyCalibrationFile << endl;
       }
       
@@ -614,17 +626,34 @@ int ReadCommandLineSettings(int argc, char **argv) {
       
       // Source specification
       // -------------------------------------------
-      if(strncmp(argv[i],"-s",2)==0) { // if option is Ecal file
-         if(i>=argc-1 || strncmp(argv[i+1],"-",1)==0) {  // return error if no file
+      if(strncmp(argv[i],"-s",2)==0) { // if option is source spec
+         if(i>=argc-1 || strncmp(argv[i+1],"-",1)==0) {  // return error if no source given
             cout << "No source specified after \"-s\" option." << endl;
             return -1;  
          }
-         
+         test=0;
+         if(strncmp(argv[i+1],"60Co",4)==0 || strncmp(argv[i+1],"Co60",4)==0) {  // is it 60Co
+            Config.SourceNumCore = 0;
+            Config.SourceNumFront = 0;
+            Config.SourceNumBack = 0;
+            test=1;
+         }
+         if(strncmp(argv[i+1],"152Eu",5)==0 || strncmp(argv[i+1],"Eu152",5)==0) {  // or is it 152Eu
+            Config.SourceNumCore = 1;
+            Config.SourceNumFront = 1;
+            Config.SourceNumBack = 2;
+            test=1;
+         }
+         if(test==0) {  // or is it somethimng else
+            cout << "Source not recognised!" << endl;
+            return -1;
+         }
+         i += 1;
       }
       
       // General Configuration file
       // -------------------------------------------
-
+      
 
    }
    
