@@ -110,9 +110,17 @@ void FinalPropXtalk();
 
 int main(int argc, char **argv)
 {
+   // Variables, Constants, etc
+   int i, j;
 
    // Set default and read custom options
    LoadDefaultSettings();
+   for(i=0;i<Config.Sources.size();i++) {
+      cout << "Source " << i << endl;
+      for(j=0;j<Config.Sources.at(i).size();j++) {
+         cout << "En " << j << " = " << Config.Sources.at(i).at(j) << endl;
+      } 
+   }
    if(ReadCommandLineSettings(argc, argv) < 0) {
       cout << "Failed to configure the run - exiting!" << endl;
       return -1;
@@ -124,10 +132,6 @@ int main(int argc, char **argv)
 
    // create root environment for interacting with plots etc
    App = new TApplication("Output", 0, NULL);
-
-
-   // Variables, Constants, etc
-   int i, j;
 
    // Timing
    TStopwatch StopWatch;
@@ -489,6 +493,7 @@ float CalcWaveCharge(std::vector < int >wavebuffer)
 
 
 int LoadDefaultSettings() {
+
    Config.RunCalibration = SORT_CALIB;
    Config.RunEfficiency = SORT_EFF;
    Config.RunPropCrosstalk = SORT_PROP;
@@ -510,6 +515,28 @@ int LoadDefaultSettings() {
    Config.UseAltEnergyCalibration = 0;
    Config.WaveCalibrationFile = "./WCal.txt";
    Config.HaveWaveCalibration = 0;
+   
+   float Sources[3][10] = {
+      {1173.237, 1332.501},
+      {121.7817, 1408.006, 244.6975, 344.2785, 411.116, 778.9040, 964.079, 1112.074},
+      {344.2785, 1408.006, 121.7817, 244.6975, 411.116, 778.9040, 964.079, 1112.074}
+   };
+   vector <float> SourceTemp;
+   
+   for(int i =0; i<2; i++) {
+      SourceTemp.push_back(Sources[0][i]);
+   }
+   Config.Sources.push_back(SourceTemp);
+   SourceTemp.clear();
+   for(int i =0; i<7; i++) {
+      SourceTemp.push_back(Sources[1][i]);
+   }
+   Config.Sources.push_back(SourceTemp);
+   SourceTemp.clear();
+   for(int i =0; i<7; i++) {
+      SourceTemp.push_back(Sources[2][i]);
+   }
+   Config.Sources.push_back(SourceTemp);
    return 0;
 }
 
@@ -587,8 +614,13 @@ int ReadCommandLineSettings(int argc, char **argv) {
       
       // Source specification
       // -------------------------------------------
-      
-      
+      if(strncmp(argv[i],"-s",2)==0) { // if option is Ecal file
+         if(i>=argc-1 || strncmp(argv[i+1],"-",1)==0) {  // return error if no file
+            cout << "No source specified after \"-s\" option." << endl;
+            return -1;  
+         }
+         
+      }
       
       // General Configuration file
       // -------------------------------------------

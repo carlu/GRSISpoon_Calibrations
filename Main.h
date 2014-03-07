@@ -75,6 +75,8 @@ struct RunConfig {
    bool UseAltEnergyCalibration;
    std::string WaveCalibrationFile;
    bool HaveWaveCalibration;
+   
+   std::vector< std::vector< float>> Sources;
 };
 
 // Storing run settings
