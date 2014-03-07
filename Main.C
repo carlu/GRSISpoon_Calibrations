@@ -1,7 +1,7 @@
 //To compile:
-// g++ Main.C CoincEff.C Calib.C PropXtalk.C CalibTools.C -I/home/cu/Code/TIGRESS/GRSISpoon/include --std=c++0x -o Sort /home/cu/Code/TIGRESS/GRSISpoon/libraries/TigFormat/libFormat.so /home/cu/Code/TIGRESS/GRSISpoon/libraries/libCalManager.so /home/cu/Code/TIGRESS/GRSISpoon/libraries/libRootIOManager.so -O2 `root-config --cflags --libs` -lTreePlayer -lSpectrum -lgsl -lgslcblas -g
+// g++ Main.C CoincEff.C Calib.C PropXtalk.C CalibTools.C -I$GRSISYS/include --std=c++0x -o Sort $GRSISYS/libraries/TigFormat/libFormat.so $GRSISYS/libraries/libCalManager.so $GRSISYS/libraries/libRootIOManager.so -O2 `root-config --cflags --libs` -lTreePlayer -lSpectrum -lgsl -lgslcblas -g
 //To run:
-// ./Sort -f InFile1 InFile2...
+// ./Sort -f InFile1 [InFile2...] [-e (energy Calibration File)] [-w (Wave calibration file)] [-s (Source)]
 // --------------------------------------------------------------------------------
 // ----  Sort code for processing ROOT TTrees of TTigFragments                 ----
 // ----  (as produced by GRSISPoon code from TIGRESS data)                     ----
