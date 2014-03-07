@@ -134,12 +134,9 @@ int main(int argc, char **argv)
    StopWatch.Start();
 
    // Load any extra configuration information 
-   if (USE_ALT_CALIB) {
-      //std::string CalFile = "/media/data1/Experiments/tigress/TigTest/Calibrations/Feb2014_TIG12/CombinedGainsFormatted.txt";        //"Cal_run27401_quad_w0.txt";
-      std::string CalFile = "/media/data1/Experiments/tigress/TigTest/Calibrations/Feb2014_TIG12/CombinedGains_run27495-8_List.txt";
+   if (Config.UseAltEnergyCalibration) {
       int NumCal;
-      NumCal = ReadCalibrationFile(CalFile, &EnCalibNames, &EnCalibValues);
-      //cout << "Hello " << NumCal << endl;
+      NumCal = ReadCalibrationFile(Config.EnergyCalibrationFile, &EnCalibNames, &EnCalibValues);
       cout << "Alternate energy calibratrion values: " << endl;
       for (i = 0; i < NumCal; i++) {
          cout << i;
@@ -148,12 +145,11 @@ int main(int argc, char **argv)
       }
    }
    // Load gain coefficients for waveforms
-   if(1) {
-      std::string CalFile = "/media/data1/Experiments/tigress/TigTest/Calibrations/Feb2014_TIG12/WaveGainsOut_run27498_List.txt";        //"Cal_run27401_quad_w0.txt";
+   if(Config.HaveWaveCalibration) {
       int NumCal;
-      NumCal = ReadCalibrationFile(CalFile, &WaveCalibNames, &WaveCalibValues);
+      NumCal = ReadCalibrationFile(Config.WaveCalibrationFile, &WaveCalibNames, &WaveCalibValues);
       cout << "Wave energy calibratrion values: " << endl;
-      cout << WaveCalibNames.size() << endl << WaveCalibValues.size() << endl;
+      //cout << WaveCalibNames.size() << endl << WaveCalibValues.size() << endl;
       for (i = 0; i < NumCal; i++) {
          cout << i;
          cout << ": " << WaveCalibNames.at(i);
@@ -508,9 +504,12 @@ int LoadDefaultSettings() {
    Config.WaveformSamples = WAVE_SAMPS;
    Config.WaveInitialSamples = INITIAL_SAMPS;
    Config.WaveFinalSamples = FINAL_SAMPS;
+
    
    Config.EnergyCalibrationFile = "./ECal.txt";
+   Config.UseAltEnergyCalibration = 0;
    Config.WaveCalibrationFile = "./WCal.txt";
+   Config.HaveWaveCalibration = 0;
    return 0;
 }
 
@@ -536,16 +535,17 @@ int ReadCommandLineSettings(int argc, char **argv) {
    }
    cout << endl << endl;
    
-   if(argc < 2) {
+   if(argc < 3) {
       cout << "I at least need to know which file to process!" << endl;
       return -1;
    }
    
    for(i = 0; i < argc; i++) { // loop all args 
+      cout << "i=" << i << endl;
       // Run files
       // -------------------------------------------
-      if(strncmp(argv[i],"-f",2)<1) { // if option is input file
-         if(i>=argc-1) {  // return error if no file
+      if(strncmp(argv[i],"-f",2)==0) { // if option is input file
+         if(i>=argc-1 || strncmp(argv[i+1],"-",1)==0) {  // return error if no file
             cout << "No file specified after \"-f\" option." << endl;
             return -1;  
          }
@@ -558,19 +558,37 @@ int ReadCommandLineSettings(int argc, char **argv) {
          cout << "Input files:" << endl;  
          for (j=0; j<Config.files.size(); j++) {  // print list of files back to screen
             cout << Config.files.at(j) << endl;
-         }           
+         }          
       }
+      
       // Energy Calibration file
       // -------------------------------------------
-      
-      
-      
+      if(strncmp(argv[i],"-e",2)==0) { // if option is Ecal file
+         if(i>=argc-1 || strncmp(argv[i+1],"-",1)==0) {  // return error if no file
+            cout << "No file specified after \"-e\" option." << endl;
+            return -1;  
+         }
+         Config.EnergyCalibrationFile = argv[++i]; // otherwise set filename
+         Config.UseAltEnergyCalibration = 1;
+         cout << "Energy calibration to be loaded from " << Config.EnergyCalibrationFile << endl;
+      }
       
       // Waveform Calibration file
       // -------------------------------------------
-            
+      if(strncmp(argv[i],"-w",2)==0) { // if option is Ecal file
+         if(i>=argc-1 || strncmp(argv[i+1],"-",1)==0) {  // return error if no file
+            cout << "No file specified after \"-w\" option." << endl;
+            return -1;  
+         }
+         Config.WaveCalibrationFile = argv[++i]; // otherwise set filename
+         Config.HaveWaveCalibration = 1;
+         cout << "Wave calibration to be loaded from " << Config.WaveCalibrationFile << endl;
+      }
+      
       // Source specification
       // -------------------------------------------
+      
+      
       
       // General Configuration file
       // -------------------------------------------

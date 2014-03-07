@@ -72,7 +72,9 @@ struct RunConfig {
    int WaveFinalSamples;
    
    std::string EnergyCalibrationFile;
+   bool UseAltEnergyCalibration;
    std::string WaveCalibrationFile;
+   bool HaveWaveCalibration;
 };
 
 // Storing run settings
