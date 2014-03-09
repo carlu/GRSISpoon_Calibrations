@@ -15,4 +15,4 @@ PropXtalk.C : Builds calibrated energy and fold spectra.  Performs analysis of p
 
 CalibTools.C : Helper functions for Calib.C.
 
-CalibOffline.C : Offline version of calib.C which carries out peak search and fits but uses the histograms output by Calib.C rather than building the spectra from scratch.  Uses the same functions from CalibTools.C so changes there should checked to work here too.
+CalibOffline.C : Offline version of calib.C which carries out peak search and fits but uses the histograms output by Calib.C rather than building the spectra from scratch.  Uses the same functions from CalibTools.C so changes there should checked to work here too. I am in the process of folding this functionality into the main loop rather than using a separate executable.  Once that's done I will do something similar for the efficiency function.
