@@ -4,6 +4,7 @@
 
 // Which parts of code to run:
 #define SORT_CALIB 1
+#define SORT_OFFCAL 0
 #define SORT_EFF   0
 #define SORT_WAVES 0
 #define SORT_PROP  0
@@ -70,10 +71,12 @@ struct RunConfig {  // this struct will hold all information
 
    // Which parts of code to run
    bool RunCalibration;
+   bool RunOffCal;
    bool RunEfficiency;
    bool RunPropCrosstalk;
    bool RunWaveform;
    bool RunDiffCrosstalk;
+   
    
    // What to print and how often
    bool PrintBasic;

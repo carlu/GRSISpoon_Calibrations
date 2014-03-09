@@ -272,13 +272,13 @@ int main(int argc, char **argv)
          if (MAX_EVENTS > 0 && EventCount >= MAX_EVENTS) {
             break;
          }
-         if (SORT_EFF) {
+         if (Config.RunEfficiency) {
             CoincEff(evFrags);
          }                      //passing vector of built events.
-         if (SORT_CALIB) {
+         if (Config.RunCalibration) {
             Calib(evFrags);
          }
-         if (SORT_PROP) {
+         if (Config.RunPropCrosstalk) {
             PropXtalk(evFrags);
          }
          if (DEBUG_TREE_LOOP) {
@@ -495,10 +495,12 @@ float CalcWaveCharge(std::vector < int >wavebuffer)
 int LoadDefaultSettings() {
 
    Config.RunCalibration = SORT_CALIB;
+   Config.RunOffCal = SORT_OFFCAL;
    Config.RunEfficiency = SORT_EFF;
    Config.RunPropCrosstalk = SORT_PROP;
    Config.RunWaveform = SORT_WAVES;
    Config.RunDiffCrosstalk = SORT_DIFF;
+   
    
    Config.PrintBasic = PRINT_OUTPUT;
    Config.PrintFrequency = PRINT_FREQ;
@@ -562,11 +564,13 @@ int ReadCommandLineSettings(int argc, char **argv) {
    // -n : max number of events
    
    // --cal : run calibration
+   // --calof : run calibration on spectrum file rather than fragment tree 
    // --eff : run efficiency
    // --prop: run propxtalk
    
    int i, j,n;
    bool test;
+   bool RunConfGiven=0;
    
    cout << "List of arguments (" << argc << " total)" << endl;
    for(i=0;i<argc;i++) {
@@ -651,6 +655,36 @@ int ReadCommandLineSettings(int argc, char **argv) {
          i += 1;
       }
       
+      // Run options
+      // -------------------------------------------
+      if(strncmp(argv[i],"--",2)==0) {// Long option used.
+         if(RunConfGiven==0) { // If run configuration given, clear defaults
+            Config.RunCalibration = 0;
+            Config.RunEfficiency = 0;
+            Config.RunPropCrosstalk = 0;
+            Config.RunWaveform = 0;
+            Config.RunDiffCrosstalk = 0;
+            RunConfGiven = 1;
+         }
+         // offline calibration
+         if(strncmp(argv[i],"--calof",7)==0) {
+            Config.RunOffCal = 1;
+         }
+         // calibration
+         if(strncmp(argv[i],"--cal",5)==0) {
+            Config.RunCalibration = 1;
+         }
+         // efficiency
+         if(strncmp(argv[i],"--eff",5)==0) {
+            Config.RunEfficiency = 1;
+         }
+         // proportional crosstalk
+         if(strncmp(argv[i],"--prop",6)==0) {
+            Config.RunPropCrosstalk = 1;
+         }
+      }
+      
+           
       // General Configuration file
       // -------------------------------------------
       
