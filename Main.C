@@ -136,6 +136,24 @@ int main(int argc, char **argv)
    // Timing
    TStopwatch StopWatch;
    StopWatch.Start();
+   
+   // Offline calibration here
+   //    - at this stage, all setup required for offline calibration should be complete.
+   //    - check if this is what we want to do.
+   //    - check the file list for a suitable set of spectra
+   //    - call the offline calibration function
+   //    - return from here rather than running the TChain stuff below.
+   if(Config.RunOffCal== 1) {
+      for(i=0;i<Config.files.size();i++) {
+         if(strncmp(Config.files.at(i).c_str(),"CalibOut",8)==0) {
+            cout << "We have a calib file!" << endl;
+            //CalibOffline()
+         }
+      }
+   
+      return 0;
+   }
+   // ---- End of offline calibration -----
 
    // Load any alternate calibration information 
    if (Config.HaveAltEnergyCalibration) {
@@ -329,6 +347,8 @@ void IncSpectra()
 {                               // For testing only
    //hTestSpectrum->SetBinContent(1,1000);
 }
+
+
 
 // Function to parse Mnemonic name:
 void ParseMnemonic(std::string * name, Mnemonic * mnemonic)

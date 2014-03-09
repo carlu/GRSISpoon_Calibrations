@@ -40,15 +40,7 @@ using namespace std;
 
 //Functions
 // Convert crystal Name/number
-int Col2Num(char Colour);
-char Num2Col(int Crystal);
 
-// Sources
-float Sources[3][10] = {
-   {1173.237, 1332.501},
-   {121.7817, 1408.006, 244.6975, 344.2785, 411.116, 778.9040, 964.079, 1112.074},
-   {344.2785, 1408.006, 121.7817, 244.6975, 411.116, 778.9040, 964.079, 1112.074}
-};
 
 // Fitting stuff
 std::string FitOptions = ("RQE");
@@ -63,7 +55,7 @@ TApplication *App;              // Pointer to root environment for plotting etc
 
 TCanvas *cCalib1, *cCalib1a, *cCalib2;  //, *cCalib3;
 
-int main(int argc, char **argv)
+int CalibOffline(TFile *file)
 {
 
    // Variables
@@ -95,7 +87,6 @@ int main(int argc, char **argv)
    gStyle->SetOptStat("iouRMen");
 
    // Set up plots
-   App = new TApplication("Output", 0, NULL);   // creates root environment for interacting with plots etc
    if (PLOT_FITS || PLOT_CALIB || PLOT_CALIB_SUMMARY || PLOT_RESIDUAL) {
       cCalib1 = new TCanvas("cCalib1", "Fit", 800, 600);        // Canvas for spectrum plots
       //cCalib1->Divide(1, 3);
@@ -107,18 +98,9 @@ int main(int argc, char **argv)
       cCalib2->Divide(2, 3);
       cCalib2->Update();
 
-      //cCalib3 = new TCanvas("cCalib3", "Calibration Residual", 800, 600);  // Canvas for residual plit
-      //cCalib3->Update();   
-
       cCalib1->cd();
    }
    // Files
-   if (argc < 2) {
-      cout << "Filename!" << endl;
-      return 0;
-   }
-
-   TFile *file = TFile::Open(argv[1]);
    if (file->IsOpen()) {
       cout << argv[1] << " opened!" << endl;
    } else {
