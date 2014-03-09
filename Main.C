@@ -137,7 +137,7 @@ int main(int argc, char **argv)
    TStopwatch StopWatch;
    StopWatch.Start();
 
-   // Load any extra configuration information 
+   // Load any alternate calibration information 
    if (Config.HaveAltEnergyCalibration) {
       int NumCal;
       NumCal = ReadCalibrationFile(Config.EnergyCalibrationFile, &EnCalibNames, &EnCalibValues);
