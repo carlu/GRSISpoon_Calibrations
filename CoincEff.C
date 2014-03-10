@@ -22,6 +22,7 @@ using namespace std;
 #include <TH1F.h>
 #include <TH2F.h>
 #include <TApplication.h>
+#include <TCanvas.h>
 
 // TriScope libraries
 #include "TTigFragment.h"

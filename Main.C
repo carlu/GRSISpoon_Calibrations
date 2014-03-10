@@ -69,6 +69,9 @@ TStopwatch watch;
 
 TApplication *App;              // Pointer to root environment for plotting etc
 
+// canvases for calibration.  To be shared between Calib() and CalibOffline() functions
+TCanvas *cCalib1, *cCalib1a, *cCalib2, *cWave1, *ctemp;
+
 // Rand for gain matching
 static TRandom3 rand1;
 
@@ -104,6 +107,8 @@ void Calib(std::vector < TTigFragment > &ev);
 void InitCalib();
 void FinalCalib();
 
+int CalibOffline(std::string filename);
+
 void PropXtalk(std::vector < TTigFragment > &ev);
 void InitPropXtalk();
 void FinalPropXtalk();
@@ -138,6 +143,22 @@ int main(int argc, char **argv)
    StopWatch.Start();
    
    // Offline calibration here
+   // need to initialise TCanvas's for Calib and CalibOffline here:
+   if(Config.RunOffCal == 1 || Config.RunCalibration == 1) {
+      // Condition here to test if plotting will be used
+      
+      // Initialise TCanvas's
+      cCalib1 = new TCanvas("cCalib1", "Fit", 800, 600);        // Canvas for spectrum plots
+
+      cCalib1a = new TCanvas("cCalib1a", "Calibration", 800, 600);      // Canvas for spectrum plots
+      cCalib1a->Divide(1, 2);
+
+      cCalib2 = new TCanvas("cCalib2", "Calibration Summary", 800, 600);        // Canvas for gain plots and histograms
+      cCalib2->Divide(2, 3);
+      cCalib2->Update(); 
+
+      cCalib1->cd();
+   }
    //    - at this stage, all setup required for offline calibration should be complete.
    //    - check if this is what we want to do.
    //    - check the file list for a suitable set of spectra
@@ -146,8 +167,8 @@ int main(int argc, char **argv)
    if(Config.RunOffCal== 1) {
       for(i=0;i<Config.files.size();i++) {
          if(strncmp(Config.files.at(i).c_str(),"CalibOut",8)==0) {
-            cout << "We have a calib file!" << endl;
-            //CalibOffline()
+            cout << "Attempting offline calibration on histograms in file: " << Config.files.at(i) << endl;
+            CalibOffline(Config.files.at(i));
          }
       }
    

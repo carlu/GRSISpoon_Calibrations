@@ -36,7 +36,6 @@ using namespace std;
 #include "Calib.h"
 #include "Main.h"
 #include "CalibTools.h"
-//#include "FitGammaSpectrumWave.h"
 
 //Functions
 // Convert crystal Name/number
@@ -51,11 +50,11 @@ float InitialSigma = 50.0;
 float InitialGain = 0.16;
 
 
-TApplication *App;              // Pointer to root environment for plotting etc
+extern TApplication *App;              // Pointer to root environment for plotting etc
 
-TCanvas *cCalib1, *cCalib1a, *cCalib2;  //, *cCalib3;
+extern TCanvas *cCalib1, *cCalib1a, *cCalib2, *cWave1, *ctemp;
 
-int CalibOffline(TFile *file)
+int CalibOffline(std::string filename)
 {
 
    // Variables
@@ -83,28 +82,13 @@ int CalibOffline(TFile *file)
    int NumFits;
 
    float CalibEn = 0.0;
-
-   gStyle->SetOptStat("iouRMen");
-
-   // Set up plots
-   if (PLOT_FITS || PLOT_CALIB || PLOT_CALIB_SUMMARY || PLOT_RESIDUAL) {
-      cCalib1 = new TCanvas("cCalib1", "Fit", 800, 600);        // Canvas for spectrum plots
-      //cCalib1->Divide(1, 3);
-
-      cCalib1a = new TCanvas("cCalib1a", "Calibration", 800, 600);      // Canvas for spectrum plots
-      cCalib1a->Divide(1, 2);
-
-      cCalib2 = new TCanvas("cCalib2", "Calibration Summary", 800, 600);        // Canvas for gain plots and histograms
-      cCalib2->Divide(2, 3);
-      cCalib2->Update();
-
-      cCalib1->cd();
-   }
-   // Files
+   
+   // File
+   TFile *file = TFile::Open(filename.c_str());
    if (file->IsOpen()) {
-      cout << argv[1] << " opened!" << endl;
+      cout << filename << " opened!" << endl;
    } else {
-      cout << "Failed to open " << argv[1] << "!" << endl;
+      cout << "Failed to open " << filename << "!" << endl;
       return 0;
    }
 
@@ -406,35 +390,3 @@ int CalibOffline(TFile *file)
 
 }
 
-
-int Col2Num(char Colour)
-{
-   switch (Colour) {
-   case 'B':
-      return 0;
-   case 'G':
-      return 1;
-   case 'R':
-      return 2;
-   case 'W':
-      return 3;
-   default:
-      return -1;
-   }
-}
-
-char Num2Col(int Crystal)
-{
-   switch (Crystal) {
-   case 0:
-      return 'B';
-   case 1:
-      return 'G';
-   case 2:
-      return 'R';
-   case 3:
-      return 'W';
-   default:
-      return 'X';
-   }
-}

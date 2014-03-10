@@ -72,7 +72,7 @@ void ResetTempSpectra();
    {344.2785, 1408.006, 121.7817, 244.6975, 411.116, 778.9040, 964.079, 1112.074}
 };*/
 
-TCanvas *cCalib1, *cCalib1a, *cCalib2, *cWave1, *ctemp;
+extern TCanvas *cCalib1, *cCalib1a, *cCalib2, *cWave1, *ctemp;
 
 void InitCalib()
 {
@@ -157,23 +157,6 @@ void InitCalib()
    cout << "Searching for back seg peaks: " << Config.Sources[Config.SourceNumBack][0] << "kev and " << Config.Sources[Config.SourceNumBack][1]
        << "keV (Ratio " << Config.Sources[Config.SourceNumBack][0] / Config.Sources[Config.SourceNumBack][1] << ")" << endl;
 
-
-   if (PLOT_FITS || PLOT_CALIB || PLOT_CALIB_SUMMARY || PLOT_RESIDUAL) {
-      cCalib1 = new TCanvas("cCalib1", "Fit", 800, 600);        // Canvas for spectrum plots
-      //cCalib1->Divide(1, 3);
-
-      cCalib1a = new TCanvas("cCalib1a", "Calibration", 800, 600);      // Canvas for spectrum plots
-      cCalib1a->Divide(1, 2);
-
-      cCalib2 = new TCanvas("cCalib2", "Calibration Summary", 800, 600);        // Canvas for gain plots and histograms
-      cCalib2->Divide(2, 3);
-      cCalib2->Update();
-
-      //cCalib3 = new TCanvas("cCalib3", "Calibration Residual", 800, 600);  // Canvas for residual plit
-      //cCalib3->Update();   
-
-      cCalib1->cd();
-   }
    if (PLOT_WAVE) {
       cWave1 = new TCanvas();
    }

@@ -116,7 +116,8 @@ extern vector<vector<float>> EnCalibValues;
 extern vector < string > WaveCalibNames;
 extern vector < vector < float >> WaveCalibValues;
 
-//extern TCanvas *cWave1, *ctemp;
+// tCanvas's for Calib() and CalibOffline()
+extern TCanvas *cCalib1, *cCalib1a, *cCalib2, *cWave1, *ctemp;
 
 // --------------------------------------------------------
 // Functions:
