@@ -1,11 +1,24 @@
-GRSISpoon_Sort
-==============
+GRSISpoon_Calibrations
+======================
 
 Code to sort the ROOT tree of TTigFragments, as produced by GRSISpoon for the TIGRESS/GRIFFIN collaboration.
 
-Files and their jobs:
+The idea is to provide a simple means of performing all initial calibrations for a TIGRESS or GRIFFIN experiment.  So far functions have been implemented to provide Energy, Efficiency and Crosstalk calibrations for the HPGe gamma-ray detectors, but additional functionality for ancillary detectors such as SHARC is also planned.  
 
-Main.C : Builds TChain of multiple input files.  Builds index of assembled events if one is not already present in the file. Calls initialisation functions for other parts of the code.  Loops all built events passing each to any other parts of the code which active.  Calls finalisation functions.  Also contains some helper functions used elesewhere.
+To compile
+----------
+
+g++ Main.C CoincEff.C Calib.C PropXtalk.C CalibTools.C CalibOffline.C -I$GRSISYS/include --std=c++0x -o Sort $GRSISYS/libraries/TigFormat/libFormat.so $GRSISYS/libraries/libCalManager.so $GRSISYS/libraries/libRootIOManager.so -O2 `root-config --cflags --libs` -lTreePlayer -lSpectrum -lgsl -lgslcblas -g
+
+To run
+------
+
+./Sort -f InFile1 [InFile2...] [-e (energy Calibration File)] [-w (Wave calibration file)] [-s (Source)]
+
+Files and their jobs
+--------------------
+
+Main.C : Builds TChain of multiple input files.  Builds index of assembled events if one is not already present in the file. Calls initialisation functions for other parts of the code.  Loops all built events passing each to any other parts of the code which active.  Calls finalisation functions.  Also contains some helper functions used elsewhere.
 
 Calib.C : Builds charge spectra and hit patterns.  Finds and identifies peaks in spectra, fits the peaks and performs a calibration.  Also fits core spectra at regular intervals through the run and keeps a record of results to check for gain drift.
 
