@@ -94,6 +94,7 @@ vector < vector < float >> WaveCalibValues;
 // Functions
 int LoadDefaultSettings();
 int ReadCommandLineSettings(int argc, char **argv);
+void PrintHelp();
 
 void SortTree(const char *fn);
 void IncSpectra();
@@ -120,12 +121,12 @@ int main(int argc, char **argv)
 
    // Set default and read custom options
    LoadDefaultSettings();
-   for(i=0;i<Config.Sources.size();i++) {
+   /*for(i=0;i<Config.Sources.size();i++) {
       cout << "Source " << i << endl;
       for(j=0;j<Config.Sources.at(i).size();j++) {
          cout << "En " << j << " = " << Config.Sources.at(i).at(j) << endl;
       } 
-   }
+   }*/
    if(ReadCommandLineSettings(argc, argv) < 0) {
       cout << "Failed to configure the run - exiting!" << endl;
       return -1;
@@ -620,12 +621,18 @@ int ReadCommandLineSettings(int argc, char **argv) {
    cout << endl << endl;
    
    if(argc < 3) {
-      cout << "I at least need to know which file to process!" << endl;
+      cout << "No input file provided!" << endl << endl;
+      PrintHelp();
       return -1;
    }
    
    for(i = 0; i < argc; i++) { // loop all args 
       cout << "i=" << i << endl;
+      // Print help information
+      if(strncmp(argv[i],"-h",2)==0) {
+         PrintHelp();
+         return -1;
+      }
       // Run files
       // -------------------------------------------
       if(strncmp(argv[i],"-f",2)==0) { // if option is input file
@@ -741,7 +748,17 @@ int ReadOptionsFile(std::string filename ) {
    return 0;
 }
 
-
+void PrintHelp() {
+   cout << "You seem confused, perhaps this will help.." << endl << endl;
+   cout << "To run:" << endl << "./Sort -f InFile1 [InFile2...] " << endl;
+   cout << "Options: " << endl;
+   cout << "[-e (energy Calibration File)] - select alternate energy calibration file.  In the absense of an entry in this file, all channels will default to using the calibrated energy from the input TTree." << endl;
+   cout << "[-w (Wave calibration file)] - select calibration for energy derived from waveforms.  No defaults. Required for succesfully running XTalk analysis." << endl;
+   cout << "[-s (Source e.g. 60Co)] - select source to be used for calibration." << endl;
+   cout << "[--cal/--eff/--prop] - run the calibration, efficiency, or proportianal crosstalk parts of the code on a fragment tree input." << endl;
+   cout << "[--calof] - run offline calibration on a histogram file (CalibOutXXXX.root).  This option overrides all other run options." << endl; 
+   cout << endl;
+}
 
 
 

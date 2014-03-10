@@ -77,7 +77,6 @@ struct RunConfig {  // this struct will hold all information
    bool RunWaveform;
    bool RunDiffCrosstalk;
    
-   
    // What to print and how often
    bool PrintBasic;
    int PrintFrequency;
