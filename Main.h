@@ -102,6 +102,11 @@ struct RunConfig {  // this struct will hold all information
    int SourceNumFront;
    int SourceNumBack;
    
+   // Plotting
+   bool PlotFits;
+   bool PlotCalib;
+   bool PlotCalibSummary;
+   
    
 };
 

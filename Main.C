@@ -1,5 +1,5 @@
 //To compile:
-// g++ Main.C CoincEff.C Calib.C PropXtalk.C CalibTools.C -I$GRSISYS/include --std=c++0x -o Sort $GRSISYS/libraries/TigFormat/libFormat.so $GRSISYS/libraries/libCalManager.so $GRSISYS/libraries/libRootIOManager.so -O2 `root-config --cflags --libs` -lTreePlayer -lSpectrum -lgsl -lgslcblas -g
+// g++ Main.C CoincEff.C Calib.C PropXtalk.C CalibTools.C CalibOffline.C -I$GRSISYS/include --std=c++0x -o Sort $GRSISYS/libraries/TigFormat/libFormat.so $GRSISYS/libraries/libCalManager.so $GRSISYS/libraries/libRootIOManager.so -O2 `root-config --cflags --libs` -lTreePlayer -lSpectrum -lgsl -lgslcblas -g
 //To run:
 // ./Sort -f InFile1 [InFile2...] [-e (energy Calibration File)] [-w (Wave calibration file)] [-s (Source)]
 // --------------------------------------------------------------------------------
@@ -118,15 +118,11 @@ int main(int argc, char **argv)
 {
    // Variables, Constants, etc
    int i, j;
+   unsigned int ChainEvent, TreeEvent;
+
 
    // Set default and read custom options
    LoadDefaultSettings();
-   /*for(i=0;i<Config.Sources.size();i++) {
-      cout << "Source " << i << endl;
-      for(j=0;j<Config.Sources.at(i).size();j++) {
-         cout << "En " << j << " = " << Config.Sources.at(i).at(j) << endl;
-      } 
-   }*/
    if(ReadCommandLineSettings(argc, argv) < 0) {
       cout << "Failed to configure the run - exiting!" << endl;
       return -1;
@@ -238,16 +234,16 @@ int main(int argc, char **argv)
    int NumTreeEntries = -1;
    int NumTreeEvents = -1;
 
-   for (i = 0; i < NumChainEntries; i++) {
+   for (ChainEvent = 0; ChainEvent < NumChainEntries; ChainEvent++) {
 
       //cout << "HERE!" << endl;
 
-      Chain->LoadTree(i);
+      Chain->LoadTree(ChainEvent);
       TreeNum = Chain->GetTreeNumber();
 
       if (TreeNum != LastTreeNum) {
          cout << "Switching to TreeNum " << TreeNum + 1 << " from " << LastTreeNum +
-             1 << " at chain entry " << i << endl;
+             1 << " at chain entry " << ChainEvent << endl;
          LastTreeNum = TreeNum;
       } else {
          continue;              // This works in conjuncion with the line below "i += (NumTreeEntries - 10);"
@@ -279,19 +275,15 @@ int main(int argc, char **argv)
 
       // cout << "HERE!!!! " << NumChainEntries << " " << NumTreeEntries << " " << NumTreeEvents << endl;
 
-      for (int j = 0; j < NumTreeEvents; j++) {
+      for (int TreeEvent = 0; TreeEvent < NumTreeEvents; TreeEvent++) {
          evFrags.clear();
          int FragNum = 1;
 
-         //cout << endl << "------------------------------" << endl;
-         //cout << "FragNum: " << FragNum << " j: " << j << endl;
-
-
-         while (Tree->GetEntryWithIndex(j, FragNum++) != -1) {
+         while (Tree->GetEntryWithIndex(TreeEvent, FragNum++) != -1) {
             evFrags.push_back(*pFrag);
             FragCount++;
             if (DEBUG_TREE_LOOP) {
-               cout << "FragNum: " << FragNum << " j: " << j;
+               cout << "FragNum: " << FragNum << " j: " << TreeEvent;
             }
          }
          if (DEBUG_TREE_LOOP) {
@@ -307,9 +299,9 @@ int main(int argc, char **argv)
             EventCount++;
          }
 
-         //cout << "HERE!!!!!!!!!!" << endl;
          // do something with the evFrag vector (contains a built event)... ProcessEvent(evFrags); 
-         if (MAX_EVENTS > 0 && EventCount >= MAX_EVENTS) {
+         if (Config.EventLimit > 0 && EventCount >= Config.EventLimit) {
+            cout << "Maximum number of events (" << Config.EventLimit << ") reached.  Terminating..." << endl;
             break;
          }
          if (Config.RunEfficiency) {
@@ -322,10 +314,10 @@ int main(int argc, char **argv)
             PropXtalk(evFrags);
          }
          if (DEBUG_TREE_LOOP) {
-            cout << "ev Num =  " << j << ", ev.size() = " << evFrags.size() << endl;
+            cout << "ev Num =  " << TreeEvent << ", ev.size() = " << evFrags.size() << endl;
          }
          // Print info to stdout
-         if (PRINT_OUTPUT && (j % PRINT_FREQ) == 0) {
+         if (PRINT_OUTPUT && (TreeEvent % PRINT_FREQ) == 0) {
             cout << "----------------------------------------------------------" << endl;
             cout << "  Tree  " << TreeNum + 1 << " / " << nTrees << endl;
             cout << "  Event " << EventCount +
@@ -339,7 +331,8 @@ int main(int argc, char **argv)
 
       }
 
-      if (MAX_EVENTS > 0 && EventCount >= MAX_EVENTS) {
+      if (Config.EventLimit > 0 && EventCount >= Config.EventLimit) {
+         cout << "Maximum number of events (" << Config.EventLimit << ") reached.  Terminating..." << endl;
          break;
       }
 
@@ -586,6 +579,9 @@ int LoadDefaultSettings() {
    Config.SourceNumFront = SOURCE_NUM_FRONT;
    Config.SourceNumBack = SOURCE_NUM_BACK;
    
+   Config.PlotFits = 0;
+   Config.PlotCalib = 0;
+   Config.PlotCalibSummary = 0;
    
    return 0;
    
@@ -614,11 +610,11 @@ int ReadCommandLineSettings(int argc, char **argv) {
    bool test;
    bool RunConfGiven=0;
    
-   cout << "List of arguments (" << argc << " total)" << endl;
+   /*cout << "List of arguments (" << argc << " total)" << endl;
    for(i=0;i<argc;i++) {
       cout << i << ": " << argv[i] << "\t";
    }
-   cout << endl << endl;
+   cout << endl << endl;*/
    
    if(argc < 3) {
       cout << "No input file provided!" << endl << endl;
@@ -703,6 +699,19 @@ int ReadCommandLineSettings(int argc, char **argv) {
          i += 1;
       }
       
+      // Maximum number of events to process
+      // -------------------------------------------
+      if(strncmp(argv[i],"-n",2)==0) { 
+         if(i>=argc-1 || strncmp(argv[i+1],"-",1)==0) {  // return error if no source given
+            cout << "No number specified after \"-n\" option. (maximum number of events)" << endl;
+            return -1;  
+         }
+         Config.EventLimit = atoi(argv[++i]);
+         if(Config.EventLimit < 0) {
+            cout << "Negative number of events specified.  What does that even mean?" << endl;
+            return -1;
+         }
+      }
       // Run options
       // -------------------------------------------
       if(strncmp(argv[i],"--",2)==0) {// Long option used.
@@ -755,6 +764,7 @@ void PrintHelp() {
    cout << "[-e (energy Calibration File)] - select alternate energy calibration file.  In the absense of an entry in this file, all channels will default to using the calibrated energy from the input TTree." << endl;
    cout << "[-w (Wave calibration file)] - select calibration for energy derived from waveforms.  No defaults. Required for succesfully running XTalk analysis." << endl;
    cout << "[-s (Source e.g. 60Co)] - select source to be used for calibration." << endl;
+   cout << "[-n N] - limit the number of events processed to N" << endl;
    cout << "[--cal/--eff/--prop] - run the calibration, efficiency, or proportianal crosstalk parts of the code on a fragment tree input." << endl;
    cout << "[--calof] - run offline calibration on a histogram file (CalibOutXXXX.root).  This option overrides all other run options." << endl; 
    cout << endl;
