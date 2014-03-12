@@ -32,6 +32,7 @@ using namespace std;
 #include <time.h>
 #include <math.h>
 #include <fstream>
+#include <algorithm>
 
 // ROOT libraries:
 #include <TFile.h>
@@ -691,13 +692,15 @@ int ReadCommandLineSettings(int argc, char **argv) {
             return -1;  
          }
          test=0;
-         if(strncmp(argv[i+1],"60Co",4)==0 || strncmp(argv[i+1],"Co60",4)==0) {  // is it 60Co
+         if(strncmp(argv[i+1],"60Co",4)==0 || strncmp(argv[i+1],"Co60",4)==0 ||
+              strncmp(argv[i+1],"60co",4)==0 || strncmp(argv[i+1],"co60",4)==0 ) {  // is it 60Co
             Config.SourceNumCore = 0;
             Config.SourceNumFront = 0;
             Config.SourceNumBack = 0;
             test=1;
          }
-         if(strncmp(argv[i+1],"152Eu",5)==0 || strncmp(argv[i+1],"Eu152",5)==0) {  // or is it 152Eu
+         if(strncmp(argv[i+1],"152Eu",5)==0 || strncmp(argv[i+1],"Eu152",5)==0 ||
+              strncmp(argv[i+1],"152eu",5)==0 || strncmp(argv[i+1],"eu152",5)==0) {  // or is it 152Eu
             Config.SourceNumCore = 1;
             Config.SourceNumFront = 1;
             Config.SourceNumBack = 2;

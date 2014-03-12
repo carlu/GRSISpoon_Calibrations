@@ -152,7 +152,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
          // Now fit the first two lines and get approx gain             //
          //-------------------------------------------------------------//
 
-         if (VERBOSE) {
+         if (Config.PrintVerbose) {
             cout << "Peaks identified, commencing fit..." << endl << endl;
          }
 
@@ -347,7 +347,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
             Fit->QuadGainFit[3] = CalibFitQuad->GetChisquare() / CalibFitQuad->GetNDF();
          }
 
-         if (VERBOSE) {
+         if (Config.PrintVerbose) {
             cout << endl << "Two point solution:" << endl;
             cout << "Offset = " << O << " +/- " << dO << "\tGain = " << G << " +/- " << dG << endl << endl;
             cout << "Linear fit: " << endl;
