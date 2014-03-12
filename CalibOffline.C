@@ -140,8 +140,7 @@ int CalibOffline(std::string filename)
    // If we're calibrating the FPGA energy...
    if (Config.CalEnergy) {
       // Loop all gamma detectors 
-      //for (Clover = 0; Clover < CLOVERS; Clover++) {
-      for (Clover = 11; Clover < 12; Clover++) {
+      for (Clover = 0; Clover < CLOVERS; Clover++) {
          for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
             for (Seg = 0; Seg <= SEGS + 1; Seg++) {
 
