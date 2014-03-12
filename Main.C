@@ -786,6 +786,7 @@ void PrintHelp() {
    cout << "[-w (Wave calibration file)] - select calibration for energy derived from waveforms.  No defaults. Required for succesfully running XTalk analysis." << endl;
    cout << "[-s (Source e.g. 60Co)] - select source to be used for calibration." << endl;
    cout << "[-n N] - limit the number of events processed to N" << endl;
+   cout << "[-o (path)] - save all output to (path) rather than ./" << endl;
    cout << "[--cal/--eff/--prop] - run the calibration, efficiency, or proportianal crosstalk parts of the code on a fragment tree input." << endl;
    cout << "[--calof] - run offline calibration on a histogram file (CalibOutXXXX.root).  This option overrides all other run options." << endl; 
    cout << endl;
