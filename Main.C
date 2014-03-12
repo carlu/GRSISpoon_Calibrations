@@ -787,7 +787,7 @@ void PrintHelp() {
    cout << "Options: " << endl;
    cout << "[-e (energy Calibration File)] - select alternate energy calibration file.  In the absense of an entry in this file, all channels will default to using the calibrated energy from the input TTree." << endl;
    cout << "[-w (Wave calibration file)] - select calibration for energy derived from waveforms.  No defaults. Required for succesfully running XTalk analysis." << endl;
-   cout << "[-s (Source e.g. 60Co)] - select source to be used for calibration." << endl;
+   cout << "[-s (Source e.g. 60Co, 152eu)] - select source to be used for calibration." << endl;
    cout << "[-n N] - limit the number of events processed to N" << endl;
    cout << "[-o (path)] - save all output to (path) rather than ./" << endl;
    cout << "[--cal/--eff/--prop] - run the calibration, efficiency, or proportianal crosstalk parts of the code on a fragment tree input." << endl;
