@@ -79,13 +79,14 @@ void InitCalib()
 
    char Colours[] = "BGRW";
 
-   // Initialise output file                                       
-   outfile = new TFile("CalibOut.root", "RECREATE");
+   // Initialise output file                
+   std::string tempstring = Config.OutPath + Config.CalOut;                       
+   outfile = new TFile(tempstring.c_str(), "RECREATE");
 
-   dCharge = outfile->mkdir("Charge");
+   dCharge     = outfile->mkdir("Charge");
    dWaveCharge = outfile->mkdir("WaveCharge");
-   dTemp = outfile->mkdir("Temp");
-   dOther = outfile->mkdir("Other");
+   dTemp       = outfile->mkdir("Temp");
+   dOther      = outfile->mkdir("Other");
 
    char name[512], title[512];
    int Clover, Crystal, Seg, NumBins;
@@ -239,7 +240,7 @@ void Calib(std::vector < TTigFragment > &ev)
 
          // Calcualte wave energy
          Length = ev[i].wavebuffer.size();
-         if (Length > INITIAL_SAMPS + FINAL_SAMPS) {
+         if (Length > Config.WaveInitialSamples + Config.WaveFinalSamples) {
             //cout << name;// << endl;
             //cout << " samples: " << Length << endl;  
             WaveCharge = CalcWaveCharge(ev[i].wavebuffer);
@@ -427,7 +428,25 @@ void FinalCalib()
        new TH1F("Quadratic Histogram", "Histogram of Quadratic component of all fitted channels", 512, -0.000001,
                 0.000001);
    QuadHist->GetXaxis()->SetTitle("keV/ch^2");
-
+   
+   std::string tempstring; 
+   if (Config.CalEnergy) {
+      tempstring = Config.OutPath + "GainsOut.txt";
+      GainOut.open(tempstring.c_str());
+      if (Config.CalReport) {
+         tempstring = Config.OutPath + "CalibrationReport.txt";
+         ReportOut.open(tempstring.c_str());
+      }
+   }
+   if (Config.CalWave) {
+      tempstring = Config.OutPath + "WaveGainsOut.txt";
+      WaveOut.open(tempstring.c_str());
+      if (Config.CalReport) {
+         tempstring = Config.OutPath + "WaveCalibrationReport.txt";
+         WaveReportOut.open(tempstring.c_str());
+      }
+   }
+   
    // Write spectra to file
    outfile->cd();
    for (Clover = 0; Clover < CLOVERS; Clover++) {
@@ -447,27 +466,9 @@ void FinalCalib()
    }
    hMidasTime->Write();
 
-   // Files for gain/fit output
-   if (OUTPUT_GAIN) {
-      if(FIT_EN) {
-         GainOut.open("GainsOut.txt");
-      }
-      if (FIT_WAVE_EN) {
-         WaveOut.open("WaveGainsOut.txt");
-      }
-   }
-   if (OUTPUT_REPORT) {
-      if(FIT_EN) {
-         ReportOut.open("CalibrationReport.txt");
-      }
-      if (FIT_WAVE_EN) {
-         WaveReportOut.open("WaveCalibrationReport.txt");
-      }
-   }
-
    // Fit full-run energy spectra
-   if (FIT_FINAL_SPECTRA && FIT_EN) {
-      if (VERBOSE) {
+   if (Config.CalEnergy) {
+      if (Config.PrintVerbose) {
          cout << endl << "Now fitting energy spectra from whole run..." << endl;
       }
 
@@ -576,7 +577,7 @@ void FinalCalib()
                         GainOut << HistName << " Fail!!!" << endl;
                      }
                   }
-                  if (OUTPUT_REPORT) {
+                  if (Config.CalReport) {
                      if (FitSuccess > 0) {
                         CalibrationReport(&Fit, ReportOut, HistName, Settings);
                      } else {
@@ -594,8 +595,8 @@ void FinalCalib()
       
 
       // Now run the fit for the waveform spectrum if required
-      if (FIT_WAVE_EN) {
-         if (VERBOSE) {
+      if (Config.CalWave) {
+         if (Config.PrintVerbose) {
             cout << "----------------------------------" << endl << "Now fitting Wave Energy Spectra" << endl << "----------------------------------"
                 << endl;
          }
@@ -606,21 +607,31 @@ void FinalCalib()
          
       }
 
-
-      if (OUTPUT_GAIN) {
-         if(FIT_EN) {
-            GainOut.close();
-         }
-         if (FIT_WAVE_EN) {
-            WaveOut.close();
-         }
-      }
-      if (OUTPUT_REPORT) {
-         if(FIT_EN) {
+      if (Config.CalEnergy) {
+         GainOut.close();
+         if (Config.CalReport) {
             ReportOut.close();
          }
-         if (FIT_WAVE_EN) {
+      }
+      if (Config.CalWave) {
+         WaveOut.close();
+         if (Config.CalReport) {
             WaveReportOut.close();
+         }
+      }
+      
+      // Write spectra to file again if fits are to be saved
+      if(Config.WriteFits) {
+         outfile->cd();
+         for (Clover = 0; Clover < CLOVERS; Clover++) {
+            for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
+               for (Seg = 0; Seg <= SEGS + 1; Seg++) {
+                  dCharge->cd();
+                  hCharge[Clover][Crystal][Seg]->Write();
+                  dWaveCharge->cd();
+                  hWaveCharge[Clover][Crystal][Seg]->Write();
+               }
+            }
          }
       }
 

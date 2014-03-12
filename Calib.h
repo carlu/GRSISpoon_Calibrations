@@ -8,10 +8,7 @@
 // General options
 #define NOTIFY_TIME_BIN 1       // print to stdout when spectra are reset
 #define VERBOSE 1               // print lots of info on peak search and fitting
-#define OUTPUT_GAIN 1           // write full-run gains to file
-#define OUTPUT_REPORT 1         // write full report including all fits and gains
-#define DEBUG 0                 // PRint Debugging messages to screen
-#define FIT_EN 1                //
+#define DEBUG 0                 // PRint Debugging messages to screen          
 
 // Plotting
 #define PLOT_FITS 0             // plot fits, all chans plotted if below items = 0
@@ -32,7 +29,6 @@
 #define CHARGE_MAX 1500000
 
 // Use waveform energy
-#define FIT_WAVE_EN 1
 #define PLOT_WAVE 0
 #define WAVE_CHARGE_MAX 16384
 

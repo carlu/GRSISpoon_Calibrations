@@ -451,8 +451,9 @@ void InitPropXtalk()
    char name[512], title[512];
    int Clover, Crystal, Seg, Fold;
 
-   // Initialise output file                                       
-   outfile = new TFile("PropXtalkOut.root", "RECREATE");
+   // Initialise output file   
+   std::string tempstring = Config.OutPath + Config.PropOut;                                    
+   outfile = new TFile(tempstring.c_str(), "RECREATE");
    dRaw = outfile->mkdir("Raw");
    dSum = outfile->mkdir("Sum");
    dAddBack = outfile->mkdir("Add-Back");
@@ -633,7 +634,8 @@ void FinalPropXtalk()
 
    // Write crosstalk values out to text file and fill 2d hist
    ofstream XTalkOut;
-   XTalkOut.open("XTalkValuesOut.txt");
+   std::string tempstring = Config.OutPath + Config.PropTxtOut;
+   XTalkOut.open(tempstring.c_str());
    for (Clover = 0; Clover < CLOVERS; Clover++) {
       XTalkOut << endl << "------------------" << endl << " Clover " << Clover +
           1 << endl << "------------------" << endl << endl;

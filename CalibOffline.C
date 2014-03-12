@@ -91,17 +91,32 @@ int CalibOffline(std::string filename)
       cout << "Failed to open " << filename << "!" << endl;
       return 0;
    }
+   
+   std::string tempstring; 
+   TFile *outfile;
+   if(Config.WriteFits) {
+      tempstring = Config.OutPath + Config.CalOfOut;
+      outfile = TFile::Open(tempstring.c_str(),"RECREATE");
+   }
 
-   if (OUTPUT_GAIN) {
-      GainOut.open("GainsOut.txt");
+   
+   if (Config.CalEnergy) {
+      tempstring = Config.OutPath + "GainsOut.txt";
+      GainOut.open(tempstring.c_str());
+      if (Config.CalReport) {
+         tempstring = Config.OutPath + "CalibrationReport.txt";
+         ReportOut.open(tempstring.c_str());
+      }
    }
-   if (OUTPUT_REPORT) {
-      ReportOut.open("CalibrationReport.txt");
+   if (Config.CalWave) {
+      tempstring = Config.OutPath + "WaveGainsOut.txt";
+      WaveOut.open(tempstring.c_str());
+      if (Config.CalReport) {
+         tempstring = Config.OutPath + "WaveCalibrationReport.txt";
+         WaveReportOut.open(tempstring.c_str());
+      }
    }
-   if (FIT_WAVE_EN) {
-      WaveOut.open("WaveGainsOut.txt");
-      WaveReportOut.open("WaveCalibrationReport.txt");
-   }
+   
    // Histograms
    GainPlot = new TH1F("Gains", "Gain of all fitted channels", 1001, -0.5, 1000.5);
    GainPlot->GetYaxis()->SetTitle("keV/ch");
@@ -123,7 +138,7 @@ int CalibOffline(std::string filename)
    QuadHist->GetXaxis()->SetTitle("keV/ch^2");
 
    // If we're calibrating the FPGA energy...
-   if (FIT_EN) {
+   if (Config.CalEnergy) {
       // Loop all gamma detectors 
       //for (Clover = 0; Clover < CLOVERS; Clover++) {
       for (Clover = 11; Clover < 12; Clover++) {
@@ -133,22 +148,22 @@ int CalibOffline(std::string filename)
                // Set source and histogram name based on seg number
                switch (Seg) {
                case 0:
-                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da Chg", Clover + 1,Num2Col(Crystal), Seg);
+                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da Chg", Clover + 1, Num2Col(Crystal), Seg);
                   HistName = CharBuf;
-                  Source = SOURCE_NUM_CORE;
+                  Source = Config.SourceNumCore;
                   break;
                case 9:
                   snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db Chg", Clover + 1, Num2Col(Crystal), 0);
                   HistName = CharBuf;
-                  Source = SOURCE_NUM_CORE;
+                  Source = Config.SourceNumCore;
                   break;
                default:
                   snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx Chg", Clover + 1, Num2Col(Crystal), Seg);
                   HistName = CharBuf;
                   if (Seg < 5) {
-                     Source = SOURCE_NUM_FRONT;
+                     Source = Config.SourceNumFront;
                   } else {
-                     Source = SOURCE_NUM_BACK;
+                     Source = Config.SourceNumBack;
                   }
                   break;
                }
@@ -216,7 +231,7 @@ int CalibOffline(std::string filename)
                      QuadHist->Fill(Fit.QuadGainFit[2]);
                   }
                   // Now print reports on results of fits and calibration.
-                  if (OUTPUT_GAIN) {
+                  if (Config.CalEnergy) {
                      if (FitSuccess > 0) {
                         if (FitSuccess < 3  || FORCE_LINEAR) {
                            GainOut << HistName << " " << Fit.LinGainFit[0] << " +/- " << Fit.dLinGainFit[0];
@@ -231,7 +246,7 @@ int CalibOffline(std::string filename)
                         GainOut << HistName << " Fail!!!" << endl;
                      }
                   }
-                  if (OUTPUT_REPORT) {
+                  if (Config.CalReport) {
                      if (FitSuccess > 0) {
                         CalibrationReport(&Fit, ReportOut, HistName, Settings);
                      } else {
@@ -239,6 +254,10 @@ int CalibOffline(std::string filename)
                             "------------------------------------------" << endl << endl;
                         ReportOut << "Fail Fail Fail! The calibration has failed!" << endl;
                      }
+                  }
+                  if(Config.WriteFits) {
+                     outfile->cd();
+                     Histo->Write();
                   }
                } else {
                   cout << endl << "Hist " << HistName << " failed to load." << endl;
@@ -248,8 +267,8 @@ int CalibOffline(std::string filename)
       }
    }
    // Now run the fit for the waveform spectrum if required
-   if (FIT_WAVE_EN) {
-      if (VERBOSE) {
+   if (Config.CalWave) {
+      if (Config.PrintVerbose) {
          cout << "-------------------" << endl << "Now fitting Wave Energy Spectra" << endl << "-------------------"
              << endl;
       }
@@ -263,7 +282,7 @@ int CalibOffline(std::string filename)
                   PlotOn = 1;
                }
 
-               if (VERBOSE) {
+               if (Config.PrintVerbose) {
                   cout << endl << "--------------------------------------" << endl;
                   cout << "Clover " << Clover << " Crystal " << Crystal << " Seg " << Seg << endl;
                   cout << "--------------------------------------" << endl;
@@ -315,25 +334,22 @@ int CalibOffline(std::string filename)
 
                FitSuccess = FitGammaSpectrum(Histo, &WaveFit, Settings);
 
-               if (OUTPUT_GAIN) {
-                  if (FitSuccess > 0) {
-                     if (FitSuccess < 3 || FORCE_LINEAR) {
-                        WaveOut << HistName << " " << WaveFit.LinGainFit[0] << " +/- " << WaveFit.dLinGainFit[0];
-                        WaveOut << " " << WaveFit.LinGainFit[1] << " +/- " << WaveFit.
-                            dLinGainFit[1] << " " << WaveFit.LinGainFit[2] << endl;
-                     } else {
-                        WaveOut << HistName << " " << WaveFit.
-                            QuadGainFit[0] << " +/- " << WaveFit.dQuadGainFit[0] << " ";
-                        WaveOut << WaveFit.QuadGainFit[1] << " +/- " << WaveFit.
-                            dQuadGainFit[1] << " " << WaveFit.QuadGainFit[2] << " +/- " << WaveFit.
-                            dQuadGainFit[2] << endl;
-                     }
+               if (FitSuccess > 0) {
+                  if (FitSuccess < 3 || FORCE_LINEAR) {
+                     WaveOut << HistName << " " << WaveFit.LinGainFit[0] << " +/- " << WaveFit.dLinGainFit[0];
+                     WaveOut << " " << WaveFit.LinGainFit[1] << " +/- " << WaveFit.
+                         dLinGainFit[1] << " " << WaveFit.LinGainFit[2] << endl;
                   } else {
-                     WaveOut << HistName << " Fail!!!" << endl;
+                     WaveOut << HistName << " " << WaveFit.
+                         QuadGainFit[0] << " +/- " << WaveFit.dQuadGainFit[0] << " ";
+                     WaveOut << WaveFit.QuadGainFit[1] << " +/- " << WaveFit.
+                         dQuadGainFit[1] << " " << WaveFit.QuadGainFit[2] << " +/- " << WaveFit.
+                         dQuadGainFit[2] << endl;
                   }
+               } else {
+                  WaveOut << HistName << " Fail!!!" << endl;
                }
-
-               if (OUTPUT_REPORT) {
+               if (Config.CalReport) {
                   if (FitSuccess > 0) {
                      CalibrationReport(&WaveFit, WaveReportOut, HistName, Settings);
                   } else {
@@ -342,10 +358,17 @@ int CalibOffline(std::string filename)
                      ReportOut << "Fail Fail Fail! The calibration has failed!" << endl;
                   }
                }
+               if(Config.WriteFits) {
+                  outfile->cd();
+                  Histo->Write();
+               }   
             }
          }
       }
+      
    }
+   
+   
 
 
    if (PLOT_CALIB_SUMMARY) {
@@ -378,11 +401,14 @@ int CalibOffline(std::string filename)
       App->Run();
    }
 
+   if(Config.WriteFits) {
+      outfile->Close();
+   }
 
-   if (OUTPUT_GAIN) {
+   if (Config.CalEnergy) {
       GainOut.close();
    }
-   if (OUTPUT_REPORT) {
+   if (Config.CalReport) {
       ReportOut.close();
    }
 

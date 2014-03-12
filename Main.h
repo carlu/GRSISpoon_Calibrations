@@ -48,6 +48,14 @@
 #define NUM_LINES 2             // Number of lines to fit
 
 
+// Other info for calibration code
+#define FIT_EN 1                //
+#define FIT_WAVE_EN 1
+#define OUTPUT_GAIN 1           // write full-run gains to file
+#define OUTPUT_REPORT 1         // write full report including all fits and gains
+#define WRITE_FITS 1
+
+
 // --------------------------------------------------------
 // Data:
 // --------------------------------------------------------
@@ -66,46 +74,54 @@ struct Mnemonic	{
 struct RunConfig {  // this struct will hold all information 
                      // required to run the code
 
-   // Input file paths
-   std::vector < std::string > files;
-
    // Which parts of code to run
    bool RunCalibration;
    bool RunOffCal;
    bool RunEfficiency;
    bool RunPropCrosstalk;
    bool RunWaveform;
-   bool RunDiffCrosstalk;
-   
-   // What to print and how often
-   bool PrintBasic;
-   int PrintFrequency;
-   bool PrintVerbose;
-   
-   // Limit on number of events
-   int EventLimit;
-
-   // Properties of waveforms stored in the data
-   int WaveformSamples;
-   int WaveInitialSamples;
-   int WaveFinalSamples;
-   
+   bool RunDiffCrosstalk; 
+   // Input file paths
+   std::vector < std::string > files;
+   // root output files
+   std::string OutPath;
+   std::string CalOut;   // First 8 letters of this should match any file loaded in to offline cal
+   std::string CalOfOut;
+   std::string EffOut;
+   std::string EffTxtOut;
+   std::string PropOut;
+   std::string PropTxtOut;
    // Information on energy and wave calibration files
    std::string EnergyCalibrationFile;
    bool HaveAltEnergyCalibration;
    std::string WaveCalibrationFile;
    bool HaveWaveCalibration;
-   
+   // What to print and how often
+   bool PrintBasic;
+   int PrintFrequency;
+   bool PrintVerbose;   
+   // Limit on number of events
+   int EventLimit;
+   // Properties of waveforms stored in the data
+   int WaveformSamples;
+   int WaveInitialSamples;
+   int WaveFinalSamples;
    // source Information
    std::vector< std::vector< float>> Sources;
    int SourceNumCore;
    int SourceNumFront;
-   int SourceNumBack;
-   
-   // Plotting
+   int SourceNumBack;   
+   // Config for Calib() and CalibOffline()
+   // What to do
+   bool CalEnergy; // fit charge spectra
+   bool CalWave;   // fit wave-charge spectra
+   bool CalReport; // write full report on peak fitting as well as list of gains
+   bool WriteFits; // online: write histo after fits, offline: write new file with histos and fits
+   // What to plot
    bool PlotFits;
    bool PlotCalib;
    bool PlotCalibSummary;
+   
    
    
 };

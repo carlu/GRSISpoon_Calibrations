@@ -163,7 +163,7 @@ int main(int argc, char **argv)
    //    - return from here rather than running the TChain stuff below.
    if(Config.RunOffCal== 1) {
       for(i=0;i<Config.files.size();i++) {
-         if(strncmp(Config.files.at(i).c_str(),"CalibOut",8)==0) {
+         if(strncmp(Config.files.at(i).c_str(),Config.CalOut.c_str(),8)==0) {
             cout << "Attempting offline calibration on histograms in file: " << Config.files.at(i) << endl;
             CalibOffline(Config.files.at(i));
          }
@@ -432,24 +432,21 @@ int ReadCalibrationFile(std::string filename,vector < string > *CalibNames,vecto
    float g0, g1, g2;
    int n = 0;
 
-   while (getline(file, line)) {
-      //cout << line << endl;    
+   while (getline(file, line)) {       // loop lines in file
       if (line.c_str()[0] != '#') {     // skip commented lines
-         g0 = 0.0;
+         g0 = 0.0;   // reset values
          g1 = 0.0;
          g2 = 0.0;
-         sscanf(line.c_str(), "%s %f %f %f", name, &g0, &g1, &g2);
-         //cout << name << " " << g0 << " " << g1 << " " << g2 << endl; 
-         vector < float >GainTemp;
+         sscanf(line.c_str(), "%s %f %f %f", name, &g0, &g1, &g2);  // grab name and 3 gains
+         vector < float >GainTemp;  
          GainTemp.push_back(g0);
          GainTemp.push_back(g1);
          GainTemp.push_back(g2);
-         CalibValues->push_back(GainTemp);
-         CalibNames->push_back(name);
-         n += 1;
+         CalibValues->push_back(GainTemp);   // store values
+         CalibNames->push_back(name);        // store name
+         n += 1;  // count
       }
-   }
-   
+   }  
    return n;
 }
 
@@ -528,7 +525,7 @@ float CalcWaveCharge(std::vector < int >wavebuffer)
 
 
 int LoadDefaultSettings() {
-
+   
    Config.RunCalibration = SORT_CALIB;
    Config.RunOffCal = SORT_OFFCAL;
    Config.RunEfficiency = SORT_EFF;
@@ -536,7 +533,13 @@ int LoadDefaultSettings() {
    Config.RunWaveform = SORT_WAVES;
    Config.RunDiffCrosstalk = SORT_DIFF;
    
-   
+   Config.OutPath  = "./";
+   Config.CalOut   = "CalibOut.root";
+   Config.CalOfOut = "CalibOffOut.root";
+   Config.EffOut   = "CoincEffOut.root";
+   Config.EffTxtOut= "CoincEffOut.txt";
+   Config.PropOut  = "PropXTalkOut.root";
+     
    Config.PrintBasic = PRINT_OUTPUT;
    Config.PrintFrequency = PRINT_FREQ;
    Config.PrintVerbose = PRINT_VERBOSE;
@@ -546,7 +549,6 @@ int LoadDefaultSettings() {
    Config.WaveformSamples = WAVE_SAMPS;
    Config.WaveInitialSamples = INITIAL_SAMPS;
    Config.WaveFinalSamples = FINAL_SAMPS;
-
    
    Config.EnergyCalibrationFile = "./ECal.txt";
    Config.HaveAltEnergyCalibration = 0;
@@ -554,12 +556,12 @@ int LoadDefaultSettings() {
    Config.HaveWaveCalibration = 0;
    
    float Sources[3][10] = {
-      {1173.237, 1332.501},
-      {121.7817, 1408.006, 244.6975, 344.2785, 411.116, 778.9040, 964.079, 1112.074},
-      {344.2785, 1408.006, 121.7817, 244.6975, 411.116, 778.9040, 964.079, 1112.074}
+      {1173.237, 1332.501},  // 60Co
+      {121.7817, 1408.006, 244.6975, 344.2785, 411.116, 778.9040, 964.079, 1112.074},  // 152Eu
+      {344.2785, 1408.006, 244.6975, 411.116, 778.9040, 964.079, 1112.074}   // 152Eu (no 121)
    };
-   vector <float> SourceTemp;
-   
+
+   vector <float> SourceTemp; 
    for(int i =0; i<2; i++) {
       SourceTemp.push_back(Sources[0][i]);
    }
@@ -579,9 +581,18 @@ int LoadDefaultSettings() {
    Config.SourceNumFront = SOURCE_NUM_FRONT;
    Config.SourceNumBack = SOURCE_NUM_BACK;
    
+   // Optons for calibration
+   // Plots
    Config.PlotFits = 0;
    Config.PlotCalib = 0;
    Config.PlotCalibSummary = 0;
+   
+   Config.CalEnergy = FIT_EN;
+   Config.CalWave   = FIT_WAVE_EN;
+   Config.CalReport = OUTPUT_REPORT;
+   
+   Config.WriteFits = WRITE_FITS;
+   
    
    return 0;
    
@@ -711,6 +722,16 @@ int ReadCommandLineSettings(int argc, char **argv) {
             cout << "Negative number of events specified.  What does that even mean?" << endl;
             return -1;
          }
+      }
+      
+      // Maximum number of events to process
+      // -------------------------------------------
+      if(strncmp(argv[i],"-o",2)==0) { 
+         if(i>=argc-1 || strncmp(argv[i+1],"-",1)==0) {  // return error if no source given
+            cout << "No path specified after \"-o\" option. (output path)" << endl;
+            return -1;  
+         }
+         Config.OutPath = argv[++i];
       }
       // Run options
       // -------------------------------------------

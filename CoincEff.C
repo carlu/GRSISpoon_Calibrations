@@ -184,10 +184,11 @@ void InitCoincEff()
 {
 
    char Colours[] = "BGRW";
-   // Initialise output file                                       
-   outfile = new TFile("CoincEffOut.root", "RECREATE");
+   // Initialise output file                
+   std::string tempstring = Config.OutPath + Config.EffOut;
+   outfile = new TFile(tempstring.c_str(), "RECREATE");
 
-   char name[512], title[512];
+   char name[CHAR_BUFFER_SIZE], title[CHAR_BUFFER_SIZE];
    int Clover, Crystal;
    hTestSpectrum = new TH1F("TS", "Test Spectrum", 4096, 0, 4095);
    hArrayEn = new TH1F("TIG Sum En", "TIGRESS Sum Energy (keV)", EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
@@ -240,9 +241,10 @@ void FinalCoincEff()
       }
    }
 
-   // Open a file to output efficiencies:
+   // Open a file to output efficiencies:   
    if (OUTPUT_EFF) {
-      EffOut.open("CoincEffOut.txt");
+      std::string tempstring = Config.OutPath + Config.EffTxtOut;
+      EffOut.open(tempstring.c_str());
    }
    // now fit 1332.5keV peak in gain matched spectra
    memset(&FitRes, 0.0, sizeof(FitResult));
