@@ -58,6 +58,7 @@ static TH1F *hEn[CLOVERS][CRYSTALS][SEGS + 2];  // energy for each individual ch
 static TH1F *hWaveEn[CLOVERS][CRYSTALS][SEGS + 2];  // as above but energy is derived from waveform
 static TH1F *hHitPattern;       // record hit counts by TIGRESS DAQ channel numbering
 static TH1F *hEHitPattern;      // record above thresh hit counts by TIGRESS DAQ channel numbering
+static TH2F *hEnMatrix;     // Channel vs energy matrix for checking calibration
 // Sums
 static TH1F *hCoreSumTig;       // sum of core energies for array
 static TH1F *hCoreSumClover[CLOVERS];   // sum of core energies for each clover
@@ -177,7 +178,6 @@ void PropXtalk(std::vector < TTigFragment > &ev)
             }
          }
          if (NewCoeffFound == 1) {      // If a new set of coeffs was found, then calibrate
-            //En = CalibrateEnergy(ev[i].Charge,Coefficients);
             En = CalibrateEnergy(ev[i].Charge, EnCalibValues.at(CalChan));
          } else {               // else use the existing calibration
             En = ev[i].ChargeCal;
@@ -251,6 +251,7 @@ void PropXtalk(std::vector < TTigFragment > &ev)
                hCoreSumTig->Fill(En);
                hCoreSumClover[Clover - 1]->Fill(En);
                hEn[Clover - 1][Crystal][Seg]->Fill(En);
+               hEnMatrix->Fill(ev[i].ChannelNumber,En);
             }
             if (WaveEnergy > EN_THRESH) {
                hWaveEn[Clover - 1][Crystal][Seg]->Fill(WaveEnergy);
@@ -260,6 +261,7 @@ void PropXtalk(std::vector < TTigFragment > &ev)
             if (En > EN_THRESH) {
                Hits[Clover - 1][Crystal][Seg] += 1;
                hEn[Clover - 1][Crystal][Seg]->Fill(En);
+               hEnMatrix->Fill(ev[i].ChannelNumber,En);
             }
             if (WaveEnergy > EN_THRESH) {
                hWaveEn[Clover - 1][Crystal][Seg]->Fill(WaveEnergy);
@@ -274,6 +276,7 @@ void PropXtalk(std::vector < TTigFragment > &ev)
                SegABEn[Clover - 1][Crystal] += En;
                CrystalSegFold[Clover - 1][Crystal] += 1;
                hEn[Clover - 1][Crystal][Seg]->Fill(En);
+               hEnMatrix->Fill(ev[i].ChannelNumber,En);
                hSegSumClover[Clover - 1]->Fill(En);
                hSegSumCrystal[Clover - 1][Crystal]->Fill(En);
             }
@@ -454,6 +457,7 @@ void InitPropXtalk()
    // Initialise output file   
    std::string tempstring = Config.OutPath + Config.PropOut;                                    
    outfile = new TFile(tempstring.c_str(), "RECREATE");
+   
    dRaw = outfile->mkdir("Raw");
    dSum = outfile->mkdir("Sum");
    dAddBack = outfile->mkdir("Add-Back");
@@ -487,6 +491,9 @@ void InitPropXtalk()
          hEn[Clover][Crystal][Seg] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
       }
    }
+   sprintf(name, "En v Channel");
+   sprintf(title, "TIGRESS DAQ Channel vs Calibrated Energy (keV)");
+   hEnMatrix = new TH2F(name, title, 1000,0,1000,2000,0,2000);
    // Waveform energy
    dWave->cd();
    for (Clover = 0; Clover < CLOVERS; Clover++) {
@@ -662,6 +669,7 @@ void FinalPropXtalk()
          }
       }
    }
+   hEnMatrix->Write();
    // Waveform energy
    dWave->cd();
    for (Clover = 0; Clover < CLOVERS; Clover++) {
