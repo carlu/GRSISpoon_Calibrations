@@ -190,7 +190,7 @@ void PropXtalk(std::vector < TTigFragment > &ev)
       }
       
       // Get Calibrated "WaveCharge"
-      if(ev[i].wavebuffer.size() > INITIAL_SAMPS + FINAL_SAMPS) {
+      if(ev[i].wavebuffer.size() > Config.WaveInitialSamples + Config.WaveFinalSamples) {
          int NewCoeffFound = 0;
          std::vector < float >Coefficients;
          for (CalChan = 0; CalChan < WaveCalibNames.size(); CalChan++) {

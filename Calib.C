@@ -147,7 +147,7 @@ void InitCalib()
    if (PLOT_WAVE) {
       sprintf(name, "Wavetemp");
       sprintf(title, "Temporary wave histogram");
-      WaveHist = new TH1F(name, title, WAVE_SAMPS, 0, WAVE_SAMPS);
+      WaveHist = new TH1F(name, title, Config.WaveformSamples, 0, Config.WaveformSamples);
    }
 
    cout << "Searching for core Peaks: " << Config.Sources[Config.SourceNumCore][0] << "kev and " << Config.Sources[Config.SourceNumCore][1] <<
