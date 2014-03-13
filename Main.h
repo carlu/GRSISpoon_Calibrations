@@ -28,11 +28,6 @@
 // Constants
 #define PI 3.14159265359
 
-// Calculation of Energy from waveform
-#define WAVE_SAMPS 200
-#define INITIAL_SAMPS 65
-#define FINAL_SAMPS 65
-
 //Other stuff
 #define CHAR_BUFFER_SIZE 1024
 

@@ -5,7 +5,7 @@
 #define FIT_LOW 1300.0
 #define FIT_HIGH 1365.0 
 
-#define MIN_FIT_COUNTS 1000
+#define MIN_FIT_COUNTS 10
 
 #define OUTPUT_EFF 1
 

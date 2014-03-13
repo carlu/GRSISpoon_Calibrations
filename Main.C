@@ -581,9 +581,9 @@ int LoadDefaultSettings() {
    Config.SourceNumFront = SOURCE_NUM_FRONT;
    Config.SourceNumBack = SOURCE_NUM_BACK; 
    // Properties of waveforms stored in the data
-   Config.WaveformSamples = WAVE_SAMPS;
-   Config.WaveInitialSamples = INITIAL_SAMPS;
-   Config.WaveFinalSamples = FINAL_SAMPS;
+   Config.WaveformSamples = 200;
+   Config.WaveInitialSamples = 65;
+   Config.WaveFinalSamples = 65;
    // Thresholds
    Config.EnergyThresh = 5; // keV
    Config.ChargeThresh = 100;
@@ -730,6 +730,12 @@ int ReadCommandLineSettings(int argc, char **argv) {
          if(Config.EventLimit < 0) {
             cout << "Negative number of events specified.  What does that even mean?" << endl;
             return -1;
+         }
+         if(Config.EventLimit==0) {
+            cout << "No event limit set." << endl;
+         }
+         else {
+            cout << "Run limited to " << Config.EventLimit << " events." << endl;
          }
       }
       
