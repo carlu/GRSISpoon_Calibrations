@@ -546,10 +546,6 @@ int LoadDefaultSettings() {
    Config.PrintVerbose = PRINT_VERBOSE;
    
    Config.EventLimit = MAX_EVENTS;
-
-   Config.WaveformSamples = WAVE_SAMPS;
-   Config.WaveInitialSamples = INITIAL_SAMPS;
-   Config.WaveFinalSamples = FINAL_SAMPS;
    
    Config.EnergyCalibrationFile = "./ECal.txt";
    Config.HaveAltEnergyCalibration = 0;
@@ -561,7 +557,10 @@ int LoadDefaultSettings() {
       {121.7817, 1408.006, 244.6975, 344.2785, 411.116, 778.9040, 964.079, 1112.074},  // 152Eu
       {344.2785, 1408.006, 244.6975, 411.116, 778.9040, 964.079, 1112.074}   // 152Eu (no 121)
    };
-
+   
+   // Global physics settings
+   // ------------------------------------------
+   // Source information
    vector <float> SourceTemp; 
    for(int i =0; i<2; i++) {
       SourceTemp.push_back(Sources[0][i]);
@@ -580,7 +579,14 @@ int LoadDefaultSettings() {
    
    Config.SourceNumCore = SOURCE_NUM_CORE;
    Config.SourceNumFront = SOURCE_NUM_FRONT;
-   Config.SourceNumBack = SOURCE_NUM_BACK;
+   Config.SourceNumBack = SOURCE_NUM_BACK; 
+   // Properties of waveforms stored in the data
+   Config.WaveformSamples = WAVE_SAMPS;
+   Config.WaveInitialSamples = INITIAL_SAMPS;
+   Config.WaveFinalSamples = FINAL_SAMPS;
+   // Thresholds
+   Config.EnergyThresh = 5; // keV
+   Config.ChargeThresh = 100;
    
    // Optons for calibration
    // Plots

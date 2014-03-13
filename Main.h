@@ -24,7 +24,6 @@
 #define SEGS      8
 #define INTEGRATION 125 // Integration factor applied to charge values
 // Options for sorting
-#define EN_THRESH 2  // energies less than this keV ignored
 #define USE_ALT_CALIB 0
 // Constants
 #define PI 3.14159265359
@@ -74,6 +73,8 @@ struct Mnemonic	{
 struct RunConfig {  // this struct will hold all information 
                      // required to run the code
 
+   // Settings related to how the code works
+   // ---------------------------------------
    // Which parts of code to run
    bool RunCalibration;
    bool RunOffCal;
@@ -88,8 +89,9 @@ struct RunConfig {  // this struct will hold all information
    std::string CalOut;   // First 8 letters of this should match any file loaded in to offline cal
    std::string CalOfOut;
    std::string EffOut;
-   std::string EffTxtOut;
    std::string PropOut;
+   // text output files
+   std::string EffTxtOut;
    std::string PropTxtOut;
    // Information on energy and wave calibration files
    std::string EnergyCalibrationFile;
@@ -102,6 +104,9 @@ struct RunConfig {  // this struct will hold all information
    bool PrintVerbose;   
    // Limit on number of events
    int EventLimit;
+      
+   // Global physics settings
+   // ------------------------------------------
    // Properties of waveforms stored in the data
    int WaveformSamples;
    int WaveInitialSamples;
@@ -110,8 +115,15 @@ struct RunConfig {  // this struct will hold all information
    std::vector< std::vector< float>> Sources;
    int SourceNumCore;
    int SourceNumFront;
-   int SourceNumBack;   
-   // Config for Calib() and CalibOffline()
+   int SourceNumBack;  
+   // Energy thresholds
+   float EnergyThresh;
+   int ChargeThresh;
+    
+   
+   // Physics settings for individual functions
+   // ------------------------------------------
+   // Calib() and CalibOffline()
    // What to do
    bool CalEnergy; // fit charge spectra
    bool CalWave;   // fit wave-charge spectra
@@ -121,6 +133,7 @@ struct RunConfig {  // this struct will hold all information
    bool PlotFits;
    bool PlotCalib;
    bool PlotCalibSummary;
+   
    
    
    

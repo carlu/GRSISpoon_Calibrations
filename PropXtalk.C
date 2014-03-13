@@ -185,7 +185,7 @@ void PropXtalk(std::vector < TTigFragment > &ev)
       }
 
       // Fill "energy hit pattern"
-      if (En > EN_THRESH) {
+      if (En > Config.EnergyThresh) {
          hEHitPattern->Fill(ev[i].ChannelNumber);
       }
       
@@ -238,14 +238,14 @@ void PropXtalk(std::vector < TTigFragment > &ev)
          WaveEnergies[Clover - 1][Crystal][Seg] = WaveEnergy;
          Charges[Clover - 1][Crystal][Seg] = ev[i].Charge;
          CloverHitList[Clover - 1] |= 1;
-         if (En > EN_THRESH) {
+         if (En > Config.EnergyThresh) {
             CloverHitListGood[Clover - 1] |= 1;
          }
          
 
          switch (Seg) {
          case 0:
-            if (En > EN_THRESH) {
+            if (En > Config.EnergyThresh) {
                Hits[Clover - 1][Crystal][Seg] += 1;     // This should only ever be 1, if 2 or more then we have an event building problem
                CloverCoreFold[Clover - 1] += 1;
                hCoreSumTig->Fill(En);
@@ -253,17 +253,17 @@ void PropXtalk(std::vector < TTigFragment > &ev)
                hEn[Clover - 1][Crystal][Seg]->Fill(En);
                hEnMatrix->Fill(ev[i].ChannelNumber,En);
             }
-            if (WaveEnergy > EN_THRESH) {
+            if (WaveEnergy > Config.EnergyThresh) {
                hWaveEn[Clover - 1][Crystal][Seg]->Fill(WaveEnergy);
             }
             break;
          case 9:
-            if (En > EN_THRESH) {
+            if (En > Config.EnergyThresh) {
                Hits[Clover - 1][Crystal][Seg] += 1;
                hEn[Clover - 1][Crystal][Seg]->Fill(En);
                hEnMatrix->Fill(ev[i].ChannelNumber,En);
             }
-            if (WaveEnergy > EN_THRESH) {
+            if (WaveEnergy > Config.EnergyThresh) {
                hWaveEn[Clover - 1][Crystal][Seg]->Fill(WaveEnergy);
             }
             break;
@@ -271,7 +271,7 @@ void PropXtalk(std::vector < TTigFragment > &ev)
             if (Seg < 1 || Seg > 8) {
                cout << "Seg numbering problem!!" << endl;
             }
-            if (En > EN_THRESH) {
+            if (En > Config.EnergyThresh) {
                Hits[Clover - 1][Crystal][Seg] += 1;
                SegABEn[Clover - 1][Crystal] += En;
                CrystalSegFold[Clover - 1][Crystal] += 1;
@@ -280,7 +280,7 @@ void PropXtalk(std::vector < TTigFragment > &ev)
                hSegSumClover[Clover - 1]->Fill(En);
                hSegSumCrystal[Clover - 1][Crystal]->Fill(En);
             }
-            if (WaveEnergy > EN_THRESH) {
+            if (WaveEnergy > Config.EnergyThresh) {
                hWaveEn[Clover - 1][Crystal][Seg]->Fill(WaveEnergy);
             }
             break;

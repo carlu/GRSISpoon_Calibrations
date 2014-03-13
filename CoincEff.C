@@ -126,18 +126,20 @@ void CoincEff(std::vector < TTigFragment > &ev)
             //cout << "Energy: " << ev[i].ChargeCal << "\tCharge: " << ev[i].Charge << endl;
             Energy = ev[i].ChargeCal;
             CloverAddBack[Clover - 1] += Energy;
-            hCloverEn[Clover - 1]->Fill(Energy);
-            hCrystalEn[(((Clover - 1) * 4) + Crystal)]->Fill(Energy);
-            hArrayEn->Fill(Energy);
-            // Fill array with energies from this event
-            CrystalEnergies[((Clover - 1) * 4) + Crystal] = Energy;
-            // Test if gate passed
-            if (Energy > GATE_LOW && Energy < GATE_HIGH) {
-               GatePassed = 1;
-               GateCrystal = ((Clover - 1) * 4) + Crystal;
-               //val = hTestSpectrum->GetBinContent(1);
-               //hTestSpectrum->SetBinContent(1,(val+1.0));
-               hTestSpectrum->Fill(1.0);
+            if(Energy>Config.EnergyThresh) {
+               hCloverEn[Clover - 1]->Fill(Energy);
+               hCrystalEn[(((Clover - 1) * 4) + Crystal)]->Fill(Energy);
+               hArrayEn->Fill(Energy);
+               // Fill array with energies from this event
+               CrystalEnergies[((Clover - 1) * 4) + Crystal] = Energy;
+               // Test if gate passed
+               if (Energy > GATE_LOW && Energy < GATE_HIGH) {
+                  GatePassed = 1;
+                  GateCrystal = ((Clover - 1) * 4) + Crystal;
+                  //val = hTestSpectrum->GetBinContent(1);
+                  //hTestSpectrum->SetBinContent(1,(val+1.0));
+                  hTestSpectrum->Fill(1.0);
+               }
             }
 
          }
@@ -153,13 +155,13 @@ void CoincEff(std::vector < TTigFragment > &ev)
    // If gate passed, loop crystals and increment gated spectra
    if (GatePassed == 1) {
       for (i = 0; i < (CRYSTALS * CLOVERS); i++) {
-         if ((CrystalEnergies[i] > EN_THRESH) && (i != GateCrystal)) {
+         if ((CrystalEnergies[i] > Config.EnergyThresh) && (i != GateCrystal)) {
             hCrystalEnGated[i]->Fill(CrystalEnergies[i]);
          }
       }
    }
    for (Clover = 0; Clover < CLOVERS; Clover++) {
-      if (CloverAddBack[Clover] > EN_THRESH) {
+      if (CloverAddBack[Clover] > Config.EnergyThresh) {
          hCloverABEn[Clover]->Fill(CloverAddBack[Clover]);
          if (CloverAddBack[Clover] > GATE_LOW && CloverAddBack[Clover] < GATE_HIGH) {
             hTestSpectrum->Fill(3.0);
@@ -172,7 +174,7 @@ void CoincEff(std::vector < TTigFragment > &ev)
    }
    if (ABGatePassed == 1) {
       for (Clover = 0; Clover < CLOVERS; Clover++) {
-         if ((CloverAddBack[Clover] > EN_THRESH) && (Clover != ABGateClover)) {
+         if ((CloverAddBack[Clover] > Config.EnergyThresh) && (Clover != ABGateClover)) {
             hCloverABEnGated[Clover]->Fill(CloverAddBack[Clover]);
          }
       }
