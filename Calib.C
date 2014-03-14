@@ -80,13 +80,13 @@ void InitCalib()
    char Colours[] = "BGRW";
 
    // Initialise output file                
-   std::string tempstring = Config.OutPath + Config.CalOut;                       
+   std::string tempstring = Config.OutPath + Config.CalOut;
    outfile = new TFile(tempstring.c_str(), "RECREATE");
 
-   dCharge     = outfile->mkdir("Charge");
+   dCharge = outfile->mkdir("Charge");
    dWaveCharge = outfile->mkdir("WaveCharge");
-   dTemp       = outfile->mkdir("Temp");
-   dOther      = outfile->mkdir("Other");
+   dTemp = outfile->mkdir("Temp");
+   dOther = outfile->mkdir("Other");
 
    char name[512], title[512];
    int Clover, Crystal, Seg, NumBins;
@@ -150,13 +150,16 @@ void InitCalib()
       WaveHist = new TH1F(name, title, Config.WaveformSamples, 0, Config.WaveformSamples);
    }
 
-   cout << "Searching for core Peaks: " << Config.Sources[Config.SourceNumCore][0] << "kev and " << Config.Sources[Config.SourceNumCore][1] <<
-       "keV (Ratio " << Config.Sources[Config.SourceNumCore][0] / Config.Sources[Config.SourceNumCore][1] << ")" << endl;
-   cout << "Searching for front seg peaks: " << Config.Sources[Config.SourceNumFront][0] << "kev and " <<
-       Config.Sources[Config.SourceNumFront][1] << "keV (Ratio " << Config.Sources[Config.SourceNumFront][0] /
+   cout << "Searching for core Peaks: " << Config.Sources[Config.SourceNumCore][0] << "kev and " << Config.
+       Sources[Config.SourceNumCore][1] << "keV (Ratio " << Config.Sources[Config.SourceNumCore][0] /
+       Config.Sources[Config.SourceNumCore][1] << ")" << endl;
+   cout << "Searching for front seg peaks: " << Config.Sources[Config.SourceNumFront][0] << "kev and " << Config.
+       Sources[Config.SourceNumFront][1] << "keV (Ratio " << Config.Sources[Config.SourceNumFront][0] /
        Config.Sources[Config.SourceNumFront][1] << ")" << endl;
-   cout << "Searching for back seg peaks: " << Config.Sources[Config.SourceNumBack][0] << "kev and " << Config.Sources[Config.SourceNumBack][1]
-       << "keV (Ratio " << Config.Sources[Config.SourceNumBack][0] / Config.Sources[Config.SourceNumBack][1] << ")" << endl;
+   cout << "Searching for back seg peaks: " << Config.Sources[Config.SourceNumBack][0] << "kev and " << Config.
+       Sources[Config.SourceNumBack][1]
+       << "keV (Ratio " << Config.Sources[Config.SourceNumBack][0] /
+       Config.Sources[Config.SourceNumBack][1] << ")" << endl;
 
    if (PLOT_WAVE) {
       cWave1 = new TCanvas();
@@ -269,8 +272,8 @@ void Calib(std::vector < TTigFragment > &ev)
                   // Increment raw charge spectra
                   if (DEBUG) {
                      cout << "A: Filling " << Clover -
-                         1 << ", " << Crystal << ", 0, " << mnemonic.
-                         outputsensor << " with charge = " << ev[i].Charge << endl;
+                         1 << ", " << Crystal << ", 0, " << mnemonic.outputsensor << " with charge = " << ev[i].
+                         Charge << endl;
                   }
                   hCharge[Clover - 1][Crystal][0]->Fill(ev[i].Charge);
                   hCrystalChargeTemp[Clover - 1][Crystal]->Fill(ev[i].Charge);
@@ -285,8 +288,8 @@ void Calib(std::vector < TTigFragment > &ev)
                      // Increment raw charge spectra
                      if (DEBUG) {
                         cout << "B: Filling " << Clover -
-                            1 << ", " << Crystal << ", 0, " << mnemonic.
-                            outputsensor << " with charge = " << ev[i].Charge << endl;
+                            1 << ", " << Crystal << ", 0, " << mnemonic.outputsensor << " with charge = " << ev[i].
+                            Charge << endl;
                      }
                      hCharge[Clover - 1][Crystal][9]->Fill(ev[i].Charge);
                      hWaveCharge[Clover - 1][Crystal][9]->Fill(WaveCharge);
@@ -334,12 +337,11 @@ void Calib(std::vector < TTigFragment > &ev)
                   if (VERBOSE) {
                      cout << "Clov: " << j << " Crys: " << k;
                   }
-
                   // Perform Fit                  
                   SpectrumFit Fit = { 0 };
                   FitSettings Settings = { 0 };
 
-                  Settings.Source = Config.SourceNumCore;  
+                  Settings.Source = Config.SourceNumCore;
                   Settings.Integration = INTEGRATION;
                   Settings.Dispersion = float (CHARGE_BINS) / float (CHARGE_MAX);
                   Settings.SearchSigma = EN_SEARCH_SIGMA;
@@ -349,7 +351,7 @@ void Calib(std::vector < TTigFragment > &ev)
                   Settings.FitZero = INCLUDE_ZERO;
                   Settings.PlotOn = PlotOn;
 
-                  FitSuccess = FitGammaSpectrum(hCharge[Clover ][Crystal][0], &Fit, Settings);
+                  FitSuccess = FitGammaSpectrum(hCharge[Clover][Crystal][0], &Fit, Settings);
 
                   if (FitSuccess > -1) {
                      hCrystalGain[(j * 4) + k]->SetBinContent(TimeBin, Fit.LinGainFit[1]);
@@ -402,7 +404,7 @@ void FinalCalib()
    ofstream WaveReportOut;
    string HistName;
    char CharBuf[CHAR_BUFFER_SIZE];
-   
+
    TH1F *GainPlot, *OffsetPlot, *QuadPlot;
    TH1F *GainHist, *OffsetHist, *QuadHist;
    int ItemNum;
@@ -428,8 +430,8 @@ void FinalCalib()
        new TH1F("Quadratic Histogram", "Histogram of Quadratic component of all fitted channels", 512, -0.000001,
                 0.000001);
    QuadHist->GetXaxis()->SetTitle("keV/ch^2");
-   
-   std::string tempstring; 
+
+   std::string tempstring;
    if (Config.CalEnergy) {
       tempstring = Config.OutPath + "GainsOut.txt";
       GainOut.open(tempstring.c_str());
@@ -446,7 +448,6 @@ void FinalCalib()
          WaveReportOut.open(tempstring.c_str());
       }
    }
-   
    // Write spectra to file
    outfile->cd();
    for (Clover = 0; Clover < CLOVERS; Clover++) {
@@ -564,14 +565,14 @@ void FinalCalib()
                   // Now print reports on results of fits and calibration.
                   if (OUTPUT_GAIN) {
                      if (FitSuccess > 0) {
-                        if (FitSuccess < 3  || FORCE_LINEAR) {
+                        if (FitSuccess < 3 || FORCE_LINEAR) {
                            GainOut << HistName << " " << Fit.LinGainFit[0] << " +/- " << Fit.dLinGainFit[0];
-                           GainOut << " " << Fit.LinGainFit[1] << " +/- " << Fit.dLinGainFit[1] << " " << Fit.
-                               LinGainFit[2] << endl;
+                           GainOut << " " << Fit.LinGainFit[1] << " +/- " << Fit.
+                               dLinGainFit[1] << " " << Fit.LinGainFit[2] << endl;
                         } else {
                            GainOut << HistName << " " << Fit.QuadGainFit[0] << " +/- " << Fit.dQuadGainFit[0] << " ";
-                           GainOut << Fit.QuadGainFit[1] << " +/- " << Fit.
-                               dQuadGainFit[1] << " " << Fit.QuadGainFit[2] << " +/- " << Fit.dQuadGainFit[2] << endl;
+                           GainOut << Fit.QuadGainFit[1] << " +/- " << Fit.dQuadGainFit[1] << " " << Fit.
+                               QuadGainFit[2] << " +/- " << Fit.dQuadGainFit[2] << endl;
                         }
                      } else {
                         GainOut << HistName << " Fail!!!" << endl;
@@ -592,19 +593,19 @@ void FinalCalib()
             }
          }
       }
-      
+
 
       // Now run the fit for the waveform spectrum if required
       if (Config.CalWave) {
          if (Config.PrintVerbose) {
-            cout << "----------------------------------" << endl << "Now fitting Wave Energy Spectra" << endl << "----------------------------------"
-                << endl;
+            cout << "----------------------------------" << endl << "Now fitting Wave Energy Spectra" << endl <<
+                "----------------------------------" << endl;
          }
-        
-        
-        
-        
-         
+
+
+
+
+
       }
 
       if (Config.CalEnergy) {
@@ -619,9 +620,8 @@ void FinalCalib()
             WaveReportOut.close();
          }
       }
-      
       // Write spectra to file again if fits are to be saved
-      if(Config.WriteFits) {
+      if (Config.WriteFits) {
          outfile->cd();
          for (Clover = 0; Clover < CLOVERS; Clover++) {
             for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {

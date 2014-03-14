@@ -48,11 +48,11 @@ static TFile *outfile = 0;
 
 // Spectra pointers here, thinking I will start all pointer names with h
 static TH1F *hTestSpectrum = 0;
-static TH1F *hCrystalEn[CLOVERS * CRYSTALS] = { 0 };
+static TH1F *hCrystalEn[CLOVERS][CRYSTALS] = { 0 };
 static TH1F *hCloverEn[CLOVERS] = { 0 };
 static TH1F *hCloverABEn[CLOVERS] = { 0 };
 static TH1F *hCloverABEnGated[CLOVERS] = { 0 };
-static TH1F *hCrystalEnGated[CLOVERS * CRYSTALS] = { 0 };
+static TH1F *hCrystalEnGated[CLOVERS][CRYSTALS] = { 0 };
 
 static TH1F *hArrayEn = 0;
 
@@ -74,24 +74,22 @@ void CoincEff(std::vector < TTigFragment > &ev)
    Int_t GatePassed = 0;
    Int_t ABGatePassed = 0;
    Int_t GateCrystal = 0;
+   Int_t GateClover = 0;
    Int_t ABGateClover = 0;
    Int_t i;
    float Energy;
-   float CrystalEnergies[CRYSTALS * CLOVERS];
+   float CrystalEnergies[CLOVERS][CRYSTALS];
    float CloverAddBack[CLOVERS];
 
    memset(CrystalEnergies, 0.0, (CLOVERS * CRYSTALS * sizeof(float)));
    memset(CloverAddBack, 0.0, CLOVERS * sizeof(float));
-
-
-   //cout << "ev.size(): " << ev.size() << endl;
-   //cout << "Event Count: " << EventCount << endl;
 
    for (i = 0; i < ev.size(); i++) {
       Int_t slave = ((ev[i].ChannelAddress & 0x00F00000) >> 20);
       Int_t port = ((ev[i].ChannelAddress & 0x00000F00) >> 8);
       Int_t chan = (ev[i].ChannelAddress & 0x000000FF);
       std::string name = ev[i].ChannelName;
+
       //cout << "Slave, Port, Chan = " << slave << ", " << port << ", " << chan << "\t" << name << endl;
 
       Mnemonic mnemonic;
@@ -105,7 +103,6 @@ void CoincEff(std::vector < TTigFragment > &ev)
       // ----------------------------------------------
       // Now identify the channels and perform analysis
       // ----------------------------------------------
-
 
       // If TIGRESS
       if (mnemonic.system == "TI") {
@@ -121,27 +118,25 @@ void CoincEff(std::vector < TTigFragment > &ev)
          //cout << "Clov,Crys = " << Clover << ", " << Crystal << endl;
 
          // If Core
-         if (mnemonic.segment == 0) {
-            //cout << "CORE!!! - " << mnemonic.arraysubposition << " Pos: " << mnemonic.arrayposition << endl;  
+         if (mnemonic.segment == 0 && mnemonic.outputsensor == "a") {
             //cout << "Energy: " << ev[i].ChargeCal << "\tCharge: " << ev[i].Charge << endl;
             Energy = ev[i].ChargeCal;
             CloverAddBack[Clover - 1] += Energy;
-            if(Energy>Config.EnergyThresh) {
+            if (Energy > Config.EnergyThresh) {
                hCloverEn[Clover - 1]->Fill(Energy);
-               hCrystalEn[(((Clover - 1) * 4) + Crystal)]->Fill(Energy);
+               hCrystalEn[Clover - 1][Crystal]->Fill(Energy);
                hArrayEn->Fill(Energy);
                // Fill array with energies from this event
-               CrystalEnergies[((Clover - 1) * 4) + Crystal] = Energy;
+               CrystalEnergies[Clover - 1][Crystal] = Energy;
                // Test if gate passed
                if (Energy > GATE_LOW && Energy < GATE_HIGH) {
                   GatePassed = 1;
-                  GateCrystal = ((Clover - 1) * 4) + Crystal;
-                  //val = hTestSpectrum->GetBinContent(1);
-                  //hTestSpectrum->SetBinContent(1,(val+1.0));
+                  GateCrystal = Crystal;
+                  GateClover = Clover;
                   hTestSpectrum->Fill(1.0);
                }
             }
-
+            //cout << Energy << " " << GatePassed << endl;
          }
          // If segment
          else {
@@ -154,27 +149,33 @@ void CoincEff(std::vector < TTigFragment > &ev)
 
    // If gate passed, loop crystals and increment gated spectra
    if (GatePassed == 1) {
-      for (i = 0; i < (CRYSTALS * CLOVERS); i++) {
-         if ((CrystalEnergies[i] > Config.EnergyThresh) && (i != GateCrystal)) {
-            hCrystalEnGated[i]->Fill(CrystalEnergies[i]);
+      for (Clover = 0; Clover < CLOVERS; Clover++) {
+         for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
+            if (CrystalEnergies[Clover][Crystal] > Config.EnergyThresh) {
+               if (Crystal != (GateCrystal - 1) || Clover != (GateClover - 1)) {
+                  hCrystalEnGated[Clover][Crystal]->Fill(CrystalEnergies[Clover][Crystal]);
+               }
+            }
          }
       }
    }
+   // now check if gate is passed with add-back and increment gated AB spectra if so
    for (Clover = 0; Clover < CLOVERS; Clover++) {
       if (CloverAddBack[Clover] > Config.EnergyThresh) {
          hCloverABEn[Clover]->Fill(CloverAddBack[Clover]);
          if (CloverAddBack[Clover] > GATE_LOW && CloverAddBack[Clover] < GATE_HIGH) {
             hTestSpectrum->Fill(3.0);
             ABGatePassed = 1;
-            ABGateClover = Clover;
+            ABGateClover = Clover + 1;  // +1 to match the GateClover and GateCrystal values above
 
          }
       }
 
    }
+
    if (ABGatePassed == 1) {
       for (Clover = 0; Clover < CLOVERS; Clover++) {
-         if ((CloverAddBack[Clover] > Config.EnergyThresh) && (Clover != ABGateClover)) {
+         if ((CloverAddBack[Clover] > Config.EnergyThresh) && (Clover != (ABGateClover - 1))) {
             hCloverABEnGated[Clover]->Fill(CloverAddBack[Clover]);
          }
       }
@@ -210,10 +211,10 @@ void InitCoincEff()
          if (Clover == 0 && Crystal == 0) {
             //cout << "Creating: " << name << title << endl;   
          }
-         hCrystalEn[((Clover * 4) + Crystal)] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
+         hCrystalEn[Clover][Crystal] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
          sprintf(name, "TIG%02d%c Gated", Clover + 1, Colours[Crystal]);
          sprintf(title, "TIG%02d%c Gated Core Energy (keV)", Clover + 1, Colours[Crystal]);
-         hCrystalEnGated[((Clover * 4) + Crystal)] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
+         hCrystalEnGated[Clover][Crystal] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
       }
    }
 }
@@ -238,8 +239,8 @@ void FinalCoincEff()
       hCloverABEn[Clover]->Write();
       hCloverABEnGated[Clover]->Write();
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
-         hCrystalEn[(Clover * 4) + Crystal]->Write();
-         hCrystalEnGated[(Clover * 4) + Crystal]->Write();
+         hCrystalEn[Clover][Crystal]->Write();
+         hCrystalEnGated[Clover][Crystal]->Write();
       }
    }
 
@@ -281,7 +282,7 @@ void FinalCoincEff()
    for (Clover = 0; Clover < CLOVERS; Clover++) {
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
          memset(&FitRes, 0.0, sizeof(FitResult));
-         FitPeak(hCrystalEnGated[(Clover * 4) + Crystal], 1300.0, 1365.0, &FitRes);
+         FitPeak(hCrystalEnGated[Clover][Crystal], 1300.0, 1365.0, &FitRes);
          Counts = (EN_SPECTRA_CHANS / EN_SPECTRA_MAX) * FitRes.Const * FitRes.Sigma * sqrt(2 * PI);
          dCountsFit = Counts * sqrt(pow(FitRes.dConst / FitRes.Const, 2) + pow(FitRes.dSigma / FitRes.Sigma, 2));       // Fitting error
          dCountsStat = sqrt(Counts);
@@ -328,8 +329,8 @@ void FitPeak(TH1F * Histo, float Min, float Max, FitResult * FitRes)
       FitRes->Sigma = FitRange->GetParameter(2);
       FitRes->dSigma = FitRange->GetParError(2);
 
-      cout << FitRes->Const << " " << FitRes->dConst << " " << FitRes->Mean << " " << FitRes->dMean << " " << FitRes->
-          Sigma << " " << FitRes->dSigma << endl;
+      //cout << FitRes->Const << " " << FitRes->dConst << " " << FitRes->Mean << " " << FitRes->dMean << " " << FitRes->
+      //  Sigma << " " << FitRes->dSigma << endl;
    }
 
 }

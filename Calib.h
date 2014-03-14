@@ -8,7 +8,7 @@
 // General options
 #define NOTIFY_TIME_BIN 1       // print to stdout when spectra are reset
 #define VERBOSE 1               // print lots of info on peak search and fitting
-#define DEBUG 0                 // PRint Debugging messages to screen          
+#define DEBUG 0                 // PRint Debugging messages to screen
 
 // Plotting
 #define PLOT_FITS 0             // plot fits, all chans plotted if below items = 0
@@ -23,7 +23,7 @@
 //#define INTEGRATION 125 // Integration factor applied to charge values
       // This definition moved to main.h
 
-#define MAX_LINES 12   // Maximum number of lines for any source
+#define MAX_LINES 12            // Maximum number of lines for any source
 
 #define CHARGE_BINS 16384
 #define CHARGE_MAX 1500000
@@ -33,9 +33,9 @@
 #define WAVE_CHARGE_MAX 16384
 
 // Peak Search stuff
-#define EN_SEARCH_THRESH 0.055   //0.0028  // minimum peak height for search as frac of max peak height
+#define EN_SEARCH_THRESH 0.055  //0.0028  // minimum peak height for search as frac of max peak height
                                  // It seems as if this value needs to be much lower than the actual minimum peak height
-#define EN_SEARCH_SIGMA 10       //50 // Expected sigma of peaks
+#define EN_SEARCH_SIGMA 10      //50 // Expected sigma of peaks
 #define WAVE_SEARCH_THRESH 0.01 //0.0028  // minimum peak height for search as frac of max peak height
                                  // It seems as if this value needs to be much lower than the actual minimum peak height
 #define WAVE_SEARCH_SIGMA 20    //50 // Expected sigma of peaks
@@ -47,7 +47,7 @@
 
 // Extra calibration point at 0 ch = 0 keV
 #define INCLUDE_ZERO 0          // Add an extra calibration point at 0ch = 0 keV
-#define FORCE_LINEAR 0   // Forces gain output file to use linear fit, even if more than 2 lines fitted
+#define FORCE_LINEAR 0          // Forces gain output file to use linear fit, even if more than 2 lines fitted
 #define ZERO_ERR 0.01
 
 // Peak Fitting

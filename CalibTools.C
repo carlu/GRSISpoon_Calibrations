@@ -229,7 +229,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
                   cout << "Line: " << Line << " (Energy = " << Config.Sources[Settings.Source][Line] << " keV)" << endl;
                   cout << "-------------------------------------------------------------" << endl << endl;
                }
-               Centre = ((Config.Sources[Settings.Source][Line] - O) / G) * Settings.Integration;      // Get centre from energy and initial calibration
+               Centre = ((Config.Sources[Settings.Source][Line] - O) / G) * Settings.Integration;       // Get centre from energy and initial calibration
                FitSinglePeak(Histo, Line, Centre, FitRange[Line], &FitRes[Line], Settings);
             }
          }
@@ -298,7 +298,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
             Fit->PeakFits[Config.Sources[Settings.Source].size()].dSigma = 0.0;
             Fit->PeakFits[Config.Sources[Settings.Source].size()].ChiSq = 0.0;
             Fit->PeakFits[Config.Sources[Settings.Source].size()].NDF = 1;
-            Fit->FitSuccess[Line+1] = 1;
+            Fit->FitSuccess[Line + 1] = 1;
             LinesUsed += 1;
          }
          Fit->LinesUsed = LinesUsed;
@@ -582,7 +582,7 @@ int CalibrationReport(SpectrumFit * Fit, ofstream & ReportOut, std::string HistN
          ReportOut << Fit->PeakFits[i].Mean << "\t\t\t" << Fit->PeakFits[i].Energy << "\t\t\t";
          ReportOut << CalibEn << "\t\t\t" << CalibEn - Fit->PeakFits[i].Energy << endl;
          Energies[NumFits] = Fit->PeakFits[i].Energy;
-     }
+      }
    }
    TGraphErrors CalibResidual(NumFits, Energies, Residuals);
    if (PLOT_RESIDUAL) {

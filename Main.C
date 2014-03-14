@@ -87,10 +87,10 @@ RunConfig Config;
 
 // Storing alternate Calibration
 vector < string > EnCalibNames;
-vector < vector < float >> EnCalibValues;
+vector < vector < float >>EnCalibValues;
 // Waveform calibration
 vector < string > WaveCalibNames;
-vector < vector < float >> WaveCalibValues;
+vector < vector < float >>WaveCalibValues;
 
 // Functions
 int LoadDefaultSettings();
@@ -99,7 +99,8 @@ void PrintHelp();
 
 void SortTree(const char *fn);
 void IncSpectra();
-int ReadCalibrationFile(std::string filename, vector < string > *EnCalibNames,vector < vector < float >> *EnCalibValues);
+int ReadCalibrationFile(std::string filename, vector < string > *EnCalibNames,
+                        vector < vector < float >>*EnCalibValues);
 
 void CoincEff(std::vector < TTigFragment > &ev);
 void InitCoincEff();
@@ -124,11 +125,10 @@ int main(int argc, char **argv)
 
    // Set default and read custom options
    LoadDefaultSettings();
-   if(ReadCommandLineSettings(argc, argv) < 0) {
+   if (ReadCommandLineSettings(argc, argv) < 0) {
       cout << "Failed to configure the run - exiting!" << endl;
       return -1;
    }
-
 
    // Set options for histo stats
    gStyle->SetOptStat("iouRMen");
@@ -139,12 +139,12 @@ int main(int argc, char **argv)
    // Timing
    TStopwatch StopWatch;
    StopWatch.Start();
-   
+
    // Offline calibration here
    // need to initialise TCanvas's for Calib and CalibOffline here:
-   if(Config.RunOffCal == 1 || Config.RunCalibration == 1) {
+   if (Config.RunOffCal == 1 || Config.RunCalibration == 1) {
       // Condition here to test if plotting will be used
-      
+
       // Initialise TCanvas's
       cCalib1 = new TCanvas("cCalib1", "Fit", 800, 600);        // Canvas for spectrum plots
 
@@ -153,7 +153,7 @@ int main(int argc, char **argv)
 
       cCalib2 = new TCanvas("cCalib2", "Calibration Summary", 800, 600);        // Canvas for gain plots and histograms
       cCalib2->Divide(2, 3);
-      cCalib2->Update(); 
+      cCalib2->Update();
 
       cCalib1->cd();
    }
@@ -162,14 +162,14 @@ int main(int argc, char **argv)
    //    - check the file list for a suitable set of spectra
    //    - call the offline calibration function
    //    - return from here rather than running the TChain stuff below.
-   if(Config.RunOffCal== 1) {
-      for(i=0;i<Config.files.size();i++) {
-         if(strncmp(Config.files.at(i).c_str(),Config.CalOut.c_str(),8)==0) {
+   if (Config.RunOffCal == 1) {
+      for (i = 0; i < Config.files.size(); i++) {
+         if (strncmp(Config.files.at(i).c_str(), Config.CalOut.c_str(), 8) == 0) {
             cout << "Attempting offline calibration on histograms in file: " << Config.files.at(i) << endl;
             CalibOffline(Config.files.at(i));
          }
       }
-   
+
       return 0;
    }
    // ---- End of offline calibration -----
@@ -186,7 +186,7 @@ int main(int argc, char **argv)
       }
    }
    // Load gain coefficients for waveforms
-   if(Config.HaveWaveCalibration) {
+   if (Config.HaveWaveCalibration) {
       int NumCal;
       NumCal = ReadCalibrationFile(Config.WaveCalibrationFile, &WaveCalibNames, &WaveCalibValues);
       cout << "Wave energy calibratrion values: " << endl;
@@ -194,7 +194,8 @@ int main(int argc, char **argv)
       for (i = 0; i < NumCal; i++) {
          cout << i;
          cout << ": " << WaveCalibNames.at(i);
-         cout << " " << WaveCalibValues.at(i)[0] << " " << WaveCalibValues[i][1] << " " << WaveCalibValues[i][2] << endl;
+         cout << " " << WaveCalibValues.
+             at(i)[0] << " " << WaveCalibValues[i][1] << " " << WaveCalibValues[i][2] << endl;
       }
    }
    // Initialise spectra   
@@ -415,7 +416,7 @@ char Num2Col(int Crystal)
    }
 }
 
-int ReadCalibrationFile(std::string filename,vector < string > *CalibNames,vector < vector < float >> *CalibValues)
+int ReadCalibrationFile(std::string filename, vector < string > *CalibNames, vector < vector < float >>*CalibValues)
 {
 
    printf("Reading calibration file %s...\t", filename.c_str());
@@ -433,21 +434,21 @@ int ReadCalibrationFile(std::string filename,vector < string > *CalibNames,vecto
    float g0, g1, g2;
    int n = 0;
 
-   while (getline(file, line)) {       // loop lines in file
+   while (getline(file, line)) {        // loop lines in file
       if (line.c_str()[0] != '#') {     // skip commented lines
-         g0 = 0.0;   // reset values
+         g0 = 0.0;              // reset values
          g1 = 0.0;
          g2 = 0.0;
-         sscanf(line.c_str(), "%s %f %f %f", name, &g0, &g1, &g2);  // grab name and 3 gains
-         vector < float >GainTemp;  
+         sscanf(line.c_str(), "%s %f %f %f", name, &g0, &g1, &g2);      // grab name and 3 gains
+         vector < float >GainTemp;
          GainTemp.push_back(g0);
          GainTemp.push_back(g1);
          GainTemp.push_back(g2);
-         CalibValues->push_back(GainTemp);   // store values
-         CalibNames->push_back(name);        // store name
-         n += 1;  // count
+         CalibValues->push_back(GainTemp);      // store values
+         CalibNames->push_back(name);   // store name
+         n += 1;                // count
       }
-   }  
+   }
    return n;
 }
 
@@ -494,9 +495,9 @@ float CalcWaveCharge(std::vector < int >wavebuffer)
    float Initial = 0.0;
    float Final = 0.0;
    Length = wavebuffer.size();
-   
-   if(wavebuffer.size() < Config.WaveInitialSamples + Config.WaveFinalSamples) {
-      return 0.0;  // return 0 if wave too short
+
+   if (wavebuffer.size() < Config.WaveInitialSamples + Config.WaveFinalSamples) {
+      return 0.0;               // return 0 if wave too short
    }
    for (Samp = 0; Samp < Config.WaveInitialSamples; Samp++) {
       Initial += wavebuffer.at(Samp);
@@ -511,90 +512,94 @@ float CalcWaveCharge(std::vector < int >wavebuffer)
 }
 
 
-int LoadDefaultSettings() {
-   
+int LoadDefaultSettings()
+{
+
    Config.RunCalibration = SORT_CALIB;
    Config.RunOffCal = SORT_OFFCAL;
    Config.RunEfficiency = SORT_EFF;
    Config.RunPropCrosstalk = SORT_PROP;
    Config.RunWaveform = SORT_WAVES;
    Config.RunDiffCrosstalk = SORT_DIFF;
-   
-   Config.OutPath  = "./";
-   Config.CalOut   = "CalibOut.root";
+
+   Config.OutPath = "./";
+   Config.CalOut = "CalibOut.root";
    Config.CalOfOut = "CalibOffOut.root";
-   Config.EffOut   = "CoincEffOut.root";
-   Config.EffTxtOut= "CoincEffOut.txt";
-   Config.PropOut  = "PropXTalkOut.root";
-     
+   Config.EffOut = "CoincEffOut.root";
+   Config.EffTxtOut = "CoincEffOut.txt";
+   Config.PropOut = "PropXTalkOut.root";
+
    Config.PrintBasic = PRINT_OUTPUT;
    Config.PrintFrequency = PRINT_FREQ;
    Config.PrintVerbose = PRINT_VERBOSE;
-   
+
    Config.EventLimit = MAX_EVENTS;
-   
+
    Config.EnergyCalibrationFile = "./ECal.txt";
    Config.HaveAltEnergyCalibration = 0;
    Config.WaveCalibrationFile = "./WCal.txt";
    Config.HaveWaveCalibration = 0;
-   
+
    float Sources[3][10] = {
-      {1173.237, 1332.501},  // 60Co
-      {121.7817, 1408.006, 244.6975, 344.2785, 411.116, 778.9040, 964.079, 1112.074},  // 152Eu
-      {344.2785, 1408.006, 244.6975, 411.116, 778.9040, 964.079, 1112.074}   // 152Eu (no 121)
+      {1173.237, 1332.501},     // 60Co
+      {121.7817, 1408.006, 244.6975, 344.2785, 411.116, 778.9040, 964.079, 1112.074},   // 152Eu
+      {344.2785, 1408.006, 244.6975, 411.116, 778.9040, 964.079, 1112.074}      // 152Eu (no 121)
    };
-   
+
    // Global physics settings
    // ------------------------------------------
    // Source information
-   vector <float> SourceTemp; 
-   for(int i =0; i<2; i++) {
+   vector < float >SourceTemp;
+   for (int i = 0; i < 2; i++) {
       SourceTemp.push_back(Sources[0][i]);
    }
    Config.Sources.push_back(SourceTemp);
    SourceTemp.clear();
-   for(int i =0; i<7; i++) {
+   for (int i = 0; i < 7; i++) {
       SourceTemp.push_back(Sources[1][i]);
    }
    Config.Sources.push_back(SourceTemp);
    SourceTemp.clear();
-   for(int i =0; i<7; i++) {
+   for (int i = 0; i < 7; i++) {
       SourceTemp.push_back(Sources[2][i]);
    }
    Config.Sources.push_back(SourceTemp);
-   
+
    Config.SourceNumCore = SOURCE_NUM_CORE;
    Config.SourceNumFront = SOURCE_NUM_FRONT;
-   Config.SourceNumBack = SOURCE_NUM_BACK; 
+   Config.SourceNumBack = SOURCE_NUM_BACK;
    // Properties of waveforms stored in the data
    Config.WaveformSamples = 200;
    Config.WaveInitialSamples = 65;
    Config.WaveFinalSamples = 65;
    // Thresholds
-   Config.EnergyThresh = 5; // keV
+   Config.EnergyThresh = 5;     // keV
    Config.ChargeThresh = 100;
-   
-   // Optons for calibration
+
+   // Optons for Calib() and CalibOffline()
+   // What to do
+   Config.CalEnergy = 1;
+   Config.CalWave = 1;
+   Config.CalReport = 1;
    // Plots
    Config.PlotFits = 0;
    Config.PlotCalib = 0;
    Config.PlotCalibSummary = 0;
-   
-   Config.CalEnergy = FIT_EN;
-   Config.CalWave   = FIT_WAVE_EN;
-   Config.CalReport = OUTPUT_REPORT;
-   
-   Config.WriteFits = WRITE_FITS;
-   
-   
+   // OPtions for CoincEff()
+
+
+   // Options for 
+
+
    return 0;
-   
-   
-   
+
+
+
 }
 
-int ReadCommandLineSettings(int argc, char **argv) {
-   
+int ReadCommandLineSettings(int argc, char **argv)
+{
+
    // -f : input files
    // -e : EnergyCalFile
    // -w : WaveCalFile
@@ -604,140 +609,131 @@ int ReadCommandLineSettings(int argc, char **argv) {
    // -h : print help and exit
    // -v : verbose
    // -n : max number of events
-   
+
    // --cal : run calibration
    // --calof : run calibration on spectrum file rather than fragment tree 
    // --eff : run efficiency
    // --prop: run propxtalk
-   
-   int i, j,n;
+
+   int i, j, n;
    bool test;
-   bool RunConfGiven=0;
-   
+   bool RunConfGiven = 0;
+
    /*cout << "List of arguments (" << argc << " total)" << endl;
-   for(i=0;i<argc;i++) {
+      for(i=0;i<argc;i++) {
       cout << i << ": " << argv[i] << "\t";
-   }
-   cout << endl << endl;*/
-   
-   if(argc < 3) {
+      }
+      cout << endl << endl; */
+
+   if (argc < 3) {
       cout << "No input file provided!" << endl << endl;
       PrintHelp();
       return -1;
    }
-   
-   for(i = 0; i < argc; i++) { // loop all args 
-      cout << "i=" << i << endl;
+
+   for (i = 0; i < argc; i++) { // loop all args 
       // Print help information
-      if(strncmp(argv[i],"-h",2)==0) {
+      if (strncmp(argv[i], "-h", 2) == 0) {
          PrintHelp();
          return -1;
       }
       // Run files
       // -------------------------------------------
-      if(strncmp(argv[i],"-f",2)==0) { // if option is input file
-         if(i>=argc-1 || strncmp(argv[i+1],"-",1)==0) {  // return error if no file
+      if (strncmp(argv[i], "-f", 2) == 0) {     // if option is input file
+         if (i >= argc - 1 || strncmp(argv[i + 1], "-", 1) == 0) {      // return error if no file
             cout << "No file specified after \"-f\" option." << endl;
-            return -1;  
+            return -1;
          }
-         while(strncmp(argv[i+1],"-",1)>0) {  // loop files 
+         while (strncmp(argv[i + 1], "-", 1) > 0) {     // loop files 
             Config.files.push_back(argv[++i]);  // add to vector and increment i
-            if(i>=argc-1) {  
-               break;  // break if at last item in arg list
+            if (i >= argc - 1) {
+               break;           // break if at last item in arg list
             }
          }
-         cout << "Input files:" << endl;  
-         for (j=0; j<Config.files.size(); j++) {  // print list of files back to screen
+         cout << "Input files:" << endl;
+         for (j = 0; j < Config.files.size(); j++) {    // print list of files back to screen
             cout << Config.files.at(j) << endl;
-         }          
+         }
       }
-      
       // Energy Calibration file
       // -------------------------------------------
-      if(strncmp(argv[i],"-e",2)==0) { // if option is Ecal file
-         if(i>=argc-1 || strncmp(argv[i+1],"-",1)==0) {  // return error if no file
+      if (strncmp(argv[i], "-e", 2) == 0) {     // if option is Ecal file
+         if (i >= argc - 1 || strncmp(argv[i + 1], "-", 1) == 0) {      // return error if no file
             cout << "No file specified after \"-e\" option." << endl;
-            return -1;  
+            return -1;
          }
-         Config.EnergyCalibrationFile = argv[++i]; // otherwise set filename
+         Config.EnergyCalibrationFile = argv[++i];      // otherwise set filename
          Config.HaveAltEnergyCalibration = 1;
          cout << "Energy calibration to be loaded from " << Config.EnergyCalibrationFile << endl;
       }
-      
       // Waveform Calibration file
       // -------------------------------------------
-      if(strncmp(argv[i],"-w",2)==0) { // if option is Ecal file
-         if(i>=argc-1 || strncmp(argv[i+1],"-",1)==0) {  // return error if no file
+      if (strncmp(argv[i], "-w", 2) == 0) {     // if option is Ecal file
+         if (i >= argc - 1 || strncmp(argv[i + 1], "-", 1) == 0) {      // return error if no file
             cout << "No file specified after \"-w\" option." << endl;
-            return -1;  
+            return -1;
          }
-         Config.WaveCalibrationFile = argv[++i]; // otherwise set filename
+         Config.WaveCalibrationFile = argv[++i];        // otherwise set filename
          Config.HaveWaveCalibration = 1;
          cout << "Wave calibration to be loaded from " << Config.WaveCalibrationFile << endl;
       }
-      
       // Source specification
       // -------------------------------------------
-      if(strncmp(argv[i],"-s",2)==0) { // if option is source spec
-         if(i>=argc-1 || strncmp(argv[i+1],"-",1)==0) {  // return error if no source given
+      if (strncmp(argv[i], "-s", 2) == 0) {     // if option is source spec
+         if (i >= argc - 1 || strncmp(argv[i + 1], "-", 1) == 0) {      // return error if no source given
             cout << "No source specified after \"-s\" option." << endl;
-            return -1;  
+            return -1;
          }
-         test=0;
-         if(strncmp(argv[i+1],"60Co",4)==0 || strncmp(argv[i+1],"Co60",4)==0 ||
-              strncmp(argv[i+1],"60co",4)==0 || strncmp(argv[i+1],"co60",4)==0 ) {  // is it 60Co
+         test = 0;
+         if (strncmp(argv[i + 1], "60Co", 4) == 0 || strncmp(argv[i + 1], "Co60", 4) == 0 || strncmp(argv[i + 1], "60co", 4) == 0 || strncmp(argv[i + 1], "co60", 4) == 0) {    // is it 60Co
             Config.SourceNumCore = 0;
             Config.SourceNumFront = 0;
             Config.SourceNumBack = 0;
-            test=1;
+            test = 1;
          }
-         if(strncmp(argv[i+1],"152Eu",5)==0 || strncmp(argv[i+1],"Eu152",5)==0 ||
-              strncmp(argv[i+1],"152eu",5)==0 || strncmp(argv[i+1],"eu152",5)==0) {  // or is it 152Eu
+         if (strncmp(argv[i + 1], "152Eu", 5) == 0 || strncmp(argv[i + 1], "Eu152", 5) == 0 || strncmp(argv[i + 1], "152eu", 5) == 0 || strncmp(argv[i + 1], "eu152", 5) == 0) {        // or is it 152Eu
             Config.SourceNumCore = 1;
             Config.SourceNumFront = 1;
             Config.SourceNumBack = 2;
-            test=1;
+            test = 1;
          }
-         if(test==0) {  // or is it somethimng else
+         if (test == 0) {       // or is it somethimng else
             cout << "Source not recognised!" << endl;
             return -1;
          }
          i += 1;
       }
-      
       // Maximum number of events to process
       // -------------------------------------------
-      if(strncmp(argv[i],"-n",2)==0) { 
-         if(i>=argc-1 || strncmp(argv[i+1],"-",1)==0) {  // return error if no source given
+      if (strncmp(argv[i], "-n", 2) == 0) {
+         if (i >= argc - 1 || strncmp(argv[i + 1], "-", 1) == 0) {      // return error if no source given
             cout << "No number specified after \"-n\" option. (maximum number of events)" << endl;
-            return -1;  
+            return -1;
          }
          Config.EventLimit = atoi(argv[++i]);
-         if(Config.EventLimit < 0) {
+         if (Config.EventLimit < 0) {
             cout << "Negative number of events specified.  What does that even mean?" << endl;
             return -1;
          }
-         if(Config.EventLimit==0) {
+         if (Config.EventLimit == 0) {
             cout << "No event limit set." << endl;
-         }
-         else {
+         } else {
             cout << "Run limited to " << Config.EventLimit << " events." << endl;
          }
       }
-      
       // Maximum number of events to process
       // -------------------------------------------
-      if(strncmp(argv[i],"-o",2)==0) { 
-         if(i>=argc-1 || strncmp(argv[i+1],"-",1)==0) {  // return error if no source given
+      if (strncmp(argv[i], "-o", 2) == 0) {
+         if (i >= argc - 1 || strncmp(argv[i + 1], "-", 1) == 0) {      // return error if no source given
             cout << "No path specified after \"-o\" option. (output path)" << endl;
-            return -1;  
+            return -1;
          }
          Config.OutPath = argv[++i];
       }
       // Run options
       // -------------------------------------------
-      if(strncmp(argv[i],"--",2)==0) {// Long option used.
-         if(RunConfGiven==0) { // If run configuration given, clear defaults
+      if (strncmp(argv[i], "--", 2) == 0) {     // Long option used.
+         if (RunConfGiven == 0) {       // If run configuration given, clear defaults
             Config.RunCalibration = 0;
             Config.RunEfficiency = 0;
             Config.RunPropCrosstalk = 0;
@@ -746,55 +742,58 @@ int ReadCommandLineSettings(int argc, char **argv) {
             RunConfGiven = 1;
          }
          // offline calibration
-         if(strncmp(argv[i],"--calof",7)==0) {
+         if (strncmp(argv[i], "--calof", 7) == 0) {
             Config.RunOffCal = 1;
          }
          // calibration
-         if(strncmp(argv[i],"--cal",5)==0) {
+         if (strncmp(argv[i], "--cal", 5) == 0) {
             Config.RunCalibration = 1;
          }
          // efficiency
-         if(strncmp(argv[i],"--eff",5)==0) {
+         if (strncmp(argv[i], "--eff", 5) == 0) {
             Config.RunEfficiency = 1;
          }
          // proportional crosstalk
-         if(strncmp(argv[i],"--prop",6)==0) {
+         if (strncmp(argv[i], "--prop", 6) == 0) {
             Config.RunPropCrosstalk = 1;
          }
       }
-      
-           
+
       // General Configuration file
       // -------------------------------------------
-      
+
 
    }
-   
-   
+
+
    return 0;
 }
 
-int ReadOptionsFile(std::string filename ) {
+int ReadOptionsFile(std::string filename)
+{
    cout << filename << endl;
    return 0;
 }
 
-void PrintHelp() {
+void PrintHelp()
+{
    cout << "You seem confused, perhaps this will help.." << endl << endl;
    cout << "To run:" << endl << "./Sort -f InFile1 [InFile2...] " << endl;
    cout << "Options: " << endl;
-   cout << "[-e (energy Calibration File)] - select alternate energy calibration file.  In the absense of an entry in this file, all channels will default to using the calibrated energy from the input TTree." << endl;
-   cout << "[-w (Wave calibration file)] - select calibration for energy derived from waveforms.  No defaults. Required for succesfully running XTalk analysis." << endl;
+   cout <<
+       "[-e (energy Calibration File)] - select alternate energy calibration file.  In the absense of an entry in this file, all channels will default to using the calibrated energy from the input TTree."
+       << endl;
+   cout <<
+       "[-w (Wave calibration file)] - select calibration for energy derived from waveforms.  No defaults. Required for succesfully running XTalk analysis."
+       << endl;
    cout << "[-s (Source e.g. 60Co, 152eu)] - select source to be used for calibration." << endl;
    cout << "[-n N] - limit the number of events processed to N" << endl;
    cout << "[-o (path)] - save all output to (path) rather than ./" << endl;
-   cout << "[--cal/--eff/--prop] - run the calibration, efficiency, or proportianal crosstalk parts of the code on a fragment tree input." << endl;
-   cout << "[--calof] - run offline calibration on a histogram file (CalibOutXXXX.root).  This option overrides all other run options." << endl; 
+   cout <<
+       "[--cal/--eff/--prop] - run the calibration, efficiency, or proportianal crosstalk parts of the code on a fragment tree input."
+       << endl;
+   cout <<
+       "[--calof] - run offline calibration on a histogram file (CalibOutXXXX.root).  This option overrides all other run options."
+       << endl;
    cout << endl;
 }
-
-
-
-
-
-

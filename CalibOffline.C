@@ -50,7 +50,7 @@ float InitialSigma = 50.0;
 float InitialGain = 0.16;
 
 
-extern TApplication *App;              // Pointer to root environment for plotting etc
+extern TApplication *App;       // Pointer to root environment for plotting etc
 
 extern TCanvas *cCalib1, *cCalib1a, *cCalib2, *cWave1, *ctemp;
 
@@ -82,7 +82,7 @@ int CalibOffline(std::string filename)
    int NumFits;
 
    float CalibEn = 0.0;
-   
+
    // File
    TFile *file = TFile::Open(filename.c_str());
    if (file->IsOpen()) {
@@ -91,15 +91,15 @@ int CalibOffline(std::string filename)
       cout << "Failed to open " << filename << "!" << endl;
       return 0;
    }
-   
-   std::string tempstring; 
+
+   std::string tempstring;
    TFile *outfile;
-   if(Config.WriteFits) {
+   if (Config.WriteFits) {
       tempstring = Config.OutPath + Config.CalOfOut;
-      outfile = TFile::Open(tempstring.c_str(),"RECREATE");
+      outfile = TFile::Open(tempstring.c_str(), "RECREATE");
    }
 
-   
+
    if (Config.CalEnergy) {
       tempstring = Config.OutPath + "GainsOut.txt";
       GainOut.open(tempstring.c_str());
@@ -116,7 +116,6 @@ int CalibOffline(std::string filename)
          WaveReportOut.open(tempstring.c_str());
       }
    }
-   
    // Histograms
    GainPlot = new TH1F("Gains", "Gain of all fitted channels", 1001, -0.5, 1000.5);
    GainPlot->GetYaxis()->SetTitle("keV/ch");
@@ -232,14 +231,14 @@ int CalibOffline(std::string filename)
                   // Now print reports on results of fits and calibration.
                   if (Config.CalEnergy) {
                      if (FitSuccess > 0) {
-                        if (FitSuccess < 3  || FORCE_LINEAR) {
+                        if (FitSuccess < 3 || FORCE_LINEAR) {
                            GainOut << HistName << " " << Fit.LinGainFit[0] << " +/- " << Fit.dLinGainFit[0];
-                           GainOut << " " << Fit.LinGainFit[1] << " +/- " << Fit.dLinGainFit[1] << " " << Fit.
-                               LinGainFit[2] << endl;
+                           GainOut << " " << Fit.LinGainFit[1] << " +/- " << Fit.
+                               dLinGainFit[1] << " " << Fit.LinGainFit[2] << endl;
                         } else {
                            GainOut << HistName << " " << Fit.QuadGainFit[0] << " +/- " << Fit.dQuadGainFit[0] << " ";
-                           GainOut << Fit.QuadGainFit[1] << " +/- " << Fit.
-                               dQuadGainFit[1] << " " << Fit.QuadGainFit[2] << " +/- " << Fit.dQuadGainFit[2] << endl;
+                           GainOut << Fit.QuadGainFit[1] << " +/- " << Fit.dQuadGainFit[1] << " " << Fit.
+                               QuadGainFit[2] << " +/- " << Fit.dQuadGainFit[2] << endl;
                         }
                      } else {
                         GainOut << HistName << " Fail!!!" << endl;
@@ -254,7 +253,7 @@ int CalibOffline(std::string filename)
                         ReportOut << "Fail Fail Fail! The calibration has failed!" << endl;
                      }
                   }
-                  if(Config.WriteFits) {
+                  if (Config.WriteFits) {
                      outfile->cd();
                      Histo->Write();
                   }
@@ -336,14 +335,12 @@ int CalibOffline(std::string filename)
                if (FitSuccess > 0) {
                   if (FitSuccess < 3 || FORCE_LINEAR) {
                      WaveOut << HistName << " " << WaveFit.LinGainFit[0] << " +/- " << WaveFit.dLinGainFit[0];
-                     WaveOut << " " << WaveFit.LinGainFit[1] << " +/- " << WaveFit.
-                         dLinGainFit[1] << " " << WaveFit.LinGainFit[2] << endl;
+                     WaveOut << " " << WaveFit.LinGainFit[1] << " +/- " << WaveFit.dLinGainFit[1] << " " << WaveFit.
+                         LinGainFit[2] << endl;
                   } else {
-                     WaveOut << HistName << " " << WaveFit.
-                         QuadGainFit[0] << " +/- " << WaveFit.dQuadGainFit[0] << " ";
-                     WaveOut << WaveFit.QuadGainFit[1] << " +/- " << WaveFit.
-                         dQuadGainFit[1] << " " << WaveFit.QuadGainFit[2] << " +/- " << WaveFit.
-                         dQuadGainFit[2] << endl;
+                     WaveOut << HistName << " " << WaveFit.QuadGainFit[0] << " +/- " << WaveFit.dQuadGainFit[0] << " ";
+                     WaveOut << WaveFit.QuadGainFit[1] << " +/- " << WaveFit.dQuadGainFit[1] << " " << WaveFit.
+                         QuadGainFit[2] << " +/- " << WaveFit.dQuadGainFit[2] << endl;
                   }
                } else {
                   WaveOut << HistName << " Fail!!!" << endl;
@@ -357,17 +354,17 @@ int CalibOffline(std::string filename)
                      ReportOut << "Fail Fail Fail! The calibration has failed!" << endl;
                   }
                }
-               if(Config.WriteFits) {
+               if (Config.WriteFits) {
                   outfile->cd();
                   Histo->Write();
-               }   
+               }
             }
          }
       }
-      
+
    }
-   
-   
+
+
 
 
    if (PLOT_CALIB_SUMMARY) {
@@ -400,7 +397,7 @@ int CalibOffline(std::string filename)
       App->Run();
    }
 
-   if(Config.WriteFits) {
+   if (Config.WriteFits) {
       outfile->Close();
    }
 
@@ -414,4 +411,3 @@ int CalibOffline(std::string filename)
    return 0;
 
 }
-
