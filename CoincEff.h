@@ -20,6 +20,10 @@ struct FitResult {
    float dMean;
    float Sigma;
    float dSigma;
+   float ConstantBG;
+   float dConstantBG;
+   float LinearBG; 
+   float dLinearBG;
    float ChiSq;
    int NDF;
 };

@@ -32,18 +32,7 @@
 #define PLOT_WAVE 0
 #define WAVE_CHARGE_MAX 16384
 
-// Peak Search stuff
-#define EN_SEARCH_THRESH 0.055  //0.0028  // minimum peak height for search as frac of max peak height
-                                 // It seems as if this value needs to be much lower than the actual minimum peak height
-#define EN_SEARCH_SIGMA 10      //50 // Expected sigma of peaks
-#define WAVE_SEARCH_THRESH 0.01 //0.0028  // minimum peak height for search as frac of max peak height
-                                 // It seems as if this value needs to be much lower than the actual minimum peak height
-#define WAVE_SEARCH_SIGMA 20    //50 // Expected sigma of peaks
 
-#define MIN_GAIN 0.125          // = 0.075 / 125    // These values cover from 0.5x to 2x the typical TIGRESS gain
-#define MAX_GAIN 0.172          // 0.3 / 125
-#define MIN_GAIN_WAVE 0.6       // = 0.075 / 125    // These values cover from 0.5x to 2x the typical TIGRESS gain
-#define MAX_GAIN_WAVE 0.7       // 0.3 / 125
 
 // Extra calibration point at 0 ch = 0 keV
 #define INCLUDE_ZERO 0          // Add an extra calibration point at 0ch = 0 keV
@@ -55,20 +44,6 @@
 #define FIT_WIDTH_KEV 15
 #define FIT_BACKGROUND 1        // 1 = yes, 0 = no.  Should be best to use this all the time but left option there just in case.
 #define BACK_WIDTH_KEV 10
-
-// Initial values for custom fit functions
-// These only effect the custom functions used if FIT_BACKGROUND == 1
-#define GAUS_CONST_INITIAL 100  // initial guess for peak height
-#define ENERGY_SIGMA_ZERO 0.45  // sigma of peaks in keV at zero energy.
-#define ENERGY_SIGMA_1MEV 0.45  // increase in sigma from zero to 1MeV, roughly same as sigma at 0, also in keV.
-#define WAVE_SIGMA_ZERO 1.5     // estimated sigma, in keV, at zero, in wave emergy spectrum
-#define WAVE_SIGMA_1MEV 0.4     // increase in sigma, in keV, from 0 to 1MeV
-
-// Checks on fit quality
-#define GAUS_HEIGHT_MIN 10      // minimum peak height for fit to be used in calibration
-#define GAUS_CSPD_MAX 50        // maximum CSPD for peak to be used in calibration
-#define GAUS_SIGMA_MIN 250      // fits with sigma below this will be ignored
-                               // will use abs(sigma) for test as some peaks seem to converge on sensible but -ve sigma
 
 // Energy/ch fitting
 #define INITIAL_GAIN 0.16
@@ -93,6 +68,10 @@ struct FitResult {
    float dMean;
    float Sigma;
    float dSigma;
+   float ConstantBG;
+   float dConstantBG;
+   float LinearBG; 
+   float dLinearBG;
    float ChiSq;
    int NDF;
 };

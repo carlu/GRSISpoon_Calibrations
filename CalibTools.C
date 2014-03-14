@@ -459,7 +459,7 @@ int FitSinglePeak(TH1F * Histo, int Line, float Centre, TF1 * FitRange, FitResul
       FitRange->SetParName(0, "Const");
       FitRange->SetParName(1, "Mean");
       FitRange->SetParName(2, "Sigma");
-      FitRange->SetParName(3, "Background");
+      FitRange->SetParName(3, "Constant Background");
       FitRange->SetParameter(0, ConstEst);
       FitRange->SetParameter(1, Centre);
       if (VERBOSE) {
@@ -495,6 +495,8 @@ int FitSinglePeak(TH1F * Histo, int Line, float Centre, TF1 * FitRange, FitResul
    FitRes->dMean = FitRange->GetParError(1);
    FitRes->Sigma = FitRange->GetParameter(2);
    FitRes->dSigma = FitRange->GetParError(2);
+   FitRes->ConstantBG = FitRange->GetParameter(3);
+   FitRes->dConstantBG = FitRange->GetParError(3);
    FitRes->ChiSq = FitRange->GetChisquare();
    FitRes->NDF = FitRange->GetNDF();
 

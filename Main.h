@@ -31,15 +31,39 @@
 //Other stuff
 #define CHAR_BUFFER_SIZE 1024
 
-// Source information for calib and eff
+// Information for calib and eff
+// --------------------------------------------
 // Peaks
 #define SOURCE_NUM_FRONT 0      //1 // Source for front segments and core 0=60Co, 1=152Eu, 2=152Eu (no 121)
 #define SOURCE_NUM_BACK 0       //2 // Source for back segments
 #define SOURCE_NUM_CORE 0       //1 // Source for core
-//#define SOURCE_NUM_FRONT 1 // Source for front segments and core 0=60Co, 1=152Eu, 2=152Eu (no 121)
-//#define SOURCE_NUM_BACK 2 // Source for back segments
-//#define SOURCE_NUM_CORE 1 // Source for core
 #define NUM_LINES 2             // Number of lines to fit
+
+// Peak Search stuff
+#define EN_SEARCH_THRESH 0.055  //0.0028  // minimum peak height for search as frac of max peak height
+                                 // It seems as if this value needs to be much lower than the actual minimum peak height
+#define EN_SEARCH_SIGMA 10      //50 // Expected sigma of peaks
+#define WAVE_SEARCH_THRESH 0.01 //0.0028  // minimum peak height for search as frac of max peak height
+                                 // It seems as if this value needs to be much lower than the actual minimum peak height
+#define WAVE_SEARCH_SIGMA 20    //50 // Expected sigma of peaks
+#define MIN_GAIN 0.125          // = 0.075 / 125    // These values cover from 0.5x to 2x the typical TIGRESS gain
+#define MAX_GAIN 0.172          // 0.3 / 125
+#define MIN_GAIN_WAVE 0.6       // = 0.075 / 125    // These values cover from 0.5x to 2x the typical TIGRESS gain
+#define MAX_GAIN_WAVE 0.7       // 0.3 / 125
+
+// Initial values for custom fit functions
+// These only effect the custom functions used if FIT_BACKGROUND == 1
+#define GAUS_CONST_INITIAL 100  // initial guess for peak height
+#define ENERGY_SIGMA_ZERO 0.45  // sigma of peaks in keV at zero energy.
+#define ENERGY_SIGMA_1MEV 0.45  // increase in sigma from zero to 1MeV, roughly same as sigma at 0, also in keV.
+#define WAVE_SIGMA_ZERO 1.5     // estimated sigma, in keV, at zero, in wave emergy spectrum
+#define WAVE_SIGMA_1MEV 0.4     // increase in sigma, in keV, from 0 to 1MeV
+// Checks on fit quality
+#define GAUS_HEIGHT_MIN 10      // minimum peak height for fit to be used in calibration
+#define GAUS_CSPD_MAX 50        // maximum CSPD for peak to be used in calibration
+#define GAUS_SIGMA_MIN 250      // fits with sigma below this will be ignored
+                               // will use abs(sigma) for test as some peaks seem to converge on sensible but -ve sigma
+
 
 
 // Other info for calibration code

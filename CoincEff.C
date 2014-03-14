@@ -7,7 +7,6 @@ using namespace std;
 #include <cstdlib>
 #include <math.h>
 
-
 // ROOT libraries:
 #include <TFile.h>
 #include <TStopwatch.h>
@@ -42,7 +41,6 @@ extern TApplication *App;
 
 // Parameters and constants
 
-
 // File pointers:
 static TFile *outfile = 0;
 
@@ -57,7 +55,6 @@ static TH1F *hCrystalEnGated[CLOVERS][CRYSTALS] = { 0 };
 static TH1F *hArrayEn = 0;
 
 // Other stuff
-
 
 // Functions
 void InitCoincEff();
@@ -130,10 +127,12 @@ void CoincEff(std::vector < TTigFragment > &ev)
                CrystalEnergies[Clover - 1][Crystal] = Energy;
                // Test if gate passed
                if (Energy > GATE_LOW && Energy < GATE_HIGH) {
-                  GatePassed = 1;
+                  GatePassed += 1;
                   GateCrystal = Crystal;
                   GateClover = Clover;
                   hTestSpectrum->Fill(1.0);
+                  //cout << endl << "Gate passed (Cl: " << Clover-1 << " Cr: " << Crystal << " En: " << CrystalEnergies[Clover-1][Crystal] << ")" << endl;
+                  //cout << "Gate Clov " << GateClover << " Cr " << GateCrystal << endl;
                }
             }
             //cout << Energy << " " << GatePassed << endl;
@@ -142,22 +141,25 @@ void CoincEff(std::vector < TTigFragment > &ev)
          else {
 
          }
-
       }
-
    }
-
+   
    // If gate passed, loop crystals and increment gated spectra
    if (GatePassed == 1) {
+         //cout << endl << "Passed!!!   Cl,Cr : ";
       for (Clover = 0; Clover < CLOVERS; Clover++) {
          for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
+            //cout << Clover << ", " << Crystal << "\t";
             if (CrystalEnergies[Clover][Crystal] > Config.EnergyThresh) {
-               if (Crystal != (GateCrystal - 1) || Clover != (GateClover - 1)) {
+               //cout << "!!!Energy!!! ";
+               if (Crystal != GateCrystal || Clover != (GateClover - 1)) {
+                  //cout << "!!!Crystal!!!";
                   hCrystalEnGated[Clover][Crystal]->Fill(CrystalEnergies[Clover][Crystal]);
                }
             }
          }
       }
+   //cout << endl;
    }
    // now check if gate is passed with add-back and increment gated AB spectra if so
    for (Clover = 0; Clover < CLOVERS; Clover++) {
@@ -165,14 +167,12 @@ void CoincEff(std::vector < TTigFragment > &ev)
          hCloverABEn[Clover]->Fill(CloverAddBack[Clover]);
          if (CloverAddBack[Clover] > GATE_LOW && CloverAddBack[Clover] < GATE_HIGH) {
             hTestSpectrum->Fill(3.0);
-            ABGatePassed = 1;
+            ABGatePassed += 1;
             ABGateClover = Clover + 1;  // +1 to match the GateClover and GateCrystal values above
-
          }
       }
-
    }
-
+   
    if (ABGatePassed == 1) {
       for (Clover = 0; Clover < CLOVERS; Clover++) {
          if ((CloverAddBack[Clover] > Config.EnergyThresh) && (Clover != (ABGateClover - 1))) {
@@ -229,20 +229,6 @@ void FinalCoincEff()
    FitResult FitRes;
    ofstream EffOut;
    char str[256];
-
-   outfile->cd();
-
-   hTestSpectrum->Write();
-   hArrayEn->Write();
-   for (Clover = 0; Clover < CLOVERS; Clover++) {
-      hCloverEn[Clover]->Write();
-      hCloverABEn[Clover]->Write();
-      hCloverABEnGated[Clover]->Write();
-      for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
-         hCrystalEn[Clover][Crystal]->Write();
-         hCrystalEnGated[Clover][Crystal]->Write();
-      }
-   }
 
    // Open a file to output efficiencies:   
    if (OUTPUT_EFF) {
@@ -302,7 +288,19 @@ void FinalCoincEff()
       }
    }
 
-   // output results warning about any problems
+   // Write histograms
+   outfile->cd();
+   hTestSpectrum->Write();
+   hArrayEn->Write();
+   for (Clover = 0; Clover < CLOVERS; Clover++) {
+      hCloverEn[Clover]->Write();
+      hCloverABEn[Clover]->Write();
+      hCloverABEnGated[Clover]->Write();
+      for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
+         hCrystalEn[Clover][Crystal]->Write();
+         hCrystalEnGated[Clover][Crystal]->Write();
+      }
+   }
 
    outfile->Close();
    if (OUTPUT_EFF) {
@@ -315,11 +313,33 @@ void FitPeak(TH1F * Histo, float Min, float Max, FitResult * FitRes)
 {
 
    int Integral = Histo->Integral();
-   TSpectrum *Spec = new TSpectrum();
+   //TSpectrum *Spec = new TSpectrum();
+   std::string FitOptions = ("RQEM");
+   int i;
+   float Centre, ConstEst, BG;
 
    //cout << "Integral is: " << Integral << endl;
    if (Integral > MIN_FIT_COUNTS) {
-      TF1 *FitRange = new TF1("GausFit", "gaus", Min, Max);
+   
+      TF1 *FitRange = new TF1("GausFlatBack", "([0]*exp(-0.5*((x-[1])/[2])**2))+[3]", Min, Max);
+      FitRange->SetParName(0, "Const");
+      FitRange->SetParName(1, "Mean");
+      FitRange->SetParName(2, "Sigma");
+      FitRange->SetParName(3, "Constant Background");
+      ConstEst=0.0;
+      TAxis *xaxis = Histo->GetXaxis();
+      for(i=xaxis->FindBin(Min); i<=xaxis->FindBin(Max); i++) {
+         if(Histo->GetBinContent(i) > ConstEst) {
+            ConstEst = Histo->GetBinContent(i);
+         } 
+      }
+      FitRange->SetParameter(0, ConstEst);
+      Centre = (Min+Max)/2.0;
+      FitRange->SetParameter(1, Centre);
+      FitRange->SetParameter(2,ENERGY_SIGMA_ZERO+ENERGY_SIGMA_1MEV);
+      BG = (Histo->GetBinContent(xaxis->FindBin(Min)) + Histo->GetBinContent(xaxis->FindBin(Min))) / 2.0; 
+      FitRange->SetParameter(3,BG);
+      
       Histo->Fit(FitRange, "R,Q");
 
       FitRes->Const = FitRange->GetParameter(0);
@@ -328,6 +348,8 @@ void FitPeak(TH1F * Histo, float Min, float Max, FitResult * FitRes)
       FitRes->dMean = FitRange->GetParError(1);
       FitRes->Sigma = FitRange->GetParameter(2);
       FitRes->dSigma = FitRange->GetParError(2);
+      FitRes->ConstantBG = FitRange->GetParameter(3);
+      FitRes->dConstantBG = FitRange->GetParError(3);
 
       //cout << FitRes->Const << " " << FitRes->dConst << " " << FitRes->Mean << " " << FitRes->dMean << " " << FitRes->
       //  Sigma << " " << FitRes->dSigma << endl;

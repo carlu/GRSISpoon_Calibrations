@@ -650,7 +650,7 @@ int ReadCommandLineSettings(int argc, char **argv)
                break;           // break if at last item in arg list
             }
          }
-         cout << "Input files:" << endl;
+         cout << "Input files:  ";
          for (j = 0; j < Config.files.size(); j++) {    // print list of files back to screen
             cout << Config.files.at(j) << endl;
          }
@@ -769,8 +769,8 @@ int ReadCommandLineSettings(int argc, char **argv)
    return 0;
 }
 
-int ReadOptionsFile(std::string filename)
-{
+int ReadOptionsFile(std::string filename)  // this is a dummy function
+{                                             // One day it should read in a config text file
    cout << filename << endl;
    return 0;
 }
