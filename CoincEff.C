@@ -226,6 +226,7 @@ void FinalCoincEff()
    int Clover, Crystal;
    float Const, dConst, Mean, dMean, Sigma, dSigma;
    float Counts, dCounts, dCountsFit, dCountsStat, Eff, dEff;
+   float PeakArea, BGArea, dPeakArea, dBGArea;
    FitResult FitRes;
    ofstream EffOut;
    char str[256];
@@ -242,21 +243,35 @@ void FinalCoincEff()
       EffOut << "Clover Addback: (" << hTestSpectrum->GetBinContent(4) << " counts in 1173 gate):" << endl;
    }
    for (Clover = 0; Clover < CLOVERS; Clover++) {
+   
       memset(&FitRes, 0.0, sizeof(FitResult));  // Clear this, should be overwritten every time but just in case...
-      FitPeak(hCloverABEnGated[Clover], FIT_LOW, FIT_HIGH, &FitRes);
-      Counts = (EN_SPECTRA_CHANS / EN_SPECTRA_MAX) * FitRes.Const * FitRes.Sigma * sqrt(2 * PI);
-      dCountsFit = Counts * sqrt(pow(FitRes.dConst / FitRes.Const, 2) + pow(FitRes.dSigma / FitRes.Sigma, 2));  // Fitting error
-      dCountsStat = sqrt(Counts);
-      dCounts = Counts * sqrt(pow(dCountsFit / Counts, 2) + pow(dCountsStat / Counts, 2));
+      
+      FitPeak(hCloverABEnGated[Clover], FIT_LOW, FIT_HIGH, &FitRes);  
+      
+      PeakArea = FitRes.Const * FitRes.Sigma * sqrt(2 * PI);
+      BGArea   = FitRes.ConstantBG * (FIT_HIGH - FIT_LOW);
+      Counts = (EN_SPECTRA_CHANS / EN_SPECTRA_MAX) * (PeakArea - BGArea );
+      
+      dPeakArea = PeakArea * sqrt(pow(FitRes.dConst / FitRes.Const, 2) + pow(FitRes.dSigma / FitRes.Sigma, 2)) * sqrt(2 * PI);
+      dBGArea   = FitRes.dConstantBG * (FIT_HIGH - FIT_LOW);
+      
+      dCountsFit = sqrt( pow(dPeakArea,2) + pow(dBGArea,2) );  // Fitting error comes out way too low to include Poisson statistical error.  
+      dCountsStat = sqrt(Counts);                                 // hmmm 
+      
+      dCounts = Counts * sqrt(pow(dCountsFit / Counts, 2) + pow(dCountsStat / Counts, 2));  // combine fit wrror with stat error for now but need to come back and do this properly
+      
       Eff = (Counts / hTestSpectrum->GetBinContent(4)) * 100.0;
+      
       dEff =
           Eff * sqrt(pow(dCounts / Counts, 2) +
                      pow(sqrt(hTestSpectrum->GetBinContent(4)) / hTestSpectrum->GetBinContent(4), 2));
+      
       if (OUTPUT_EFF) {
          sprintf(str, "TIG%02d:\t", Clover + 1);
          EffOut << str << FitRes.Const << " +/- " << FitRes.dConst;
          EffOut << "\t" << FitRes.Mean << " +/- " << FitRes.dMean;
          EffOut << "\t" << FitRes.Sigma << " +/- " << FitRes.dSigma;
+         EffOut << "\t" << FitRes.ConstantBG << " +/- " << FitRes.dConstantBG;
          EffOut << "\t" << Counts << " +/- " << dCounts;
          EffOut << "\t" << Eff << " +/- " << dEff << endl;
       }
@@ -267,16 +282,29 @@ void FinalCoincEff()
    }
    for (Clover = 0; Clover < CLOVERS; Clover++) {
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
+      
          memset(&FitRes, 0.0, sizeof(FitResult));
-         FitPeak(hCrystalEnGated[Clover][Crystal], 1300.0, 1365.0, &FitRes);
-         Counts = (EN_SPECTRA_CHANS / EN_SPECTRA_MAX) * FitRes.Const * FitRes.Sigma * sqrt(2 * PI);
-         dCountsFit = Counts * sqrt(pow(FitRes.dConst / FitRes.Const, 2) + pow(FitRes.dSigma / FitRes.Sigma, 2));       // Fitting error
-         dCountsStat = sqrt(Counts);
-         dCounts = Counts * sqrt(pow(dCountsFit / Counts, 2) + pow(dCountsStat / Counts, 2));
+         
+         FitPeak(hCrystalEnGated[Clover][Crystal], FIT_LOW, FIT_HIGH, &FitRes);
+         
+         PeakArea = FitRes.Const * FitRes.Sigma * sqrt(2 * PI);
+         BGArea   = FitRes.ConstantBG * (FIT_HIGH - FIT_LOW);
+         Counts = (EN_SPECTRA_CHANS / EN_SPECTRA_MAX) * (PeakArea - BGArea );
+         
+         dPeakArea = PeakArea * sqrt(pow(FitRes.dConst / FitRes.Const, 2) + pow(FitRes.dSigma / FitRes.Sigma, 2)) * sqrt(2 * PI);
+         dBGArea   = FitRes.dConstantBG * (FIT_HIGH - FIT_LOW);
+         
+         dCountsFit = sqrt( pow(dPeakArea,2) + pow(dBGArea,2) );  // Fitting error comes out way too low to include Poisson statistical error.  
+         dCountsStat = sqrt(Counts);                                 // hmmm 
+         
+         dCounts = Counts * sqrt(pow(dCountsFit / Counts, 2) + pow(dCountsStat / Counts, 2));  // combine fit wrror with stat error for now but need to come back and do this properly
+         
          Eff = (Counts / hTestSpectrum->GetBinContent(4)) * 100.0;
+         
          dEff =
              Eff * sqrt(pow(dCounts / Counts, 2) +
                         pow(sqrt(hTestSpectrum->GetBinContent(4)) / hTestSpectrum->GetBinContent(4), 2));
+                        
          if (OUTPUT_EFF) {
             sprintf(str, "TIG%02d%c:\t", Clover + 1, Num2Col(Crystal));
             EffOut << str << FitRes.Const << " +/- " << FitRes.dConst;
