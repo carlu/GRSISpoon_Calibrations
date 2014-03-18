@@ -1,5 +1,5 @@
 //To compile:
-// g++ Main.C CoincEff.C Calib.C PropXtalk.C CalibTools.C CalibOffline.C -I$GRSISYS/include --std=c++0x -o Sort $GRSISYS/libraries/TigFormat/libFormat.so $GRSISYS/libraries/libCalManager.so $GRSISYS/libraries/libRootIOManager.so -O2 `root-config --cflags --libs` -lTreePlayer -lSpectrum -lgsl -lgslcblas -g
+// g++ Main.C CoincEff.C Calib.C PropXtalk.C CalibTools.C CalibOffline.C -I$GRSISYS/include --std=c++0x -o Sort $GRSISYS/libraries/TigFormat/libFormat.so $GRSISYS/libraries/libCalManager.so $GRSISYS/libraries/libRootIOManager.so -O0 `root-config --cflags --libs` -lTreePlayer -lSpectrum -lgsl -lgslcblas -g
 //To run:
 // ./Sort -f InFile1 [InFile2...] [-e (energy Calibration File)] [-w (Wave calibration file)] [-s (Source)]
 // --------------------------------------------------------------------------------
@@ -80,7 +80,7 @@ static TRandom3 rand1;
 int FileCount = 0;
 int EventCount = 0;
 int FragCount = 0;
-int BadEventCount = 0;
+int EmptyEventCount = 0;
 
 // Storing run settings
 RunConfig Config;
@@ -294,8 +294,8 @@ int main(int argc, char **argv)
          //cout << "HERE!!!!! " << endl;
 
          if (FragNum < 3) {     // Init to 1, incremented on first GetEntryWithIndex, so should be at least 3 if any frags found      
-            BadEventCount++;
-            //cout << "HERE!!!!! " << BadEventCount << endl;
+            EmptyEventCount++;
+            //cout << "HERE!!!!! " << EmptyEventCount << endl;
             continue;
          } else {
             EventCount++;
@@ -323,7 +323,7 @@ int main(int argc, char **argv)
             cout << "----------------------------------------------------------" << endl;
             cout << "  Tree  " << TreeNum + 1 << " / " << nTrees << endl;
             cout << "  Event " << EventCount +
-                BadEventCount << " / " << NumChainEvents << "   (" << EventCount << " good, " << BadEventCount <<
+                EmptyEventCount << " / " << NumChainEvents << "   (" << EventCount << " good, " << EmptyEventCount <<
                 " empty)" << endl;
             cout << "  Frag  " << FragCount << " / " << NumChainEntries << endl;
             cout << "\t  in " << StopWatch.RealTime() << " seconds." << endl;
@@ -331,11 +331,6 @@ int main(int argc, char **argv)
             cout << "----------------------------------------------------------" << endl;
          }
 
-      }
-
-      if (Config.EventLimit > 0 && EventCount >= Config.EventLimit) {
-         cout << "Maximum number of events (" << Config.EventLimit << ") reached.  Terminating..." << endl;
-         break;
       }
 
       Branch->DropBaskets("all");       // Clear cache before next tree    

@@ -22,6 +22,7 @@ using namespace std;
 #include <TH2F.h>
 #include <TApplication.h>
 #include <TCanvas.h>
+#include <TGraphErrors.h>
 
 // TriScope libraries
 #include "TTigFragment.h"
@@ -223,13 +224,21 @@ void InitCoincEff()
 void FinalCoincEff()
 {
 
-   int Clover, Crystal;
+   int Clover, Crystal, Num;
    float Const, dConst, Mean, dMean, Sigma, dSigma;
    float Counts, dCounts, dCountsFit, dCountsStat, Eff, dEff;
    float PeakArea, BGArea, dPeakArea, dBGArea;
    FitResult FitRes;
    ofstream EffOut;
    char str[256];
+   // Results
+   float CloverEff[CLOVERS];
+   float CloverErr[CLOVERS];
+   float CloverNums[CLOVERS]; 
+   
+   float CrystalEff[CLOVERS*CRYSTALS];
+   float CrystalErr[CLOVERS*CRYSTALS];
+   float CrystalNums[CLOVERS*CRYSTALS];
 
    // Open a file to output efficiencies:   
    if (OUTPUT_EFF) {
@@ -237,7 +246,13 @@ void FinalCoincEff()
       EffOut.open(tempstring.c_str());
    }
    // now fit 1332.5keV peak in gain matched spectra
-   memset(&FitRes, 0.0, sizeof(FitResult));
+   memset(&FitRes,    0.0, sizeof(FitResult));
+   memset(&CloverEff,  0.0, CLOVERS*sizeof(float));
+   memset(&CrystalEff, 0.0, CLOVERS*CRYSTALS*sizeof(float));
+   memset(&CloverErr,  0.0, CLOVERS*sizeof(float));
+   memset(&CrystalErr, 0.0, CLOVERS*CRYSTALS*sizeof(float));
+   
+   
    // First the clover add-back Spectra
    if (OUTPUT_EFF) {
       EffOut << "Clover Addback: (" << hTestSpectrum->GetBinContent(4) << " counts in 1173 gate):" << endl;
@@ -246,6 +261,7 @@ void FinalCoincEff()
    
       memset(&FitRes, 0.0, sizeof(FitResult));  // Clear this, should be overwritten every time but just in case...
       
+      cout << "Cl: " << Clover << endl;
       FitPeak(hCloverABEnGated[Clover], FIT_LOW, FIT_HIGH, &FitRes);  
       
       PeakArea = FitRes.Const * FitRes.Sigma * sqrt(2 * PI);
@@ -266,6 +282,9 @@ void FinalCoincEff()
           Eff * sqrt(pow(dCounts / Counts, 2) +
                      pow(sqrt(hTestSpectrum->GetBinContent(4)) / hTestSpectrum->GetBinContent(4), 2));
       
+      // store:               
+      CloverEff[Clover] = Eff; CloverErr[Clover] = dEff; CloverNums[Clover] = Clover +1;
+      
       if (OUTPUT_EFF) {
          sprintf(str, "TIG%02d:\t", Clover + 1);
          EffOut << str << FitRes.Const << " +/- " << FitRes.dConst;
@@ -285,6 +304,7 @@ void FinalCoincEff()
       
          memset(&FitRes, 0.0, sizeof(FitResult));
          
+         cout << "Cl, Cr: " << Clover << ", " << Crystal << endl;
          FitPeak(hCrystalEnGated[Clover][Crystal], FIT_LOW, FIT_HIGH, &FitRes);
          
          PeakArea = FitRes.Const * FitRes.Sigma * sqrt(2 * PI);
@@ -305,6 +325,11 @@ void FinalCoincEff()
              Eff * sqrt(pow(dCounts / Counts, 2) +
                         pow(sqrt(hTestSpectrum->GetBinContent(4)) / hTestSpectrum->GetBinContent(4), 2));
                         
+         // store:               
+         Num = (Clover*4) + Crystal; CrystalNums[Num] = Num +1;
+         CrystalEff[Num] = Eff; CrystalErr[Num] = dEff;
+                        
+                        
          if (OUTPUT_EFF) {
             sprintf(str, "TIG%02d%c:\t", Clover + 1, Num2Col(Crystal));
             EffOut << str << FitRes.Const << " +/- " << FitRes.dConst;
@@ -315,7 +340,12 @@ void FinalCoincEff()
          }
       }
    }
-
+   
+   // Plot efficiencies
+   TGraphErrors CloverEffPlot(CLOVERS,CloverNums, CloverEff, NULL, CloverErr);
+   CloverEffPlot.Draw();
+   App->Run();
+   
    // Write histograms
    outfile->cd();
    hTestSpectrum->Write();
@@ -346,7 +376,7 @@ void FitPeak(TH1F * Histo, float Min, float Max, FitResult * FitRes)
    int i;
    float Centre, ConstEst, BG;
 
-   //cout << "Integral is: " << Integral << endl;
+   cout << "Integral is: " << Integral << endl;
    if (Integral > MIN_FIT_COUNTS) {
    
       TF1 *FitRange = new TF1("GausFlatBack", "([0]*exp(-0.5*((x-[1])/[2])**2))+[3]", Min, Max);
@@ -365,7 +395,7 @@ void FitPeak(TH1F * Histo, float Min, float Max, FitResult * FitRes)
       Centre = (Min+Max)/2.0;
       FitRange->SetParameter(1, Centre);
       FitRange->SetParameter(2,ENERGY_SIGMA_ZERO+ENERGY_SIGMA_1MEV);
-      BG = (Histo->GetBinContent(xaxis->FindBin(Min)) + Histo->GetBinContent(xaxis->FindBin(Min))) / 2.0; 
+      BG = (Histo->GetBinContent(xaxis->FindBin(Min)) + Histo->GetBinContent(xaxis->FindBin(Max))) / 2.0; 
       FitRange->SetParameter(3,BG);
       
       Histo->Fit(FitRange, "R,Q");
