@@ -154,7 +154,7 @@ struct RunConfig {              // this struct will hold all information
    // CoincEff()
    // What to plot
    bool PlotEff;
-   bool SavePlotEff;
+   bool OutputEff;
 
 
 

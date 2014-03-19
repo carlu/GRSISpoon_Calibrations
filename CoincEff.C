@@ -241,7 +241,7 @@ void FinalCoincEff()
    float CrystalNums[CLOVERS*CRYSTALS];
 
    // Open a file to output efficiencies:   
-   if (OUTPUT_EFF) {
+   if (Config.OutputEff) {
       std::string tempstring = Config.OutPath + Config.EffTxtOut;
       EffOut.open(tempstring.c_str());
    }
@@ -254,27 +254,24 @@ void FinalCoincEff()
    
    
    // First the clover add-back Spectra
-   if (OUTPUT_EFF) {
+   if (Config.OutputEff) {
       EffOut << "Clover Addback: (" << hTestSpectrum->GetBinContent(4) << " counts in 1173 gate):" << endl;
    }
    for (Clover = 0; Clover < CLOVERS; Clover++) {
    
       memset(&FitRes, 0.0, sizeof(FitResult));  // Clear this, should be overwritten every time but just in case...
       
-      cout << "Cl: " << Clover << endl;
       FitPeak(hCloverABEnGated[Clover], FIT_LOW, FIT_HIGH, &FitRes);  
       
       PeakArea = FitRes.Const * FitRes.Sigma * sqrt(2 * PI);
-      BGArea   = FitRes.ConstantBG * (FIT_HIGH - FIT_LOW);
-      Counts = (EN_SPECTRA_CHANS / EN_SPECTRA_MAX) * (PeakArea - BGArea );
+      
+      Counts = (EN_SPECTRA_CHANS / EN_SPECTRA_MAX) * PeakArea;
       
       dPeakArea = PeakArea * sqrt(pow(FitRes.dConst / FitRes.Const, 2) + pow(FitRes.dSigma / FitRes.Sigma, 2)) * sqrt(2 * PI);
-      dBGArea   = FitRes.dConstantBG * (FIT_HIGH - FIT_LOW);
       
-      dCountsFit = sqrt( pow(dPeakArea,2) + pow(dBGArea,2) );  // Fitting error comes out way too low to include Poisson statistical error.  
       dCountsStat = sqrt(Counts);                                 // hmmm 
       
-      dCounts = Counts * sqrt(pow(dCountsFit / Counts, 2) + pow(dCountsStat / Counts, 2));  // combine fit wrror with stat error for now but need to come back and do this properly
+      dCounts = Counts * sqrt(pow(dPeakArea / Counts, 2) + pow(dCountsStat / Counts, 2));  // combine fit wrror with stat error for now but need to come back and do this properly
       
       Eff = (Counts / hTestSpectrum->GetBinContent(4)) * 100.0;
       
@@ -285,7 +282,7 @@ void FinalCoincEff()
       // store:               
       CloverEff[Clover] = Eff; CloverErr[Clover] = dEff; CloverNums[Clover] = Clover +1;
       
-      if (OUTPUT_EFF) {
+      if (Config.OutputEff) {
          sprintf(str, "TIG%02d:\t", Clover + 1);
          EffOut << str << FitRes.Const << " +/- " << FitRes.dConst;
          EffOut << "\t" << FitRes.Mean << " +/- " << FitRes.dMean;
@@ -296,7 +293,7 @@ void FinalCoincEff()
       }
    }
    // then crystal spectra
-   if (OUTPUT_EFF) {
+   if (Config.OutputEff) {
       EffOut << endl << "Crystals: (" << hTestSpectrum->GetBinContent(2) << " counts in 1173 gate):" << endl;
    }
    for (Clover = 0; Clover < CLOVERS; Clover++) {
@@ -304,20 +301,17 @@ void FinalCoincEff()
       
          memset(&FitRes, 0.0, sizeof(FitResult));
          
-         cout << "Cl, Cr: " << Clover << ", " << Crystal << endl;
          FitPeak(hCrystalEnGated[Clover][Crystal], FIT_LOW, FIT_HIGH, &FitRes);
          
          PeakArea = FitRes.Const * FitRes.Sigma * sqrt(2 * PI);
-         BGArea   = FitRes.ConstantBG * (FIT_HIGH - FIT_LOW);
-         Counts = (EN_SPECTRA_CHANS / EN_SPECTRA_MAX) * (PeakArea - BGArea );
+      
+         Counts = (EN_SPECTRA_CHANS / EN_SPECTRA_MAX) * PeakArea;
          
          dPeakArea = PeakArea * sqrt(pow(FitRes.dConst / FitRes.Const, 2) + pow(FitRes.dSigma / FitRes.Sigma, 2)) * sqrt(2 * PI);
-         dBGArea   = FitRes.dConstantBG * (FIT_HIGH - FIT_LOW);
          
-         dCountsFit = sqrt( pow(dPeakArea,2) + pow(dBGArea,2) );  // Fitting error comes out way too low to include Poisson statistical error.  
          dCountsStat = sqrt(Counts);                                 // hmmm 
          
-         dCounts = Counts * sqrt(pow(dCountsFit / Counts, 2) + pow(dCountsStat / Counts, 2));  // combine fit wrror with stat error for now but need to come back and do this properly
+         dCounts = Counts * sqrt(pow(dPeakArea / Counts, 2) + pow(dCountsStat / Counts, 2));  // combine fit wrror with stat error for now but need to come back and do this properly
          
          Eff = (Counts / hTestSpectrum->GetBinContent(4)) * 100.0;
          
@@ -330,7 +324,7 @@ void FinalCoincEff()
          CrystalEff[Num] = Eff; CrystalErr[Num] = dEff;
                         
                         
-         if (OUTPUT_EFF) {
+         if (Config.OutputEff) {
             sprintf(str, "TIG%02d%c:\t", Clover + 1, Num2Col(Crystal));
             EffOut << str << FitRes.Const << " +/- " << FitRes.dConst;
             EffOut << "\t" << FitRes.Mean << " +/- " << FitRes.dMean;
@@ -342,9 +336,14 @@ void FinalCoincEff()
    }
    
    // Plot efficiencies
-   TGraphErrors CloverEffPlot(CLOVERS,CloverNums, CloverEff, NULL, CloverErr);
-   CloverEffPlot.Draw();
-   App->Run();
+   if(Config.PlotEff) { 
+      TCanvas cClovEff("cClovEff", "Clover Add-back Efficiency", 800, 600);
+      cClovEff.cd();
+      TGraphErrors CloverEffPlot(CLOVERS,CloverNums, CloverEff, NULL, CloverErr);
+      CloverEffPlot.Draw();
+      cClovEff.Update();
+      App->Run();
+   }
    
    // Write histograms
    outfile->cd();
@@ -361,7 +360,7 @@ void FinalCoincEff()
    }
 
    outfile->Close();
-   if (OUTPUT_EFF) {
+   if (Config.OutputEff) {
       EffOut.close();
    }
 }

@@ -571,7 +571,7 @@ int LoadDefaultSettings()
    Config.EnergyThresh = 5;     // keV
    Config.ChargeThresh = 100;
 
-   // Optons for Calib() and CalibOffline()
+   // Options for Calib() and CalibOffline()
    // What to do
    Config.CalEnergy = 1;
    Config.CalWave = 1;
@@ -580,8 +580,11 @@ int LoadDefaultSettings()
    Config.PlotFits = 0;
    Config.PlotCalib = 0;
    Config.PlotCalibSummary = 0;
-   // OPtions for CoincEff()
 
+   // Options for CoincEff()
+   Config.OutputEff = 1;
+   // Plots
+   Config.PlotEff = 1;
 
    // Options for 
 
