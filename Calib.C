@@ -150,14 +150,19 @@ void InitCalib()
       WaveHist = new TH1F(name, title, Config.WaveformSamples, 0, Config.WaveformSamples);
    }
 
-   cout << "Searching for core Peaks: " << Config.Sources[Config.SourceNumCore][0] << "kev and " << Config.
-       Sources[Config.SourceNumCore][1] << "keV (Ratio " << Config.Sources[Config.SourceNumCore][0] /
+   cout << "Searching for core Peaks: " << Config.Sources[Config.
+                                                          SourceNumCore][0] << "kev and " << Config.Sources[Config.
+                                                                                                            SourceNumCore]
+       [1] << "keV (Ratio " << Config.Sources[Config.SourceNumCore][0] /
        Config.Sources[Config.SourceNumCore][1] << ")" << endl;
-   cout << "Searching for front seg peaks: " << Config.Sources[Config.SourceNumFront][0] << "kev and " << Config.
-       Sources[Config.SourceNumFront][1] << "keV (Ratio " << Config.Sources[Config.SourceNumFront][0] /
+   cout << "Searching for front seg peaks: " << Config.Sources[Config.
+                                                               SourceNumFront][0] << "kev and " <<
+       Config.Sources[Config.SourceNumFront][1] << "keV (Ratio " << Config.Sources[Config.SourceNumFront][0] /
        Config.Sources[Config.SourceNumFront][1] << ")" << endl;
-   cout << "Searching for back seg peaks: " << Config.Sources[Config.SourceNumBack][0] << "kev and " << Config.
-       Sources[Config.SourceNumBack][1]
+   cout << "Searching for back seg peaks: " << Config.Sources[Config.
+                                                              SourceNumBack][0] << "kev and " << Config.Sources[Config.
+                                                                                                                SourceNumBack]
+       [1]
        << "keV (Ratio " << Config.Sources[Config.SourceNumBack][0] /
        Config.Sources[Config.SourceNumBack][1] << ")" << endl;
 
@@ -272,8 +277,8 @@ void Calib(std::vector < TTigFragment > &ev)
                   // Increment raw charge spectra
                   if (DEBUG) {
                      cout << "A: Filling " << Clover -
-                         1 << ", " << Crystal << ", 0, " << mnemonic.outputsensor << " with charge = " << ev[i].
-                         Charge << endl;
+                         1 << ", " << Crystal << ", 0, " << mnemonic.
+                         outputsensor << " with charge = " << ev[i].Charge << endl;
                   }
                   hCharge[Clover - 1][Crystal][0]->Fill(ev[i].Charge);
                   hCrystalChargeTemp[Clover - 1][Crystal]->Fill(ev[i].Charge);
@@ -288,8 +293,8 @@ void Calib(std::vector < TTigFragment > &ev)
                      // Increment raw charge spectra
                      if (DEBUG) {
                         cout << "B: Filling " << Clover -
-                            1 << ", " << Crystal << ", 0, " << mnemonic.outputsensor << " with charge = " << ev[i].
-                            Charge << endl;
+                            1 << ", " << Crystal << ", 0, " << mnemonic.
+                            outputsensor << " with charge = " << ev[i].Charge << endl;
                      }
                      hCharge[Clover - 1][Crystal][9]->Fill(ev[i].Charge);
                      hWaveCharge[Clover - 1][Crystal][9]->Fill(WaveCharge);
@@ -567,12 +572,12 @@ void FinalCalib()
                      if (FitSuccess > 0) {
                         if (FitSuccess < 3 || FORCE_LINEAR) {
                            GainOut << HistName << " " << Fit.LinGainFit[0] << " +/- " << Fit.dLinGainFit[0];
-                           GainOut << " " << Fit.LinGainFit[1] << " +/- " << Fit.
-                               dLinGainFit[1] << " " << Fit.LinGainFit[2] << endl;
+                           GainOut << " " << Fit.LinGainFit[1] << " +/- " << Fit.dLinGainFit[1] << " " << Fit.
+                               LinGainFit[2] << endl;
                         } else {
                            GainOut << HistName << " " << Fit.QuadGainFit[0] << " +/- " << Fit.dQuadGainFit[0] << " ";
-                           GainOut << Fit.QuadGainFit[1] << " +/- " << Fit.dQuadGainFit[1] << " " << Fit.
-                               QuadGainFit[2] << " +/- " << Fit.dQuadGainFit[2] << endl;
+                           GainOut << Fit.QuadGainFit[1] << " +/- " << Fit.
+                               dQuadGainFit[1] << " " << Fit.QuadGainFit[2] << " +/- " << Fit.dQuadGainFit[2] << endl;
                         }
                      } else {
                         GainOut << HistName << " Fail!!!" << endl;

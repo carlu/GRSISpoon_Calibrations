@@ -129,7 +129,6 @@ int main(int argc, char **argv)
       cout << "Failed to configure the run - exiting!" << endl;
       return -1;
    }
-
    // Set options for histo stats
    gStyle->SetOptStat("iouRMen");
 
@@ -194,8 +193,8 @@ int main(int argc, char **argv)
       for (i = 0; i < NumCal; i++) {
          cout << i;
          cout << ": " << WaveCalibNames.at(i);
-         cout << " " << WaveCalibValues.
-             at(i)[0] << " " << WaveCalibValues[i][1] << " " << WaveCalibValues[i][2] << endl;
+         cout << " " << WaveCalibValues.at(i)[0] << " " << WaveCalibValues[i][1] << " " << WaveCalibValues[i][2] <<
+             endl;
       }
    }
    // Initialise spectra   
@@ -758,7 +757,6 @@ int ReadCommandLineSettings(int argc, char **argv)
             Config.RunPropCrosstalk = 1;
          }
       }
-
       // General Configuration file
       // -------------------------------------------
 
@@ -769,8 +767,8 @@ int ReadCommandLineSettings(int argc, char **argv)
    return 0;
 }
 
-int ReadOptionsFile(std::string filename)  // this is a dummy function
-{                                             // One day it should read in a config text file
+int ReadOptionsFile(std::string filename)       // this is a dummy function
+{                               // One day it should read in a config text file
    cout << filename << endl;
    return 0;
 }

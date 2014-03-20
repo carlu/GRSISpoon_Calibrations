@@ -22,8 +22,7 @@ using namespace std;
 #include <TH2F.h>
 #include <TApplication.h>
 #include <TCanvas.h>
-#include <TGraphErrors.h>
-#include <TLine.h>
+
 // TriScope libraries
 #include "TTigFragment.h"
 //#include "TFSPC_Info.h"
@@ -56,8 +55,6 @@ static TH1F *hCrystalEnGated[CLOVERS][CRYSTALS] = { 0 };
 static TH1F *hArrayEn = 0;
 
 // Other stuff
-static unsigned int GateCounts = 0;
-static unsigned int ABGateCounts = 0;
 
 // Functions
 void InitCoincEff();
@@ -133,6 +130,7 @@ void CoincEff(std::vector < TTigFragment > &ev)
                   GatePassed += 1;
                   GateCrystal = Crystal;
                   GateClover = Clover;
+                  hTestSpectrum->Fill(1.0);
                   //cout << endl << "Gate passed (Cl: " << Clover-1 << " Cr: " << Crystal << " En: " << CrystalEnergies[Clover-1][Crystal] << ")" << endl;
                   //cout << "Gate Clov " << GateClover << " Cr " << GateCrystal << endl;
                }
@@ -145,12 +143,10 @@ void CoincEff(std::vector < TTigFragment > &ev)
          }
       }
    }
-   
+
    // If gate passed, loop crystals and increment gated spectra
    if (GatePassed == 1) {
       //cout << endl << "Passed!!!   Cl,Cr : ";
-      GateCounts +=1;
-      hTestSpectrum->Fill(1.0);
       for (Clover = 0; Clover < CLOVERS; Clover++) {
          for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
             //cout << Clover << ", " << Crystal << "\t";
@@ -163,23 +159,21 @@ void CoincEff(std::vector < TTigFragment > &ev)
             }
          }
       }
-   //cout << endl;
+      //cout << endl;
    }
-   
    // now check if gate is passed with add-back and increment gated AB spectra if so
    for (Clover = 0; Clover < CLOVERS; Clover++) {
       if (CloverAddBack[Clover] > Config.EnergyThresh) {
          hCloverABEn[Clover]->Fill(CloverAddBack[Clover]);
          if (CloverAddBack[Clover] > GATE_LOW && CloverAddBack[Clover] < GATE_HIGH) {
+            hTestSpectrum->Fill(3.0);
             ABGatePassed += 1;
             ABGateClover = Clover + 1;  // +1 to match the GateClover and GateCrystal values above
          }
       }
    }
-   
+
    if (ABGatePassed == 1) {
-      hTestSpectrum->Fill(3.0);
-      ABGateCounts += 1;
       for (Clover = 0; Clover < CLOVERS; Clover++) {
          if ((CloverAddBack[Clover] > Config.EnergyThresh) && (Clover != (ABGateClover - 1))) {
             hCloverABEnGated[Clover]->Fill(CloverAddBack[Clover]);
@@ -229,109 +223,61 @@ void InitCoincEff()
 void FinalCoincEff()
 {
 
-   int Clover, Crystal, Num;
+   int Clover, Crystal;
    float Const, dConst, Mean, dMean, Sigma, dSigma;
    float Counts, dCounts, dCountsFit, dCountsStat, Eff, dEff;
-   float PeakArea, BGArea, dPeakArea, dBGArea;
    FitResult FitRes;
    ofstream EffOut;
    char str[256];
-   // Results
-   float CloverEff[CLOVERS];
-   float CloverErr[CLOVERS];
-   float CloverNums[CLOVERS]; 
-   
-   float CrystalEff[CLOVERS*CRYSTALS];
-   float CrystalErr[CLOVERS*CRYSTALS];
-   float CrystalNums[CLOVERS*CRYSTALS];
 
    // Open a file to output efficiencies:   
-   if (Config.OutputEff) {
+   if (OUTPUT_EFF) {
       std::string tempstring = Config.OutPath + Config.EffTxtOut;
       EffOut.open(tempstring.c_str());
    }
    // now fit 1332.5keV peak in gain matched spectra
-   memset(&FitRes,    0.0, sizeof(FitResult));
-   memset(&CloverEff,  0.0, CLOVERS*sizeof(float));
-   memset(&CrystalEff, 0.0, CLOVERS*CRYSTALS*sizeof(float));
-   memset(&CloverErr,  0.0, CLOVERS*sizeof(float));
-   memset(&CrystalErr, 0.0, CLOVERS*CRYSTALS*sizeof(float));
-   
-   
+   memset(&FitRes, 0.0, sizeof(FitResult));
    // First the clover add-back Spectra
-   if (Config.OutputEff) {
+   if (OUTPUT_EFF) {
       EffOut << "Clover Addback: (" << hTestSpectrum->GetBinContent(4) << " counts in 1173 gate):" << endl;
-      EffOut << "Channel\tConst\tErr\t\tMean  Err\t\tSigmq  Err\t\tBgnd  Err\t\tCounts  Err\t\tEff  Err" << endl; 
    }
    for (Clover = 0; Clover < CLOVERS; Clover++) {
-   
       memset(&FitRes, 0.0, sizeof(FitResult));  // Clear this, should be overwritten every time but just in case...
-      
-      FitPeak(hCloverABEnGated[Clover], FIT_LOW, FIT_HIGH, &FitRes);  
-      
-      PeakArea = FitRes.Const * FitRes.Sigma * sqrt(2 * PI);
-      
-      Counts = (EN_SPECTRA_CHANS / EN_SPECTRA_MAX) * PeakArea;
-      
-      dPeakArea = PeakArea * sqrt(pow(FitRes.dConst / FitRes.Const, 2) + pow(FitRes.dSigma / FitRes.Sigma, 2)) * sqrt(2 * PI);
-      
-      dCountsStat = sqrt(Counts);                                 // hmmm 
-      
-      dCounts = Counts * sqrt(pow(dPeakArea / Counts, 2) + pow(dCountsStat / Counts, 2));  // combine fit wrror with stat error for now but need to come back and do this properly
-      
-      Eff = (Counts / hTestSpectrum->GetBinContent(4));
-      
+      FitPeak(hCloverABEnGated[Clover], FIT_LOW, FIT_HIGH, &FitRes);
+      Counts = (EN_SPECTRA_CHANS / EN_SPECTRA_MAX) * FitRes.Const * FitRes.Sigma * sqrt(2 * PI);
+      dCountsFit = Counts * sqrt(pow(FitRes.dConst / FitRes.Const, 2) + pow(FitRes.dSigma / FitRes.Sigma, 2));  // Fitting error
+      dCountsStat = sqrt(Counts);
+      dCounts = Counts * sqrt(pow(dCountsFit / Counts, 2) + pow(dCountsStat / Counts, 2));
+      Eff = (Counts / hTestSpectrum->GetBinContent(4)) * 100.0;
       dEff =
           Eff * sqrt(pow(dCounts / Counts, 2) +
-                     pow(sqrt(ABGateCounts) / ABGateCounts, 2));
-      
-      // store:               
-      CloverEff[Clover] = Eff; CloverErr[Clover] = dEff; CloverNums[Clover] = Clover +1;
-      
-      if (Config.OutputEff) {
+                     pow(sqrt(hTestSpectrum->GetBinContent(4)) / hTestSpectrum->GetBinContent(4), 2));
+      if (OUTPUT_EFF) {
          sprintf(str, "TIG%02d:\t", Clover + 1);
          EffOut << str << FitRes.Const << " +/- " << FitRes.dConst;
          EffOut << "\t" << FitRes.Mean << " +/- " << FitRes.dMean;
          EffOut << "\t" << FitRes.Sigma << " +/- " << FitRes.dSigma;
-         EffOut << "\t" << FitRes.ConstantBG << " +/- " << FitRes.dConstantBG;
          EffOut << "\t" << Counts << " +/- " << dCounts;
          EffOut << "\t" << Eff << " +/- " << dEff << endl;
       }
    }
    // then crystal spectra
-   if (Config.OutputEff) {
+   if (OUTPUT_EFF) {
       EffOut << endl << "Crystals: (" << hTestSpectrum->GetBinContent(2) << " counts in 1173 gate):" << endl;
-      EffOut << "Channel\tConst\tErr\t\tMean  Err\t\tSigmq  Err\t\tBgnd  Err\t\tCounts  Err\t\tEff  Err" << endl; 
    }
    for (Clover = 0; Clover < CLOVERS; Clover++) {
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
-      
          memset(&FitRes, 0.0, sizeof(FitResult));
-         
-         FitPeak(hCrystalEnGated[Clover][Crystal], FIT_LOW, FIT_HIGH, &FitRes);
-         
-         PeakArea = FitRes.Const * FitRes.Sigma * sqrt(2 * PI);
-      
-         Counts = (EN_SPECTRA_CHANS / EN_SPECTRA_MAX) * PeakArea;
-         
-         dPeakArea = PeakArea * sqrt(pow(FitRes.dConst / FitRes.Const, 2) + pow(FitRes.dSigma / FitRes.Sigma, 2)) * sqrt(2 * PI);
-         
-         dCountsStat = sqrt(Counts);                                 // hmmm 
-         
-         dCounts = Counts * sqrt(pow(dPeakArea / Counts, 2) + pow(dCountsStat / Counts, 2));  // combine fit wrror with stat error for now but need to come back and do this properly
-         
-         Eff = (Counts / hTestSpectrum->GetBinContent(4));
-         
+         FitPeak(hCrystalEnGated[Clover][Crystal], 1300.0, 1365.0, &FitRes);
+         Counts = (EN_SPECTRA_CHANS / EN_SPECTRA_MAX) * FitRes.Const * FitRes.Sigma * sqrt(2 * PI);
+         dCountsFit = Counts * sqrt(pow(FitRes.dConst / FitRes.Const, 2) + pow(FitRes.dSigma / FitRes.Sigma, 2));       // Fitting error
+         dCountsStat = sqrt(Counts);
+         dCounts = Counts * sqrt(pow(dCountsFit / Counts, 2) + pow(dCountsStat / Counts, 2));
+         Eff = (Counts / hTestSpectrum->GetBinContent(4)) * 100.0;
          dEff =
              Eff * sqrt(pow(dCounts / Counts, 2) +
-                        pow(sqrt(GateCounts) / GateCounts, 2));
-                        
-         // store:               
-         Num = (Clover*4) + Crystal; CrystalNums[Num] = Num +1;
-         CrystalEff[Num] = Eff; CrystalErr[Num] = dEff;
-                        
-                        
-         if (Config.OutputEff) {
+                        pow(sqrt(hTestSpectrum->GetBinContent(4)) / hTestSpectrum->GetBinContent(4), 2));
+         if (OUTPUT_EFF) {
             sprintf(str, "TIG%02d%c:\t", Clover + 1, Num2Col(Crystal));
             EffOut << str << FitRes.Const << " +/- " << FitRes.dConst;
             EffOut << "\t" << FitRes.Mean << " +/- " << FitRes.dMean;
@@ -341,64 +287,7 @@ void FinalCoincEff()
          }
       }
    }
-   
-   // Plot efficiencies
-   if(Config.PlotEff) { 
-      TCanvas cClovEff("cClovEff", "Clover Add-back Efficiency", 800, 600);
-      cClovEff.cd();
-      TGraphErrors *CloverEffPlot = new TGraphErrors(CLOVERS,CloverNums, CloverEff, NULL, CloverErr);
-      CloverEffPlot->SetLineWidth(0);
-      CloverEffPlot->SetMarkerStyle(24);
-      CloverEffPlot->Draw();
-      if(Config.HighEffMode==1) {
-         TLine *CloverABspec = new TLine(0,CLOVER_AB_EFF_HIGHEFF,CLOVERS,CLOVER_AB_EFF_HIGHEFF);
-         CloverABspec->SetLineStyle(3);
-         CloverABspec->SetLineColor(6);
-         CloverABspec->SetLineWidth(2);
-         CloverABspec->Draw();
-      }
-      else {
-         TLine *CloverABspec = new TLine(0,CLOVER_AB_EFF_HIGHPT,CLOVERS,CLOVER_AB_EFF_HIGHPT);
-         CloverABspec->SetLineStyle(3);
-         CloverABspec->SetLineColor(6);
-         CloverABspec->SetLineWidth(2);
-         CloverABspec->Draw();
-      }      
-      CloverEffPlot->GetYaxis()->SetRange(0.0,0.01);
-      CloverEffPlot->GetYaxis()->SetTitle("Efficiency");
-      CloverEffPlot->GetXaxis()->SetTitle("Clover");
-      CloverEffPlot->SetTitle("Clover Add-back Efficiency");
-      cClovEff.Update();
-      
-      TCanvas cCrysEff("cCrysEff", "Crystal Efficiency", 800, 600);
-      cCrysEff.cd();
-      TGraphErrors *CrysEffPlot = new TGraphErrors(CLOVERS*CRYSTALS,CrystalNums, CrystalEff, NULL, CrystalErr);
-      CrysEffPlot->SetLineWidth(0);
-      CrysEffPlot->SetMarkerStyle(24);
-      CrysEffPlot->Draw();
-      if(Config.HighEffMode==1) {
-         TLine *Crystalspec = new TLine(0,CRYSTAL_EFF_HIGHEFF,CLOVERS*CRYSTALS,CRYSTAL_EFF_HIGHEFF);
-         Crystalspec->SetLineStyle(3);
-         Crystalspec->SetLineColor(6);
-         Crystalspec->SetLineWidth(2);
-         Crystalspec->Draw();
-      }
-      else {
-         TLine *Crystalspec = new TLine(0,CRYSTAL_EFF_HIGHPT,CLOVERS*CRYSTALS,CRYSTAL_EFF_HIGHPT);
-         Crystalspec->SetLineStyle(3);
-         Crystalspec->SetLineColor(6);
-         Crystalspec->SetLineWidth(2);
-         Crystalspec->Draw();
-      }
-      CrysEffPlot->GetYaxis()->SetRange(0.0,0.01);
-      CrysEffPlot->GetYaxis()->SetTitle("Efficiency");
-      CrysEffPlot->GetXaxis()->SetTitle("Crystal");
-      CrysEffPlot->SetTitle("Crystal Efficiency");
-      cCrysEff.Update();
-      
-      App->Run(1);
-   }
-   
+
    // Write histograms
    outfile->cd();
    hTestSpectrum->Write();
@@ -414,7 +303,7 @@ void FinalCoincEff()
    }
 
    outfile->Close();
-   if (Config.OutputEff) {
+   if (OUTPUT_EFF) {
       EffOut.close();
    }
 }
@@ -431,26 +320,26 @@ void FitPeak(TH1F * Histo, float Min, float Max, FitResult * FitRes)
 
    //cout << "Integral is: " << Integral << endl;
    if (Integral > MIN_FIT_COUNTS) {
-   
+
       TF1 *FitRange = new TF1("GausFlatBack", "([0]*exp(-0.5*((x-[1])/[2])**2))+[3]", Min, Max);
       FitRange->SetParName(0, "Const");
       FitRange->SetParName(1, "Mean");
       FitRange->SetParName(2, "Sigma");
       FitRange->SetParName(3, "Constant Background");
-      ConstEst=0.0;
+      ConstEst = 0.0;
       TAxis *xaxis = Histo->GetXaxis();
-      for(i=xaxis->FindBin(Min); i<=xaxis->FindBin(Max); i++) {
-         if(Histo->GetBinContent(i) > ConstEst) {
+      for (i = xaxis->FindBin(Min); i <= xaxis->FindBin(Max); i++) {
+         if (Histo->GetBinContent(i) > ConstEst) {
             ConstEst = Histo->GetBinContent(i);
-         } 
+         }
       }
       FitRange->SetParameter(0, ConstEst);
-      Centre = (Min+Max)/2.0;
+      Centre = (Min + Max) / 2.0;
       FitRange->SetParameter(1, Centre);
-      FitRange->SetParameter(2,ENERGY_SIGMA_ZERO+ENERGY_SIGMA_1MEV);
-      BG = (Histo->GetBinContent(xaxis->FindBin(Min)) + Histo->GetBinContent(xaxis->FindBin(Max))) / 2.0; 
-      FitRange->SetParameter(3,BG);
-      
+      FitRange->SetParameter(2, ENERGY_SIGMA_ZERO + ENERGY_SIGMA_1MEV);
+      BG = (Histo->GetBinContent(xaxis->FindBin(Min)) + Histo->GetBinContent(xaxis->FindBin(Min))) / 2.0;
+      FitRange->SetParameter(3, BG);
+
       Histo->Fit(FitRange, "R,Q");
 
       FitRes->Const = FitRange->GetParameter(0);

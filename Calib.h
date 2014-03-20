@@ -70,7 +70,7 @@ struct FitResult {
    float dSigma;
    float ConstantBG;
    float dConstantBG;
-   float LinearBG; 
+   float LinearBG;
    float dLinearBG;
    float ChiSq;
    int NDF;
