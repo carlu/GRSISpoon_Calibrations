@@ -12,6 +12,11 @@
 #define EN_SPECTRA_CHANS 8192
 #define EN_SPECTRA_MAX 2048
 
+#define CRYSTAL_EFF_HIGHPT 0.0011
+#define CLOVER_AB_EFF_HIGHPT 0.0061
+#define CRYSTAL_EFF_HIGHEFF 0.0017
+#define CLOVER_AB_EFF_HIGHEFF 0.0094
+
 struct FitResult {
    float Energy;
    float Const;

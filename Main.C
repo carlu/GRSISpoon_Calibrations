@@ -570,6 +570,8 @@ int LoadDefaultSettings()
    // Thresholds
    Config.EnergyThresh = 5;     // keV
    Config.ChargeThresh = 100;
+   // Array mode
+   Config.HighEffMode = 0;
 
    // Options for Calib() and CalibOffline()
    // What to do

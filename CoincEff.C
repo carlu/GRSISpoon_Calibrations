@@ -23,7 +23,7 @@ using namespace std;
 #include <TApplication.h>
 #include <TCanvas.h>
 #include <TGraphErrors.h>
-
+#include <TLine.h>
 // TriScope libraries
 #include "TTigFragment.h"
 //#include "TFSPC_Info.h"
@@ -56,6 +56,8 @@ static TH1F *hCrystalEnGated[CLOVERS][CRYSTALS] = { 0 };
 static TH1F *hArrayEn = 0;
 
 // Other stuff
+static unsigned int GateCounts = 0;
+static unsigned int ABGateCounts = 0;
 
 // Functions
 void InitCoincEff();
@@ -131,7 +133,6 @@ void CoincEff(std::vector < TTigFragment > &ev)
                   GatePassed += 1;
                   GateCrystal = Crystal;
                   GateClover = Clover;
-                  hTestSpectrum->Fill(1.0);
                   //cout << endl << "Gate passed (Cl: " << Clover-1 << " Cr: " << Crystal << " En: " << CrystalEnergies[Clover-1][Crystal] << ")" << endl;
                   //cout << "Gate Clov " << GateClover << " Cr " << GateCrystal << endl;
                }
@@ -147,7 +148,9 @@ void CoincEff(std::vector < TTigFragment > &ev)
    
    // If gate passed, loop crystals and increment gated spectra
    if (GatePassed == 1) {
-         //cout << endl << "Passed!!!   Cl,Cr : ";
+      //cout << endl << "Passed!!!   Cl,Cr : ";
+      GateCounts +=1;
+      hTestSpectrum->Fill(1.0);
       for (Clover = 0; Clover < CLOVERS; Clover++) {
          for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
             //cout << Clover << ", " << Crystal << "\t";
@@ -162,12 +165,12 @@ void CoincEff(std::vector < TTigFragment > &ev)
       }
    //cout << endl;
    }
+   
    // now check if gate is passed with add-back and increment gated AB spectra if so
    for (Clover = 0; Clover < CLOVERS; Clover++) {
       if (CloverAddBack[Clover] > Config.EnergyThresh) {
          hCloverABEn[Clover]->Fill(CloverAddBack[Clover]);
          if (CloverAddBack[Clover] > GATE_LOW && CloverAddBack[Clover] < GATE_HIGH) {
-            hTestSpectrum->Fill(3.0);
             ABGatePassed += 1;
             ABGateClover = Clover + 1;  // +1 to match the GateClover and GateCrystal values above
          }
@@ -175,6 +178,8 @@ void CoincEff(std::vector < TTigFragment > &ev)
    }
    
    if (ABGatePassed == 1) {
+      hTestSpectrum->Fill(3.0);
+      ABGateCounts += 1;
       for (Clover = 0; Clover < CLOVERS; Clover++) {
          if ((CloverAddBack[Clover] > Config.EnergyThresh) && (Clover != (ABGateClover - 1))) {
             hCloverABEnGated[Clover]->Fill(CloverAddBack[Clover]);
@@ -256,6 +261,7 @@ void FinalCoincEff()
    // First the clover add-back Spectra
    if (Config.OutputEff) {
       EffOut << "Clover Addback: (" << hTestSpectrum->GetBinContent(4) << " counts in 1173 gate):" << endl;
+      EffOut << "Channel\tConst\tErr\t\tMean  Err\t\tSigmq  Err\t\tBgnd  Err\t\tCounts  Err\t\tEff  Err" << endl; 
    }
    for (Clover = 0; Clover < CLOVERS; Clover++) {
    
@@ -273,11 +279,11 @@ void FinalCoincEff()
       
       dCounts = Counts * sqrt(pow(dPeakArea / Counts, 2) + pow(dCountsStat / Counts, 2));  // combine fit wrror with stat error for now but need to come back and do this properly
       
-      Eff = (Counts / hTestSpectrum->GetBinContent(4)) * 100.0;
+      Eff = (Counts / hTestSpectrum->GetBinContent(4));
       
       dEff =
           Eff * sqrt(pow(dCounts / Counts, 2) +
-                     pow(sqrt(hTestSpectrum->GetBinContent(4)) / hTestSpectrum->GetBinContent(4), 2));
+                     pow(sqrt(ABGateCounts) / ABGateCounts, 2));
       
       // store:               
       CloverEff[Clover] = Eff; CloverErr[Clover] = dEff; CloverNums[Clover] = Clover +1;
@@ -295,6 +301,7 @@ void FinalCoincEff()
    // then crystal spectra
    if (Config.OutputEff) {
       EffOut << endl << "Crystals: (" << hTestSpectrum->GetBinContent(2) << " counts in 1173 gate):" << endl;
+      EffOut << "Channel\tConst\tErr\t\tMean  Err\t\tSigmq  Err\t\tBgnd  Err\t\tCounts  Err\t\tEff  Err" << endl; 
    }
    for (Clover = 0; Clover < CLOVERS; Clover++) {
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
@@ -313,11 +320,11 @@ void FinalCoincEff()
          
          dCounts = Counts * sqrt(pow(dPeakArea / Counts, 2) + pow(dCountsStat / Counts, 2));  // combine fit wrror with stat error for now but need to come back and do this properly
          
-         Eff = (Counts / hTestSpectrum->GetBinContent(4)) * 100.0;
+         Eff = (Counts / hTestSpectrum->GetBinContent(4));
          
          dEff =
              Eff * sqrt(pow(dCounts / Counts, 2) +
-                        pow(sqrt(hTestSpectrum->GetBinContent(4)) / hTestSpectrum->GetBinContent(4), 2));
+                        pow(sqrt(GateCounts) / GateCounts, 2));
                         
          // store:               
          Num = (Clover*4) + Crystal; CrystalNums[Num] = Num +1;
@@ -339,10 +346,57 @@ void FinalCoincEff()
    if(Config.PlotEff) { 
       TCanvas cClovEff("cClovEff", "Clover Add-back Efficiency", 800, 600);
       cClovEff.cd();
-      TGraphErrors CloverEffPlot(CLOVERS,CloverNums, CloverEff, NULL, CloverErr);
-      CloverEffPlot.Draw();
+      TGraphErrors *CloverEffPlot = new TGraphErrors(CLOVERS,CloverNums, CloverEff, NULL, CloverErr);
+      CloverEffPlot->SetLineWidth(0);
+      CloverEffPlot->SetMarkerStyle(24);
+      CloverEffPlot->Draw();
+      if(Config.HighEffMode==1) {
+         TLine *CloverABspec = new TLine(0,CLOVER_AB_EFF_HIGHEFF,CLOVERS,CLOVER_AB_EFF_HIGHEFF);
+         CloverABspec->SetLineStyle(3);
+         CloverABspec->SetLineColor(6);
+         CloverABspec->SetLineWidth(2);
+         CloverABspec->Draw();
+      }
+      else {
+         TLine *CloverABspec = new TLine(0,CLOVER_AB_EFF_HIGHPT,CLOVERS,CLOVER_AB_EFF_HIGHPT);
+         CloverABspec->SetLineStyle(3);
+         CloverABspec->SetLineColor(6);
+         CloverABspec->SetLineWidth(2);
+         CloverABspec->Draw();
+      }      
+      CloverEffPlot->GetYaxis()->SetRange(0.0,0.01);
+      CloverEffPlot->GetYaxis()->SetTitle("Efficiency");
+      CloverEffPlot->GetXaxis()->SetTitle("Clover");
+      CloverEffPlot->SetTitle("Clover Add-back Efficiency");
       cClovEff.Update();
-      App->Run();
+      
+      TCanvas cCrysEff("cCrysEff", "Crystal Efficiency", 800, 600);
+      cCrysEff.cd();
+      TGraphErrors *CrysEffPlot = new TGraphErrors(CLOVERS*CRYSTALS,CrystalNums, CrystalEff, NULL, CrystalErr);
+      CrysEffPlot->SetLineWidth(0);
+      CrysEffPlot->SetMarkerStyle(24);
+      CrysEffPlot->Draw();
+      if(Config.HighEffMode==1) {
+         TLine *Crystalspec = new TLine(0,CRYSTAL_EFF_HIGHEFF,CLOVERS*CRYSTALS,CRYSTAL_EFF_HIGHEFF);
+         Crystalspec->SetLineStyle(3);
+         Crystalspec->SetLineColor(6);
+         Crystalspec->SetLineWidth(2);
+         Crystalspec->Draw();
+      }
+      else {
+         TLine *Crystalspec = new TLine(0,CRYSTAL_EFF_HIGHPT,CLOVERS*CRYSTALS,CRYSTAL_EFF_HIGHPT);
+         Crystalspec->SetLineStyle(3);
+         Crystalspec->SetLineColor(6);
+         Crystalspec->SetLineWidth(2);
+         Crystalspec->Draw();
+      }
+      CrysEffPlot->GetYaxis()->SetRange(0.0,0.01);
+      CrysEffPlot->GetYaxis()->SetTitle("Efficiency");
+      CrysEffPlot->GetXaxis()->SetTitle("Crystal");
+      CrysEffPlot->SetTitle("Crystal Efficiency");
+      cCrysEff.Update();
+      
+      App->Run(1);
    }
    
    // Write histograms
@@ -375,7 +429,7 @@ void FitPeak(TH1F * Histo, float Min, float Max, FitResult * FitRes)
    int i;
    float Centre, ConstEst, BG;
 
-   cout << "Integral is: " << Integral << endl;
+   //cout << "Integral is: " << Integral << endl;
    if (Integral > MIN_FIT_COUNTS) {
    
       TF1 *FitRange = new TF1("GausFlatBack", "([0]*exp(-0.5*((x-[1])/[2])**2))+[3]", Min, Max);

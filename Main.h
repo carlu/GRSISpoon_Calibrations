@@ -101,20 +101,20 @@ struct RunConfig {              // this struct will hold all information
    bool RunWaveform;
    bool RunDiffCrosstalk;
    // Input file paths
-    std::vector < std::string > files;
+   std::vector < std::string > files;
    // root output files
-    std::string OutPath;
-    std::string CalOut;         // First 8 letters of this should match any file loaded in to offline cal
-    std::string CalOfOut;
-    std::string EffOut;
-    std::string PropOut;
+   std::string OutPath;
+   std::string CalOut;         // First 8 letters of this should match any file loaded in to offline cal
+   std::string CalOfOut;
+   std::string EffOut;
+   std::string PropOut;
    // text output files
-    std::string EffTxtOut;
-    std::string PropTxtOut;
+   std::string EffTxtOut;
+   std::string PropTxtOut;
    // Information on energy and wave calibration files
-    std::string EnergyCalibrationFile;
+   std::string EnergyCalibrationFile;
    bool HaveAltEnergyCalibration;
-    std::string WaveCalibrationFile;
+   std::string WaveCalibrationFile;
    bool HaveWaveCalibration;
    // What to print and how often
    bool PrintBasic;
@@ -137,6 +137,8 @@ struct RunConfig {              // this struct will hold all information
    // Energy thresholds
    float EnergyThresh;
    int ChargeThresh;
+   // Array mode
+   bool HighEffMode; // 1 if TIGRESS is in high eff mode (11cm), 0 if in high peak/total (14.5cm)
 
 
    // Physics settings for individual functions
