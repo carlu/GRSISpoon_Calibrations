@@ -51,7 +51,7 @@ static TH1F *hCharge[CLOVERS][CRYSTALS][SEGS + 2] = { };        // charge from F
 static TH1F *hWaveCharge[CLOVERS][CRYSTALS][SEGS + 2] = { };    // charge from waveform
 
 static TH1F *hMidasTime = 0;
-static TH1F *hCrystalChargeTemp[CRYSTALS][CLOVERS] = { };       // Only doing these guys for the cores
+static TH1F *hCrystalChargeTemp[CLOVERS][CRYSTALS] = { };       // Only doing these guys for the cores
 static TH1F *hCrystalGain[CRYSTALS * CLOVERS] = { };
 static TH1F *hCrystalOffset[CRYSTALS * CLOVERS] = { };
 
@@ -281,7 +281,7 @@ void Calib(std::vector < TTigFragment > &ev)
                          outputsensor << " with charge = " << ev[i].Charge << endl;
                   }
                   hCharge[Clover - 1][Crystal][0]->Fill(ev[i].Charge);
-                  hCrystalChargeTemp[Clover - 1][Crystal]->Fill(ev[i].Charge);
+                  //hCrystalChargeTemp[Clover - 1][Crystal]->Fill(ev[i].Charge);
                   hWaveCharge[Clover - 1][Crystal][0]->Fill(WaveCharge);
                }
             } else {
@@ -310,7 +310,6 @@ void Calib(std::vector < TTigFragment > &ev)
                }
             }
          }
-
          // Now Get time elapsed in run
          MidasTime = ev[i].MidasTimeStamp;
          //cout << "Time: " << ctime(&MidasTime) << endl;
