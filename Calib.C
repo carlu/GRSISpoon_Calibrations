@@ -579,7 +579,7 @@ void FinalCalib()
                                dQuadGainFit[1] << " " << Fit.QuadGainFit[2] << " +/- " << Fit.dQuadGainFit[2] << endl;
                         }
                      } else {
-                        GainOut << HistName << " Fail!!!" << endl;
+                        //GainOut << HistName << " Fail!!!" << endl;
                      }
                   }
                   if (Config.CalReport) {
