@@ -232,16 +232,14 @@ int CalibOffline(std::string filename)
                   if (Config.CalEnergy) {
                      if (FitSuccess > 0) {
                         if (FitSuccess < 3 || FORCE_LINEAR) {
-                           GainOut << HistName << " " << Fit.LinGainFit[0] << " +/- " << Fit.dLinGainFit[0];
-                           GainOut << " " << Fit.LinGainFit[1] << " +/- " << Fit.dLinGainFit[1] << " " << Fit.
-                               LinGainFit[2] << endl;
+                           GainOut << HistName << ":\t" << Fit.LinGainFit[0];
+                           GainOut << "\t" << Fit.LinGainFit[1] << endl;
                         } else {
-                           GainOut << HistName << " " << Fit.QuadGainFit[0] << " +/- " << Fit.dQuadGainFit[0] << " ";
-                           GainOut << Fit.QuadGainFit[1] << " +/- " << Fit.
-                               dQuadGainFit[1] << " " << Fit.QuadGainFit[2] << " +/- " << Fit.dQuadGainFit[2] << endl;
+                           GainOut << HistName << ":\t" << Fit.QuadGainFit[0] << "\t";
+                           GainOut << Fit.QuadGainFit[1] << "\t" << Fit.QuadGainFit[2] << endl;
                         }
                      } else {
-                        GainOut << HistName << " Fail!!!" << endl;
+                        //GainOut << HistName << " Fail!!!" << endl;
                      }
                   }
                   if (Config.CalReport) {
@@ -334,16 +332,14 @@ int CalibOffline(std::string filename)
 
                if (FitSuccess > 0) {
                   if (FitSuccess < 3 || FORCE_LINEAR) {
-                     WaveOut << HistName << " " << WaveFit.LinGainFit[0] << " +/- " << WaveFit.dLinGainFit[0];
-                     WaveOut << " " << WaveFit.LinGainFit[1] << " +/- " << WaveFit.
-                         dLinGainFit[1] << " " << WaveFit.LinGainFit[2] << endl;
+                     WaveOut << HistName << "\t" << WaveFit.LinGainFit[0];
+                     WaveOut << "\t" << WaveFit.LinGainFit[1] << endl;
                   } else {
-                     WaveOut << HistName << " " << WaveFit.QuadGainFit[0] << " +/- " << WaveFit.dQuadGainFit[0] << " ";
-                     WaveOut << WaveFit.QuadGainFit[1] << " +/- " << WaveFit.
-                         dQuadGainFit[1] << " " << WaveFit.QuadGainFit[2] << " +/- " << WaveFit.dQuadGainFit[2] << endl;
+                     WaveOut << HistName << ":\t" << WaveFit.QuadGainFit[0] <<  "\t";
+                     WaveOut << WaveFit.QuadGainFit[1] << "\t" << WaveFit.QuadGainFit[2] << endl;
                   }
                } else {
-                  WaveOut << HistName << " Fail!!!" << endl;
+                  //WaveOut << HistName << " Fail!!!" << endl;
                }
                if (Config.CalReport) {
                   if (FitSuccess > 0) {
