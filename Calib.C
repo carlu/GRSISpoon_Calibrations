@@ -477,7 +477,7 @@ void FinalCalib()
          cout << endl << "Now fitting energy spectra from whole run..." << endl;
       }
 
-      for (Clover = 11; Clover < 12; Clover++) {
+      for (Clover = 0; Clover < 12; Clover++) {
          for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
             for (Seg = 0; Seg <= SEGS + 1; Seg++) {
 
