@@ -649,9 +649,9 @@ int ReadCommandLineSettings(int argc, char **argv)
                break;           // break if at last item in arg list
             }
          }
-         cout << "Input files:  ";
+         cout << "Input files:  " << endl;
          for (j = 0; j < Config.files.size(); j++) {    // print list of files back to screen
-            cout << Config.files.at(j) << endl;
+            cout << "\t" << Config.files.at(j) << endl;
          }
       }
       // Energy Calibration file
