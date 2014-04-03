@@ -177,38 +177,42 @@ int main(int argc, char **argv)
    if (Config.HaveAltEnergyCalibration) {
       int NumCal;
       NumCal = ReadCalibrationFile(Config.EnergyCalibrationFile, &EnCalibNames, &EnCalibValues);
-      cout << "Alternate energy calibratrion values: " << endl;
-      for (i = 0; i < NumCal; i++) {
-         cout << i;
-         cout << ": " << EnCalibNames.at(i);
-         cout << " " << EnCalibValues.at(i)[0] << " " << EnCalibValues[i][1] << " " << EnCalibValues[i][2] << endl;
+      if(Config.PrintBasic) {
+         cout << "Alternate energy calibratrion values: " << endl;
+         for (i = 0; i < NumCal; i++) {
+            cout << i;
+            cout << ": " << EnCalibNames.at(i);
+            cout << " " << EnCalibValues.at(i)[0] << " " << EnCalibValues[i][1] << " " << EnCalibValues[i][2] << endl;
+         }
       }
    }
    // Load gain coefficients for waveforms
    if (Config.HaveWaveCalibration) {
       int NumCal;
       NumCal = ReadCalibrationFile(Config.WaveCalibrationFile, &WaveCalibNames, &WaveCalibValues);
-      cout << "Wave energy calibratrion values: " << endl;
-      //cout << WaveCalibNames.size() << endl << WaveCalibValues.size() << endl;
-      for (i = 0; i < NumCal; i++) {
-         cout << i;
-         cout << ": " << WaveCalibNames.at(i);
-         cout << " " << WaveCalibValues.at(i)[0] << " " << WaveCalibValues[i][1] << " " << WaveCalibValues[i][2] <<
-             endl;
+      if(Config.PrintBasic) {
+         cout << "Wave energy calibratrion values: " << endl;
+         //cout << WaveCalibNames.size() << endl << WaveCalibValues.size() << endl;
+         for (i = 0; i < NumCal; i++) {
+            cout << i;
+            cout << ": " << WaveCalibNames.at(i);
+            cout << " " << WaveCalibValues.at(i)[0] << " " << WaveCalibValues[i][1] << " " << WaveCalibValues[i][2] <<
+                endl;
+         }
       }
    }
    // Initialise spectra   
 
    if (Config.RunEfficiency) {
-      cout << "Initialising Efficiency Spectra..." << endl;
+      if(Config.PrintBasic) {cout << "Initialising Efficiency Spectra..." << endl;}
       InitCoincEff();
    }
    if (Config.RunCalibration) {
-      cout << "Initialising Calibration Spectra..." << endl;
+      if(Config.PrintBasic) {cout << "Initialising Calibration Spectra..." << endl;}
       InitCalib();
    }
    if (Config.RunPropCrosstalk) {
-      cout << "Initialising Cross-talk Spectra..." << endl;
+      if(Config.PrintBasic) {cout << "Initialising Cross-talk Spectra..." << endl;}
       InitPropXtalk();
    }
 
@@ -227,13 +231,16 @@ int main(int argc, char **argv)
    int NumChainEntries = Chain->GetEntries();
    int NumChainEvents = (int) Chain->GetMaximum("TriggerId");   // This doesn't work, TrigID reset for each tree on chain.
 
-   cout << "Chain Entries (frags) : " << NumChainEntries << endl;
-   cout << "Chain Events          : " << NumChainEvents << endl;
+   if(Config.PrintBasic) {
+      cout << "Chain Entries (frags) : " << NumChainEntries << endl;
+      cout << "Chain Events          : " << NumChainEvents << endl;
+   }
 
    int TreeNum = -1;
    int LastTreeNum = -1;
    int NumTreeEntries = -1;
    int NumTreeEvents = -1;
+   int FirstTreeEvent = -1;
 
    for (ChainEvent = 0; ChainEvent < NumChainEntries; ChainEvent++) {
 
@@ -243,8 +250,10 @@ int main(int argc, char **argv)
       TreeNum = Chain->GetTreeNumber();
 
       if (TreeNum != LastTreeNum) {
-         cout << "Switching to TreeNum " << TreeNum + 1 << " from " << LastTreeNum +
-             1 << " at chain entry " << ChainEvent << endl;
+         if(Config.PrintBasic) {
+            cout << "Switching to TreeNum " << TreeNum + 1 << " from " << LastTreeNum +
+               1 << " at chain entry " << ChainEvent << endl;
+         }
          LastTreeNum = TreeNum;
       } else {
          continue;              // This works in conjuncion with the line below "i += (NumTreeEntries - 10);"
@@ -256,10 +265,10 @@ int main(int argc, char **argv)
       TTree *Tree = Chain->GetTree();
 
       if (!Tree->GetTreeIndex()) {
-         printf("\nTree Index not found, Building index...");
+         if(Config.PrintBasic) {printf("\nTree Index not found, Building index...");}
          fflush(stdout);
          Tree->BuildIndex("TriggerId", "FragmentId");
-         printf("  Done\n");
+         if(Config.PrintBasic) {printf("  Done\n");}
          fflush(stdout);
       }
 
@@ -273,10 +282,12 @@ int main(int argc, char **argv)
 
       NumTreeEntries = Tree->GetEntries();
       NumTreeEvents = (int) Tree->GetMaximum("TriggerId");
+      FirstTreeEvent = (int) Tree->GetMinimum("TriggerId");
 
       // cout << "HERE!!!! " << NumChainEntries << " " << NumTreeEntries << " " << NumTreeEvents << endl;
 
       for (int TreeEvent = 0; TreeEvent < NumTreeEvents; TreeEvent++) {
+      //for (int TreeEvent = FirstTreeEvent; TreeEvent < NumTreeEvents; TreeEvent++) {   
          evFrags.clear();
          int FragNum = 1;
 
@@ -302,7 +313,7 @@ int main(int argc, char **argv)
 
          // do something with the evFrag vector (contains a built event)... ProcessEvent(evFrags); 
          if (Config.EventLimit > 0 && EventCount >= Config.EventLimit) {
-            cout << "Maximum number of events (" << Config.EventLimit << ") reached.  Terminating..." << endl;
+            if(Config.PrintBasic) {cout << "Maximum number of events (" << Config.EventLimit << ") reached.  Terminating..." << endl;}
             break;
          }
          if (Config.RunEfficiency) {
@@ -318,12 +329,13 @@ int main(int argc, char **argv)
             cout << "ev Num =  " << TreeEvent << ", ev.size() = " << evFrags.size() << endl;
          }
          // Print info to stdout
-         if (PRINT_OUTPUT && (TreeEvent % PRINT_FREQ) == 0) {
+         if (Config.PrintBasic && (TreeEvent % PRINT_FREQ) == 0) {
             cout << "----------------------------------------------------------" << endl;
             cout << "  Tree  " << TreeNum + 1 << " / " << nTrees << endl;
-            cout << "  Event " << EventCount +
-                EmptyEventCount << " / " << NumChainEvents << "   (" << EventCount << " good, " << EmptyEventCount <<
-                " empty)" << endl;
+            //cout << "  Event " << EventCount +
+            //    EmptyEventCount << " / " << NumChainEvents << "   (" << EventCount << " good, " << EmptyEventCount <<
+            //    " empty)" << endl;
+            cout << "  Event " << EventCount << " / " << NumChainEvents << endl;
             cout << "  Frag  " << FragCount << " / " << NumChainEntries << endl;
             cout << "\t  in " << StopWatch.RealTime() << " seconds." << endl;
             StopWatch.Continue();
@@ -413,14 +425,14 @@ char Num2Col(int Crystal)
 int ReadCalibrationFile(std::string filename, vector < string > *CalibNames, vector < vector < float >>*CalibValues)
 {
 
-   printf("Reading calibration file %s...\t", filename.c_str());
+   if(Config.PrintBasic) {printf("Reading calibration file %s...\t", filename.c_str());}
    ifstream file;
    file.open(filename);
    if (!file) {
-      printf("could not open file.\n");
+      if(Config.PrintBasic) {printf("could not open file.\n");}
       return -1;
    } else {
-      printf("File opened.\n");
+      if(Config.PrintBasic) {printf("File opened.\n");}
    }
 
    std::string line;
@@ -523,9 +535,9 @@ int LoadDefaultSettings()
    Config.EffTxtOut = "CoincEffOut.txt";
    Config.PropOut = "PropXTalkOut.root";
 
-   Config.PrintBasic = PRINT_OUTPUT;
+   Config.PrintBasic = 1;
    Config.PrintFrequency = PRINT_FREQ;
-   Config.PrintVerbose = PRINT_VERBOSE;
+   Config.PrintVerbose = 0;
 
    Config.EventLimit = MAX_EVENTS;
 
@@ -607,6 +619,7 @@ int ReadCommandLineSettings(int argc, char **argv)
    // -o : output path (prepended to all output files)
    // -h : print help and exit
    // -v : verbose
+   // -q : Quiet
    // -n : max number of events
 
    // --cal : run calibration
@@ -729,6 +742,18 @@ int ReadCommandLineSettings(int argc, char **argv)
          }
          Config.OutPath = argv[++i];
       }
+      // Verbose mode
+      // -------------------------------------------
+      if (strncmp(argv[i], "-v", 2) == 0) {
+         Config.PrintBasic = 1;
+         Config.PrintVerbose = 1;
+      }
+      // Quiet mode   (clearly verbose and quiet will override eachother)
+      // -------------------------------------------
+      if (strncmp(argv[i], "-q", 2) == 0) {
+         Config.PrintBasic = 0;
+         Config.PrintVerbose = 0;
+      }         
       // Run options
       // -------------------------------------------
       if (strncmp(argv[i], "--", 2) == 0) {     // Long option used.

@@ -84,9 +84,9 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
    if (Histo) {
       Integral = Histo->Integral();
    } else {
-      cout << "Bad histo! " << endl;
+      if(Config.PrintVerbose) {cout << "Bad histo! " << endl;}
    }
-   if (VERBOSE) {
+   if (Config.PrintVerbose) {
       cout << "\tIntegral: " << Integral;
    }
    if (Integral > MIN_FIT_COUNTS) {
@@ -102,7 +102,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
 
       NumPeaks = Spec->Search(Histo, Settings.SearchSigma, "new", Settings.SearchThresh);
       PeakPositions = Spec->GetPositionX();
-      if (VERBOSE) {
+      if (Config.PrintVerbose) {
          cout << "\tPeaks: " << NumPeaks << endl;
          cout << "Commencing peak search for " << En1 << " keV and " << En2 << " keV (Ratio = " << IdealRatio << ")" <<
              endl;
@@ -112,7 +112,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
       BestDiff = 1000.0;
       if (NumPeaks > 1) {
          for (Peak1 = 0; Peak1 < NumPeaks; Peak1++) {
-            if (VERBOSE) {
+            if (Config.PrintVerbose) {
                cout << "Peak " << Peak1 << " - Cent: " << PeakPositions[Peak1] << endl;
             }
             for (Peak2 = 0; Peak2 < NumPeaks; Peak2++) {
@@ -132,7 +132,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
                }
             }
          }
-         if (VERBOSE && PeakFound) {
+         if (Config.PrintVerbose && PeakFound) {
             cout << "Best Peak1: " << BestPeak1 << " BestPeak2: " << BestPeak2 << " Ratio: " << PeakPositions[BestPeak1]
                 / PeakPositions[BestPeak2] << endl;
          }
@@ -165,8 +165,10 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
             }
 
             Centre = PeakPositions[Peak];
-            cout << "Line: " << Line << " (Energy = " << Config.Sources[Settings.Source][Line] << " keV)" << endl;
-            cout << "-------------------------------------------------------------" << endl << endl;
+            if(Config.PrintVerbose) {
+               cout << "Line: " << Line << " (Energy = " << Config.Sources[Settings.Source][Line] << " keV)" << endl;
+               cout << "-------------------------------------------------------------" << endl << endl;
+            }
             FitSinglePeak(Histo, Line, Centre, FitRange[Line], &FitRes[Line], Settings);
 
          }
@@ -209,7 +211,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
          Fit->LinGain[1] = G;
          Fit->dLinGain[1] = dG;
 
-         if (VERBOSE) {
+         if (Config.PrintVerbose) {
             cout << "Gain: " << G << " +/- " << dG << ", Offset: " << O << " +/- " << dO << endl;
          }
 
@@ -225,7 +227,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
          if (Config.Sources[Settings.Source].size() > 2) {
             for (Line = 2; Line < Config.Sources[Settings.Source].size(); Line++) {
 
-               if (VERBOSE) {
+               if (Config.PrintVerbose) {
                   cout << "Line: " << Line << " (Energy = " << Config.Sources[Settings.Source][Line] << " keV)" << endl;
                   cout << "-------------------------------------------------------------" << endl << endl;
                }
@@ -238,7 +240,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
          //-------------------------------------------------------------//
          // Finally fit energy vs peak centroid for final calibration   //
          //-------------------------------------------------------------//
-         if (VERBOSE) {
+         if (Config.PrintVerbose) {
             cout << endl << "Calibrating..." << endl;
          }
          if (PLOT_FITS || PLOT_CALIB || PLOT_CALIB_SUMMARY || PLOT_RESIDUAL) {
@@ -264,7 +266,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
                   Energies[LinesUsed] = Config.Sources[Settings.Source][Line];
                   Centroids[LinesUsed] = FitRes[Line].Mean / Settings.Integration;
                   dCentroids[LinesUsed] = FitRes[Line].dMean / Settings.Integration;
-                  if (VERBOSE) {
+                  if (Config.PrintVerbose) {
                      cout << Energies[LinesUsed] << " keV\t" << Centroids[LinesUsed] << " +/- " <<
                          dCentroids[LinesUsed] << " ch" << endl;
                   }
@@ -285,7 +287,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
             Energies[LinesUsed] = 0.0;
             Centroids[LinesUsed] = 0.0;
             dCentroids[LinesUsed] = ZERO_ERR;
-            if (VERBOSE) {
+            if (Config.PrintVerbose) {
                cout << Energies[LinesUsed] << " keV\t" << Centroids[LinesUsed] << " +/- " << dCentroids[LinesUsed] <<
                    " ch" << endl;
             }
@@ -303,7 +305,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
          }
          Fit->LinesUsed = LinesUsed;
          TGraphErrors CalibPlot(LinesUsed, Centroids, Energies, dCentroids, dEnergies);
-         if (VERBOSE) {
+         if (Config.PrintVerbose) {
             cout << LinesUsed << " lines used for calibration ";
             for (i = 0; i < LinesUsed; i++) {
                cout << Energies[i] << " ";
@@ -375,7 +377,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
          }
 
       } else {
-         if (VERBOSE) {
+         if (Config.PrintVerbose) {
             cout << "Ratio of peak centroids (" << BestDiff << ") does not match the expected value (" << IdealRatio <<
                 ")" << endl;
          }
@@ -384,7 +386,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
    }
 
    else {
-      if (VERBOSE) {
+      if (Config.PrintVerbose) {
          cout << "\tNot enough counts to fit (" << Integral << ")" << endl;
       }
       return -1;
@@ -444,7 +446,7 @@ int FitSinglePeak(TH1F * Histo, int Line, float Centre, TF1 * FitRange, FitResul
       cout << "Dispersion: " << Settings.Dispersion << endl;
     */
 
-   if (VERBOSE) {
+   if (Config.PrintVerbose) {
       cout << "Fitting line " << Line << " Min: " << Min << " Max: " << Max << endl;
    }
    if (PLOT_FITS) {
@@ -462,13 +464,13 @@ int FitSinglePeak(TH1F * Histo, int Line, float Centre, TF1 * FitRange, FitResul
       FitRange->SetParName(3, "Constant Background");
       FitRange->SetParameter(0, ConstEst);
       FitRange->SetParameter(1, Centre);
-      if (VERBOSE) {
+      if (Config.PrintVerbose) {
          cout << "Initial Sigma: " << InitialSigma << endl;
       }
       FitRange->SetParameter(2, InitialSigma);
       BackEst =
           (Histo->Integral(MinBin, (MinBin + BackBins)) + Histo->Integral(MaxBin - BackBins, MaxBin)) / (2 * BackBins);
-      if (VERBOSE) {
+      if (Config.PrintVerbose) {
          cout << "Back Est: " << BackEst << endl;
       }
       FitRange->SetParameter(3, BackEst);
@@ -481,7 +483,7 @@ int FitSinglePeak(TH1F * Histo, int Line, float Centre, TF1 * FitRange, FitResul
       Opts = FitOptions + "+";
    }
 
-   if (VERBOSE) {
+   if (Config.PrintVerbose) {
       cout << "Fit options: " << Opts << endl;
    }
 
@@ -500,7 +502,7 @@ int FitSinglePeak(TH1F * Histo, int Line, float Centre, TF1 * FitRange, FitResul
    FitRes->ChiSq = FitRange->GetChisquare();
    FitRes->NDF = FitRange->GetNDF();
 
-   if (Settings.PlotOn || VERBOSE) {
+   if (Settings.PlotOn || Config.PrintVerbose) {
       cout << "Peak " << Line << " Params: " << FitRes->Const << " " << FitRes->Mean << " " << FitRes->Sigma << endl;
       cout << "Peak " << Line << " Errors: " << FitRes->dConst << " " << FitRes->dMean << " " << FitRes->dSigma << endl;
       if (FIT_BACKGROUND == 1) {

@@ -150,22 +150,18 @@ void InitCalib()
       WaveHist = new TH1F(name, title, Config.WaveformSamples, 0, Config.WaveformSamples);
    }
 
-   cout << "Searching for core Peaks: " << Config.Sources[Config.
-                                                          SourceNumCore][0] << "kev and " << Config.Sources[Config.
-                                                                                                            SourceNumCore]
-       [1] << "keV (Ratio " << Config.Sources[Config.SourceNumCore][0] /
-       Config.Sources[Config.SourceNumCore][1] << ")" << endl;
-   cout << "Searching for front seg peaks: " << Config.Sources[Config.
-                                                               SourceNumFront][0] << "kev and " <<
-       Config.Sources[Config.SourceNumFront][1] << "keV (Ratio " << Config.Sources[Config.SourceNumFront][0] /
-       Config.Sources[Config.SourceNumFront][1] << ")" << endl;
-   cout << "Searching for back seg peaks: " << Config.Sources[Config.
-                                                              SourceNumBack][0] << "kev and " << Config.Sources[Config.
-                                                                                                                SourceNumBack]
-       [1]
-       << "keV (Ratio " << Config.Sources[Config.SourceNumBack][0] /
-       Config.Sources[Config.SourceNumBack][1] << ")" << endl;
-
+   if(Config.PrintVerbose) {
+      cout << "Searching for core Peaks: " << Config.Sources[Config.SourceNumCore][0] << "kev and " << Config.Sources[Config.SourceNumCore]
+          [1] << "keV (Ratio " << Config.Sources[Config.SourceNumCore][0] /
+          Config.Sources[Config.SourceNumCore][1] << ")" << endl;
+      cout << "Searching for front seg peaks: " << Config.Sources[Config.SourceNumFront][0] << "kev and " <<
+          Config.Sources[Config.SourceNumFront][1] << "keV (Ratio " << Config.Sources[Config.SourceNumFront][0] /
+          Config.Sources[Config.SourceNumFront][1] << ")" << endl;
+      cout << "Searching for back seg peaks: " << Config.Sources[Config.SourceNumBack][0] << "kev and " << Config.Sources
+         [Config.SourceNumBack][1] << "keV (Ratio " << Config.Sources[Config.SourceNumBack][0] /
+          Config.Sources[Config.SourceNumBack][1] << ")" << endl;
+   }
+   
    if (PLOT_WAVE) {
       cWave1 = new TCanvas();
    }
@@ -212,12 +208,12 @@ void Calib(std::vector < TTigFragment > &ev)
       if (FirstEvent == 1) {
          StartTime = ev[i].MidasTimeStamp;      //ev[i].MidasTimeStamp;
          FirstEvent = 0;
-         cout << "MIDAS time of first fragment: " << ctime(&StartTime) << endl;
+         if(Config.PrintBasic) {cout << "MIDAS time of first fragment: " << ctime(&StartTime) << endl;}
       }
       // Insert test for time earlier than StartTime.....
       if (ev[i].MidasTimeStamp < StartTime) {
          StartTime = ev[i].MidasTimeStamp;      //ev[i].MidasTimeStamp;
-         cout << "Earlier event found! Updating time of first fragment to: " << ctime(&StartTime) << endl;
+         if(Config.PrintBasic) {cout << "Earlier event found! Updating time of first fragment to: " << ctime(&StartTime) << endl;}
       }
 
       Slave = ((ev[i].ChannelAddress & 0x00F00000) >> 20);
@@ -230,7 +226,7 @@ void Calib(std::vector < TTigFragment > &ev)
       if (name.size() >= 10) {
          ParseMnemonic(&name, &mnemonic);
       } else {
-         cout << "Bad mnemonic size: This shouldn't happen if the odb is correctly configured!" << endl;
+         if(Config.PrintVerbose) {cout << "Bad mnemonic size: This shouldn't happen if the odb is correctly configured!" << endl;}
          continue;
       }
 
@@ -240,7 +236,7 @@ void Calib(std::vector < TTigFragment > &ev)
          char Colour = mnemonic.arraysubposition.c_str()[0];
          Crystal = Col2Num(Colour);
          if (Crystal == -1) {
-            cout << "Bad Colour: " << Colour << endl;
+            if(Config.PrintBasic) {cout << "Bad Colour: " << Colour << endl;}
             continue;
          }
          // Determine Clover position
@@ -271,7 +267,7 @@ void Calib(std::vector < TTigFragment > &ev)
             //cout << mnemonic.outputsensor << endl;
             if (Chan == 0) {
                if (!(mnemonic.outputsensor.compare("a") == 0 || mnemonic.outputsensor.compare("A") == 0)) {     // if this is the primary core output
-                  cout << "Core Channel/Label mismatch" << endl;
+                  if(Config.PrintBasic) {cout << "Core Channel/Label mismatch" << endl;}
                }
                if (ev[i].Charge > 0) {
                   // Increment raw charge spectra
@@ -287,7 +283,7 @@ void Calib(std::vector < TTigFragment > &ev)
             } else {
                if (Chan == 9) {
                   if (!(mnemonic.outputsensor.compare("b") == 0 || mnemonic.outputsensor.compare("B") == 0)) {  // if this is the primary core output
-                     cout << "Core Channel/Label mismatch" << endl;
+                     if(Config.PrintBasic) {cout << "Core Channel/Label mismatch" << endl;}
                   }
                   if (ev[i].Charge > 0) {
                      // Increment raw charge spectra
@@ -322,10 +318,12 @@ void Calib(std::vector < TTigFragment > &ev)
             TB = ((MidasTime - StartTime) / MAX_TIME);
             TimeBin = TB * TIME_BINS;
 
-            cout << "MT: " << MidasTime << " ST: " << StartTime << " MT: " << MAX_TIME << " TIME_BINS: " << TIME_BINS <<
-                " TB: " << TB << " TimeBin: " << TimeBin << endl;
-
-            if (NOTIFY_TIME_BIN) {
+            if(DEBUG) {
+               cout << "MT: " << MidasTime << " ST: " << StartTime << " MT: " << MAX_TIME << " TIME_BINS: " << TIME_BINS <<
+                  " TB: " << TB << " TimeBin: " << TimeBin << endl;
+            }
+            
+            if (Config.PrintVerbose) {
                cout << "Start Of Run:      " << ctime(&StartTime);
                cout << "Start of this fit: " << FitTimeElapsed << endl;
                cout << "Time of this frag: " << ctime(&MidasTime);
@@ -338,7 +336,7 @@ void Calib(std::vector < TTigFragment > &ev)
             // Loop crystals, fit spectra core , write gains and offsets to spectrum
             for (j = 0; j < CLOVERS; j++) {
                for (k = 0; k < CRYSTALS; k++) {
-                  if (VERBOSE) {
+                  if (Config.PrintVerbose) {
                      cout << "Clov: " << j << " Crys: " << k;
                   }
                   // Perform Fit                  
@@ -507,9 +505,11 @@ void FinalCalib()
                // Load histogram
                TH1F *Histo = hCharge[Clover][Crystal][Seg];
                if (Histo) {
-                  cout << endl << "------------------------------------" << endl;
-                  cout << "Hist " << HistName << " loaded" << endl;
-                  cout << "------------------------------------" << endl << endl;
+                  if(Config.PrintVerbose) {
+                     cout << endl << "------------------------------------" << endl;
+                     cout << "Hist " << HistName << " loaded" << endl;
+                     cout << "------------------------------------" << endl << endl;
+                  }
                   // Check if plot should be active for this channel
                   PlotOn = 0;
                   if (PLOT_FITS) {
@@ -590,7 +590,7 @@ void FinalCalib()
                      }
                   }
                } else {
-                  cout << endl << "Hist " << HistName << " failed to load." << endl;
+                  if(Config.PrintVerbose) {cout << endl << "Hist " << HistName << " failed to load." << endl;}
                }
             }
          }

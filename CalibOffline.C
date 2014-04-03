@@ -86,9 +86,9 @@ int CalibOffline(std::string filename)
    // File
    TFile *file = TFile::Open(filename.c_str());
    if (file->IsOpen()) {
-      cout << filename << " opened!" << endl;
+      if(Config.PrintBasic) {cout << filename << " opened!" << endl;}
    } else {
-      cout << "Failed to open " << filename << "!" << endl;
+      if(Config.PrintBasic) {cout << "Failed to open " << filename << "!" << endl;}
       return 0;
    }
 
@@ -169,9 +169,11 @@ int CalibOffline(std::string filename)
                // Load histogram
                TH1F *Histo = (TH1F *) file->FindObjectAny(HistName.c_str());
                if (Histo) {
-                  cout << endl << "------------------------------------" << endl;
-                  cout << "Hist " << HistName << " loaded" << endl;
-                  cout << "------------------------------------" << endl << endl;
+                  if(Config.PrintVerbose) {
+                     cout << endl << "------------------------------------" << endl;
+                     cout << "Hist " << HistName << " loaded" << endl;
+                     cout << "------------------------------------" << endl << endl;
+                  }
                   // Check if plot should be active for this channel
                   PlotOn = 0;
                   if (PLOT_FITS) {
@@ -256,7 +258,7 @@ int CalibOffline(std::string filename)
                      Histo->Write();
                   }
                } else {
-                  cout << endl << "Hist " << HistName << " failed to load." << endl;
+                  if(Config.PrintBasic) {cout << endl << "Hist " << HistName << " failed to load." << endl;}
                }
             }
          }
@@ -265,11 +267,10 @@ int CalibOffline(std::string filename)
    // Now run the fit for the waveform spectrum if required
    if (Config.CalWave) {
       if (Config.PrintVerbose) {
-         cout << "-------------------" << endl << "Now fitting Wave Energy Spectra" << endl << "-------------------"
-             << endl;
+         if(Config.PrintBasic) {cout << "-------------------" << endl << "Now fitting Wave Energy Spectra" << endl << "-------------------"<< endl;}
       }
-      //for (Clover = 0; Clover < CLOVERS; Clover++) {
-      for (Clover = 11; Clover < 12; Clover++) {
+      for (Clover = 0; Clover < CLOVERS; Clover++) {
+      //for (Clover = 11; Clover < 12; Clover++) {
          for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
             for (Seg = 0; Seg <= SEGS + 1; Seg++) {
 
