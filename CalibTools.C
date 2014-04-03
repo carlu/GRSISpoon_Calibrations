@@ -84,7 +84,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
    if (Histo) {
       Integral = Histo->Integral();
    } else {
-      if(Config.PrintVerbose) {cout << "Bad histo! " << endl;}
+      cout << "Bad histo! " << endl;
    }
    if (Config.PrintVerbose) {
       cout << "\tIntegral: " << Integral;
@@ -165,7 +165,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
             }
 
             Centre = PeakPositions[Peak];
-            if(Config.PrintVerbose) {
+            if (Config.PrintVerbose) {
                cout << "Line: " << Line << " (Energy = " << Config.Sources[Settings.Source][Line] << " keV)" << endl;
                cout << "-------------------------------------------------------------" << endl << endl;
             }

@@ -164,7 +164,9 @@ int main(int argc, char **argv)
    if (Config.RunOffCal == 1) {
       for (i = 0; i < Config.files.size(); i++) {
          if (strncmp(Config.files.at(i).c_str(), Config.CalOut.c_str(), 8) == 0) {
-            cout << "Attempting offline calibration on histograms in file: " << Config.files.at(i) << endl;
+            if(Config.PrintBasic) {
+               cout << "Attempting offline calibration on histograms in file: " << Config.files.at(i) << endl;
+            }
             CalibOffline(Config.files.at(i));
          }
       }
@@ -662,10 +664,12 @@ int ReadCommandLineSettings(int argc, char **argv)
                break;           // break if at last item in arg list
             }
          }
-         cout << "Input files:  " << endl;
-         for (j = 0; j < Config.files.size(); j++) {    // print list of files back to screen
-            cout << "\t" << Config.files.at(j) << endl;
-         }
+         if(Config.PrintBasic) {
+            cout << "Input files:  " << endl;
+            for (j = 0; j < Config.files.size(); j++) {    // print list of files back to screen
+               cout << "\t" << Config.files.at(j) << endl;
+            }
+         }   
       }
       // Energy Calibration file
       // -------------------------------------------
@@ -818,5 +822,6 @@ void PrintHelp()
    cout <<
        "[--calof] - run offline calibration on a histogram file (CalibOutXXXX.root).  This option overrides all other run options."
        << endl;
+   cout << "[-q] - Quiet mode.  [-v] - Verbose mode.  Default prints progress through run and configuration.  Quiet doesn't.  Verbose also prints other stuff" << endl;
    cout << endl;
 }
