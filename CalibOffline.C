@@ -78,6 +78,7 @@ int CalibOffline(std::string filename)
    ofstream ReportOut;
    ofstream WaveOut;
    ofstream WaveReportOut;
+   ofstream CalFileOut;
 
    int NumFits;
 
@@ -99,7 +100,7 @@ int CalibOffline(std::string filename)
       outfile = TFile::Open(tempstring.c_str(), "RECREATE");
    }
 
-
+   // Prepare energy calibration output files
    if (Config.CalEnergy) {
       tempstring = Config.OutPath + "GainsOut.txt";
       GainOut.open(tempstring.c_str());
@@ -108,6 +109,7 @@ int CalibOffline(std::string filename)
          ReportOut.open(tempstring.c_str());
       }
    }
+   // Prepart Wave calibration output files
    if (Config.CalWave) {
       tempstring = Config.OutPath + "WaveGainsOut.txt";
       WaveOut.open(tempstring.c_str());
@@ -115,6 +117,11 @@ int CalibOffline(std::string filename)
          tempstring = Config.OutPath + "WaveCalibrationReport.txt";
          WaveReportOut.open(tempstring.c_str());
       }
+   }
+   // Prepare .cal file
+   if(Config.CalFile) {
+      tempstring = Config.OutPath + "EnergyCalibration.cal";
+      CalFileOut.open(tempstring.c_str());
    }
    // Histograms
    GainPlot = new TH1F("Gains", "Gain of all fitted channels", 1001, -0.5, 1000.5);
@@ -244,6 +251,7 @@ int CalibOffline(std::string filename)
                         //GainOut << HistName << " Fail!!!" << endl;
                      }
                   }
+                  // Write full calibration report
                   if (Config.CalReport) {
                      if (FitSuccess > 0) {
                         CalibrationReport(&Fit, ReportOut, HistName, Settings);
@@ -253,6 +261,11 @@ int CalibOffline(std::string filename)
                         ReportOut << "Fail Fail Fail! The calibration has failed!" << endl;
                      }
                   }
+                  // Write .cal file for GRSISpoon
+                  if(Config.CalFile) {
+                     WriteCalFile(&Fit, CalFileOut, HistName, Settings);
+                  }
+                  // Write histo with fits
                   if (Config.WriteFits) {
                      outfile->cd();
                      Histo->Write();

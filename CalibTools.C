@@ -533,75 +533,86 @@ int CalibrationReport(SpectrumFit * Fit, ofstream & ReportOut, std::string HistN
 
    //char HistName[1024];
    //sprintf(HistName,"TempHist");
-
-   // Heading for this channel
-   ReportOut << endl << "------------------------------------------" << endl << HistName << endl <<
-       "------------------------------------------" << endl << endl;
-   // Peak fit info
-   ReportOut << Fit->LinesUsed << " lines used in calibration." << endl;
-   ReportOut << "Individual fit results:" << endl;
-   ReportOut << "(Const +/- err\tMean +/- err\tSigma +/- err\nChiSq\tNDF\tCSPD)" << endl << endl;
-   for (i = 0; i <= Config.Sources[Settings.Source].size(); i++) {
-      if (Fit->FitSuccess[i] == 1) {
-         ReportOut << Fit->PeakFits[i].Energy << " keV" << endl;
-         ReportOut << Fit->PeakFits[i].Const << " +/- " << Fit->PeakFits[i].dConst << "\t";
-         ReportOut << Fit->PeakFits[i].Mean << " +/- " << Fit->PeakFits[i].dMean << "\t";
-         ReportOut << Fit->PeakFits[i].Const << " +/- " << Fit->PeakFits[i].dConst << endl;
-         ReportOut << Fit->PeakFits[i].ChiSq << "\t" << Fit->PeakFits[i].NDF << "\t" << Fit->PeakFits[i].ChiSq /
-             Fit->PeakFits[i].NDF;
-         ReportOut << endl << endl;
+   
+   if(Config.CalReport) {
+      // Heading for this channel
+      ReportOut << endl << "------------------------------------------" << endl << HistName << endl <<
+          "------------------------------------------" << endl << endl;
+      // Peak fit info
+      ReportOut << Fit->LinesUsed << " lines used in calibration." << endl;
+      ReportOut << "Individual fit results:" << endl;
+      ReportOut << "(Const +/- err\tMean +/- err\tSigma +/- err\nChiSq\tNDF\tCSPD)" << endl << endl;
+      for (i = 0; i <= Config.Sources[Settings.Source].size(); i++) {
+         if (Fit->FitSuccess[i] == 1) {
+            ReportOut << Fit->PeakFits[i].Energy << " keV" << endl;
+            ReportOut << Fit->PeakFits[i].Const << " +/- " << Fit->PeakFits[i].dConst << "\t";
+            ReportOut << Fit->PeakFits[i].Mean << " +/- " << Fit->PeakFits[i].dMean << "\t";
+            ReportOut << Fit->PeakFits[i].Const << " +/- " << Fit->PeakFits[i].dConst << endl;
+            ReportOut << Fit->PeakFits[i].ChiSq << "\t" << Fit->PeakFits[i].NDF << "\t" << Fit->PeakFits[i].ChiSq /
+                Fit->PeakFits[i].NDF;
+            ReportOut << endl << endl;
+         }
+      }
+      // Calibration...
+      ReportOut << "Linear Solution: Offset = " << Fit->LinGain[0] << " +/- " << Fit->dLinGain[0] << "\t";
+      ReportOut << "Gain = " << Fit->LinGain[1] << " +/- " << Fit->dLinGain[1] << endl;
+      ReportOut << "Linear Fit: Offset = " << Fit->LinGainFit[0] << " +/- " << Fit->dLinGainFit[0] << "\t";
+      ReportOut << "Gain = " << Fit->LinGainFit[1] << " +/- " << Fit->dLinGainFit[1] << "\t";
+      ReportOut << "CSPD = " << Fit->LinGainFit[2] << endl;
+      ReportOut << "Quadratic Fit: Offset = " << Fit->QuadGainFit[0] << " +/- " << Fit->dQuadGainFit[0] << "\t";
+      ReportOut << "Gain = " << Fit->QuadGainFit[1] << " +/- " << Fit->dQuadGainFit[1] << "\t";
+      ReportOut << "Quad = " << Fit->QuadGainFit[2] << " +/- " << Fit->dQuadGainFit[2] << "\t";
+      ReportOut << "CSPD = " << Fit->LinGainFit[3] << endl;
+      // Residual from quadratic fit
+      ReportOut << endl << "Quadratic calibration residuals...." << endl;
+      ReportOut << "Centroid (ch)\t\tList Energy (keV)\t\tCalibration Energy (keV)\t\tResidual (keV)" << endl;
+      NumFits = 0;
+      for (i = 0; i <= Config.Sources[Settings.Source].size(); i++) {
+         if (Fit->FitSuccess[i] == 1) {
+            CalibEn = Fit->QuadGainFit[0] + (Fit->QuadGainFit[1] * (Fit->PeakFits[i].Mean / Settings.Integration)) +
+                (pow((Fit->PeakFits[i].Mean / Settings.Integration), 2) * Fit->QuadGainFit[2]);
+            ReportOut << Fit->PeakFits[i].Mean << "\t\t\t" << Fit->PeakFits[i].Energy << "\t\t\t";
+            ReportOut << CalibEn << "\t\t\t" << CalibEn - Fit->PeakFits[i].Energy << endl;
+            Residuals[NumFits] = CalibEn - Fit->PeakFits[i].Energy;
+            NumFits++;
+         }
+      }
+      // Residual from linear fit
+      NumFits = 0;
+      ReportOut << endl << "Linear calibration residuals...." << endl;
+      ReportOut << "Centroid (ch)\t\tList Energy (keV)\t\tCalibration Energy (keV)\t\tResidual (keV)" << endl;
+      for (i = 0; i <= Config.Sources[Settings.Source].size(); i++) {
+         if (Fit->FitSuccess[i] == 1) {
+            CalibEn = Fit->LinGainFit[0] + (Fit->LinGainFit[1] * (Fit->PeakFits[i].Mean / Settings.Integration));
+            ReportOut << Fit->PeakFits[i].Mean << "\t\t\t" << Fit->PeakFits[i].Energy << "\t\t\t";
+            ReportOut << CalibEn << "\t\t\t" << CalibEn - Fit->PeakFits[i].Energy << endl;
+            Energies[NumFits] = Fit->PeakFits[i].Energy;
+         }
+      }
+      TGraphErrors CalibResidual(NumFits, Energies, Residuals);
+      if (PLOT_RESIDUAL) {
+         cCalib1a->cd(2);
+         CalibResidual.SetMarkerColor(2);
+         CalibResidual.SetMarkerStyle(20);
+         CalibResidual.SetMarkerSize(1.0);
+         CalibResidual.SetTitle("Residual from quadratic calibration");
+         CalibResidual.Draw("AP");
+         //CalibResidual.Draw();
+         cCalib1a->Modified();
+         cCalib1a->Update();
+         App->Run(1);
+         //cCalib1->cd(1);
       }
    }
-   // Calibration...
-   ReportOut << "Linear Solution: Offset = " << Fit->LinGain[0] << " +/- " << Fit->dLinGain[0] << "\t";
-   ReportOut << "Gain = " << Fit->LinGain[1] << " +/- " << Fit->dLinGain[1] << endl;
-   ReportOut << "Linear Fit: Offset = " << Fit->LinGainFit[0] << " +/- " << Fit->dLinGainFit[0] << "\t";
-   ReportOut << "Gain = " << Fit->LinGainFit[1] << " +/- " << Fit->dLinGainFit[1] << "\t";
-   ReportOut << "CSPD = " << Fit->LinGainFit[2] << endl;
-   ReportOut << "Quadratic Fit: Offset = " << Fit->QuadGainFit[0] << " +/- " << Fit->dQuadGainFit[0] << "\t";
-   ReportOut << "Gain = " << Fit->QuadGainFit[1] << " +/- " << Fit->dQuadGainFit[1] << "\t";
-   ReportOut << "Quad = " << Fit->QuadGainFit[2] << " +/- " << Fit->dQuadGainFit[2] << "\t";
-   ReportOut << "CSPD = " << Fit->LinGainFit[3] << endl;
-   // Residual from quadratic fit
-   ReportOut << endl << "Quadratic calibration residuals...." << endl;
-   ReportOut << "Centroid (ch)\t\tList Energy (keV)\t\tCalibration Energy (keV)\t\tResidual (keV)" << endl;
-   NumFits = 0;
-   for (i = 0; i <= Config.Sources[Settings.Source].size(); i++) {
-      if (Fit->FitSuccess[i] == 1) {
-         CalibEn = Fit->QuadGainFit[0] + (Fit->QuadGainFit[1] * (Fit->PeakFits[i].Mean / Settings.Integration)) +
-             (pow((Fit->PeakFits[i].Mean / Settings.Integration), 2) * Fit->QuadGainFit[2]);
-         ReportOut << Fit->PeakFits[i].Mean << "\t\t\t" << Fit->PeakFits[i].Energy << "\t\t\t";
-         ReportOut << CalibEn << "\t\t\t" << CalibEn - Fit->PeakFits[i].Energy << endl;
-         Residuals[NumFits] = CalibEn - Fit->PeakFits[i].Energy;
-         NumFits++;
-      }
-   }
-   // Residual from linear fit
-   NumFits = 0;
-   ReportOut << endl << "Linear calibration residuals...." << endl;
-   ReportOut << "Centroid (ch)\t\tList Energy (keV)\t\tCalibration Energy (keV)\t\tResidual (keV)" << endl;
-   for (i = 0; i <= Config.Sources[Settings.Source].size(); i++) {
-      if (Fit->FitSuccess[i] == 1) {
-         CalibEn = Fit->LinGainFit[0] + (Fit->LinGainFit[1] * (Fit->PeakFits[i].Mean / Settings.Integration));
-         ReportOut << Fit->PeakFits[i].Mean << "\t\t\t" << Fit->PeakFits[i].Energy << "\t\t\t";
-         ReportOut << CalibEn << "\t\t\t" << CalibEn - Fit->PeakFits[i].Energy << endl;
-         Energies[NumFits] = Fit->PeakFits[i].Energy;
-      }
-   }
-   TGraphErrors CalibResidual(NumFits, Energies, Residuals);
-   if (PLOT_RESIDUAL) {
-      cCalib1a->cd(2);
-      CalibResidual.SetMarkerColor(2);
-      CalibResidual.SetMarkerStyle(20);
-      CalibResidual.SetMarkerSize(1.0);
-      CalibResidual.SetTitle("Residual from quadratic calibration");
-      CalibResidual.Draw("AP");
-      //CalibResidual.Draw();
-      cCalib1a->Modified();
-      cCalib1a->Update();
-      App->Run(1);
-      //cCalib1->cd(1);
+   if(Config.CalFile) {
+      
    }
 
+}
 
+int WriteCalFile(SpectrumFit *Fit, ofstream &CalFileOut, std::string HistName, FitSettings Settings) {
+
+
+
+   return 0;
 }
