@@ -526,7 +526,6 @@ float CalcWaveCharge(std::vector < int >wavebuffer)
 
 int LoadDefaultSettings()
 {
-
    Config.RunCalibration = SORT_CALIB;
    Config.RunOffCal = SORT_OFFCAL;
    Config.RunEfficiency = SORT_EFF;
@@ -601,6 +600,7 @@ int LoadDefaultSettings()
    Config.PlotFits = 0;
    Config.PlotCalib = 0;
    Config.PlotCalibSummary = 0;
+   memset(&Config.CalibPlots,0,CLOVERS*CRYSTALS*(SEGS+2)*sizeof(bool));
 
    // Options for CoincEff()
    Config.OutputEff = 1;
@@ -629,6 +629,7 @@ int ReadCommandLineSettings(int argc, char **argv)
    // -v : verbose
    // -q : Quiet
    // -n : max number of events
+   // -p : plot (Clover) (Crystal) (Seg)
 
    // --cal : run calibration
    // --calof : run calibration on spectrum file rather than fragment tree 
@@ -636,6 +637,7 @@ int ReadCommandLineSettings(int argc, char **argv)
    // --prop: run propxtalk
 
    int i, j, n;
+   int Plot[3];
    bool test;
    bool RunConfGiven = 0;
 
@@ -764,6 +766,36 @@ int ReadCommandLineSettings(int argc, char **argv)
          Config.PrintBasic = 0;
          Config.PrintVerbose = 0;
       }         
+      // Plots 
+      if(strncmp(argv[i], "-p", 2) == 0) {
+         if (i >= argc - 1 || strncmp(argv[i + 1], "-", 1) == 0) {      // return error if no file
+            cout << "Plotting all fits." << endl;
+            Config.PlotFits = 1;
+            memset(&Config.CalibPlots,1,CLOVERS*CRYSTALS*(SEGS+2)*sizeof(bool));
+         }
+         else {
+            Config.PlotFits = 1;
+            n=0;
+            while (strncmp(argv[i + 1], "-", 1) > 0) {     // loop plot items 
+               Plot[n] = atoi(argv[++i]);  
+               cout << "n,Plot[n] = " << n << ", " << Plot[n] << endl;
+               if((Plot[n] < 0) || (Plot[n] > CLOVERS)) {
+                  cout << "Error with plot specification!" << endl;
+                  return -1;
+               }
+               n++;
+               if (n==3) {
+                  break;
+               }
+               if (i >= argc - 1) {
+                  cout << "Need to specify (Clover) (Crystal) (Seg) for plots" << endl;
+                  return -1;
+               }
+            }
+            cout << "Plotting Cl: " << Plot[0] << " Cr: " << Plot[1] << " Seg: " << Plot[2] << endl;
+            Config.CalibPlots[Plot[0]][Plot[1]][Plot[2]] = 1;
+         }   
+      }
       // Run options
       // -------------------------------------------
       if (strncmp(argv[i], "--", 2) == 0) {     // Long option used.
@@ -829,5 +861,6 @@ void PrintHelp()
        "[--calof] - run offline calibration on a histogram file (CalibOutXXXX.root).  This option overrides all other run options."
        << endl;
    cout << "[-q] - Quiet mode.  [-v] - Verbose mode.  Default prints progress through run and configuration.  Quiet doesn't.  Verbose also prints other stuff" << endl;
+   cout << "[-p (Clover) (Crystal) (Seg)] - Plot certain segment when doing calibration.  ";
    cout << endl;
 }

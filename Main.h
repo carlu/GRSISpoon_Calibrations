@@ -154,6 +154,7 @@ struct RunConfig {              // this struct will hold all information
    bool WriteFits;              // --cal: write histo after fits, --calof: write new file with histos and fits
    // What to plot
    bool PlotFits;
+   bool CalibPlots[CLOVERS][CRYSTALS][SEGS+2];
    bool PlotCalib;
    bool PlotCalibSummary;
    // CoincEff()

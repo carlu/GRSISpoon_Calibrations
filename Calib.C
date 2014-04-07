@@ -521,14 +521,9 @@ void FinalCalib()
                   }
                   // Check if plot should be active for this channel
                   PlotOn = 0;
-                  if (PLOT_FITS) {
-                     if (PLOT_CLOVER == 0 || (Clover + 1) == PLOT_CLOVER) {
-                        if (PLOT_CRYSTAL == 0 || (Crystal + 1) == PLOT_CRYSTAL) {
-                           if (PLOT_SEG == 0 || Seg == PLOT_SEG) {
+                  if (Config.PlotFits) {
+                     if (Config.CalibPlots[Clover][Crystal][Seg]) {
                               PlotOn = 1;
-                              cCalib1->cd();
-                           }
-                        }
                      }
                   }
                   // Perform Fit                  
@@ -657,14 +652,9 @@ void FinalCalib()
                   }
                   // Check if plot should be active for this channel
                   PlotOn = 0;
-                  if (PLOT_FITS) {
-                     if (PLOT_CLOVER == 0 || (Clover + 1) == PLOT_CLOVER) {
-                        if (PLOT_CRYSTAL == 0 || (Crystal + 1) == PLOT_CRYSTAL) {
-                           if (PLOT_SEG == 0 || Seg == PLOT_SEG) {
+                  if (Config.PlotFits) {
+                     if (Config.CalibPlots[Clover][Crystal][Seg]) {
                               PlotOn = 1;
-                              cCalib1->cd();
-                           }
-                        }
                      }
                   }
                   // Perform Fit                  
