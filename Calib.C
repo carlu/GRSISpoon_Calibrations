@@ -536,7 +536,7 @@ void FinalCalib()
                   FitSettings Settings = { 0 };
 
                   Settings.Source = Source;
-                  Settings.Integration = 1;
+                  Settings.Integration = INTEGRATION;
                   Settings.Dispersion = float (CHARGE_BINS) / float (WAVE_CHARGE_MAX);
                   Settings.SearchSigma = WAVE_SEARCH_SIGMA;
                   Settings.SearchThresh = WAVE_SEARCH_THRESH;
@@ -672,12 +672,12 @@ void FinalCalib()
                   FitSettings Settings = { 0 };
 
                   Settings.Source = Source;
-                  Settings.Integration = INTEGRATION;
-                  Settings.Dispersion = float (CHARGE_BINS) / float (CHARGE_MAX);
-                  Settings.SearchSigma = EN_SEARCH_SIGMA;
-                  Settings.SearchThresh = EN_SEARCH_THRESH;
-                  Settings.SigmaEstZero = ENERGY_SIGMA_ZERO;
-                  Settings.SigmaEst1MeV = ENERGY_SIGMA_1MEV;
+                  Settings.Integration = 1;
+                  Settings.Dispersion = float (CHARGE_BINS) / float (WAVE_CHARGE_MAX);
+                  Settings.SearchSigma = WAVE_SEARCH_SIGMA;
+                  Settings.SearchThresh = WAVE_SEARCH_THRESH;
+                  Settings.SigmaEstZero = WAVE_SIGMA_ZERO;
+                  Settings.SigmaEst1MeV = WAVE_SIGMA_1MEV;
                   Settings.FitZero = INCLUDE_ZERO;
                   Settings.PlotOn = PlotOn;
 
@@ -699,11 +699,12 @@ void FinalCalib()
                   }
                   if (Config.CalReport) {
                      if (FitSuccess > 0) {
+                        WaveReportOut << "test" << endl;
                         CalibrationReport(&WaveFit, WaveReportOut, HistName, Settings);
                      } else {
-                        ReportOut << endl << "------------------------------------------" << endl << HistName << endl <<
+                        WaveReportOut << endl << "------------------------------------------" << endl << HistName << endl <<
                             "------------------------------------------" << endl << endl;
-                        ReportOut << "Fail Fail Fail! The calibration has failed!" << endl;
+                        WaveReportOut << "Fail Fail Fail! The calibration has failed!" << endl;
                      }
                   }
                } else {

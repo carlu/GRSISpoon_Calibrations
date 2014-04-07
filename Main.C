@@ -345,6 +345,10 @@ int main(int argc, char **argv)
          }
 
       }
+      
+      if (Config.EventLimit > 0 && EventCount >= Config.EventLimit) {
+         break;
+      }
 
       Branch->DropBaskets("all");       // Clear cache before next tree    
       //i += (nEntries - 10);
