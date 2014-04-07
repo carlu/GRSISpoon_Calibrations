@@ -591,6 +591,8 @@ int LoadDefaultSettings()
    Config.CalEnergy = 1;
    Config.CalWave = 1;
    Config.CalReport = 1;
+   // Output
+   Config.WriteFits = 1;   
    // Plots
    Config.PlotFits = 0;
    Config.PlotCalib = 0;

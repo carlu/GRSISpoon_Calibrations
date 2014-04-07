@@ -484,7 +484,7 @@ void FinalCalib()
          cout << endl << "Now fitting energy spectra from whole run..." << endl;
       }
 
-      for (Clover = 0; Clover < 12; Clover++) {
+      for (Clover = 0; Clover < CLOVERS; Clover++) {
          for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
             for (Seg = 0; Seg <= SEGS + 1; Seg++) {
 
@@ -611,141 +611,141 @@ void FinalCalib()
          }
       }
 
+   }
+   // Now run the fit for the waveform spectrum if required
+   // ------------------------------------------------------
+   if (Config.CalWave) {
+      if (Config.PrintVerbose) {
+         cout << "----------------------------------" << endl << "Now fitting Wave Energy Spectra" << endl <<
+             "----------------------------------" << endl;
+      }
 
-      // Now run the fit for the waveform spectrum if required
-      // ------------------------------------------------------
-      if (Config.CalWave) {
-         if (Config.PrintVerbose) {
-            cout << "----------------------------------" << endl << "Now fitting Wave Energy Spectra" << endl <<
-                "----------------------------------" << endl;
-         }
+      for (Clover = 0; Clover < CLOVERS; Clover++) {
+         for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
+            for (Seg = 0; Seg <= SEGS + 1; Seg++) {
 
-         for (Clover = 0; Clover < 12; Clover++) {
-            for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
-               for (Seg = 0; Seg <= SEGS + 1; Seg++) {
-
-                  // Set source and histogram name based on seg number
-                  switch (Seg) {
-                  case 0:
-                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da WaveChg", Clover + 1, Num2Col(Crystal), Seg);
-                     HistName = CharBuf;
-                     Source = Config.SourceNumCore;
-                     break;
-                  case 9:
-                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db WaveChg", Clover + 1, Num2Col(Crystal), 0);
-                     HistName = CharBuf;
-                     Source = Config.SourceNumCore;
-                     break;
-                  default:
-                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx WaveChg", Clover + 1, Num2Col(Crystal), Seg);
-                     HistName = CharBuf;
-                     if (Seg < 5) {
-                        Source = Config.SourceNumFront;
-                     } else {
-                        Source = Config.SourceNumBack;
-                     }
-                     break;
-                  }
-
-                  // Load histogram
-                  TH1F *Histo = hWaveCharge[Clover][Crystal][Seg];
-                  if (Histo) {
-                     if(Config.PrintVerbose) {
-                        cout << endl << "------------------------------------" << endl;
-                        cout << "Hist " << HistName << " loaded" << endl;
-                        cout << "------------------------------------" << endl << endl;
-                     }
-                     // Check if plot should be active for this channel
-                     PlotOn = 0;
-                     if (PLOT_FITS) {
-                        if (PLOT_CLOVER == 0 || (Clover + 1) == PLOT_CLOVER) {
-                           if (PLOT_CRYSTAL == 0 || (Crystal + 1) == PLOT_CRYSTAL) {
-                              if (PLOT_SEG == 0 || Seg == PLOT_SEG) {
-                                 PlotOn = 1;
-                                 cCalib1->cd();
-                              }
-                           }
-                        }
-                     }
-                     // Perform Fit                  
-                     SpectrumFit WaveFit = { 0 };
-                     FitSettings Settings = { 0 };
-
-                     Settings.Source = Source;
-                     Settings.Integration = INTEGRATION;
-                     Settings.Dispersion = float (CHARGE_BINS) / float (CHARGE_MAX);
-                     Settings.SearchSigma = EN_SEARCH_SIGMA;
-                     Settings.SearchThresh = EN_SEARCH_THRESH;
-                     Settings.SigmaEstZero = ENERGY_SIGMA_ZERO;
-                     Settings.SigmaEst1MeV = ENERGY_SIGMA_1MEV;
-                     Settings.FitZero = INCLUDE_ZERO;
-                     Settings.PlotOn = PlotOn;
-
-                     FitSuccess = FitGammaSpectrum(Histo, &WaveFit, Settings);
-
-                     // Now print reports on results of fits and calibration.
-                     if (OUTPUT_GAIN) {
-                        if (FitSuccess > 0) {
-                           if (FitSuccess < 3 || FORCE_LINEAR) {
-                              WaveOut << HistName << ":\t" << WaveFit.LinGainFit[0];
-                              WaveOut << "\t" << WaveFit.LinGainFit[1] <<  endl;
-                           } else {
-                              WaveOut << HistName << ":\t" << WaveFit.QuadGainFit[0] << "\t";
-                              WaveOut << WaveFit.QuadGainFit[1] << "\t" << WaveFit.QuadGainFit[2]  << endl;
-                           }
-                        } else {
-                           //WaveOut << HistName << " Fail!!!" << endl;
-                        }
-                     }
-                     if (Config.CalReport) {
-                        if (FitSuccess > 0) {
-                           CalibrationReport(&WaveFit, ReportOut, HistName, Settings);
-                        } else {
-                           ReportOut << endl << "------------------------------------------" << endl << HistName << endl <<
-                               "------------------------------------------" << endl << endl;
-                           ReportOut << "Fail Fail Fail! The calibration has failed!" << endl;
-                        }
-                     }
+               // Set source and histogram name based on seg number
+               switch (Seg) {
+               case 0:
+                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da WaveChg", Clover + 1, Num2Col(Crystal), Seg);
+                  HistName = CharBuf;
+                  Source = Config.SourceNumCore;
+                  break;
+               case 9:
+                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db WaveChg", Clover + 1, Num2Col(Crystal), 0);
+                  HistName = CharBuf;
+                  Source = Config.SourceNumCore;
+                  break;
+               default:
+                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx WaveChg", Clover + 1, Num2Col(Crystal), Seg);
+                  HistName = CharBuf;
+                  if (Seg < 5) {
+                     Source = Config.SourceNumFront;
                   } else {
-                     if(Config.PrintVerbose) {cout << endl << "Hist " << HistName << " failed to load." << endl;}
+                     Source = Config.SourceNumBack;
                   }
+                  break;
                }
-            }
-         }
 
-      }
+               // Load histogram
+               TH1F *Histo = hWaveCharge[Clover][Crystal][Seg];
+               if (Histo) {
+                  if(Config.PrintVerbose) {
+                     cout << endl << "------------------------------------" << endl;
+                     cout << "Hist " << HistName << " loaded" << endl;
+                     cout << "------------------------------------" << endl << endl;
+                  }
+                  // Check if plot should be active for this channel
+                  PlotOn = 0;
+                  if (PLOT_FITS) {
+                     if (PLOT_CLOVER == 0 || (Clover + 1) == PLOT_CLOVER) {
+                        if (PLOT_CRYSTAL == 0 || (Crystal + 1) == PLOT_CRYSTAL) {
+                           if (PLOT_SEG == 0 || Seg == PLOT_SEG) {
+                              PlotOn = 1;
+                              cCalib1->cd();
+                           }
+                        }
+                     }
+                  }
+                  // Perform Fit                  
+                  SpectrumFit WaveFit = { 0 };
+                  FitSettings Settings = { 0 };
 
-      if (Config.CalEnergy) {
-         GainOut.close();
-         if (Config.CalReport) {
-            ReportOut.close();
-         }
-         if(Config.CalFile) {
-            CalFileOut.close();
-         }         
-      }
-      if (Config.CalWave) {
-         WaveOut.close();
-         if (Config.CalReport) {
-            WaveReportOut.close();
-         }
-      }
-      // Write spectra to file again if fits are to be saved
-      if (Config.WriteFits) {
-         outfile->cd();
-         for (Clover = 0; Clover < CLOVERS; Clover++) {
-            for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
-               for (Seg = 0; Seg <= SEGS + 1; Seg++) {
-                  dCharge->cd();
-                  hCharge[Clover][Crystal][Seg]->Write();
-                  dWaveCharge->cd();
-                  hWaveCharge[Clover][Crystal][Seg]->Write();
+                  Settings.Source = Source;
+                  Settings.Integration = INTEGRATION;
+                  Settings.Dispersion = float (CHARGE_BINS) / float (CHARGE_MAX);
+                  Settings.SearchSigma = EN_SEARCH_SIGMA;
+                  Settings.SearchThresh = EN_SEARCH_THRESH;
+                  Settings.SigmaEstZero = ENERGY_SIGMA_ZERO;
+                  Settings.SigmaEst1MeV = ENERGY_SIGMA_1MEV;
+                  Settings.FitZero = INCLUDE_ZERO;
+                  Settings.PlotOn = PlotOn;
+
+                  FitSuccess = FitGammaSpectrum(Histo, &WaveFit, Settings);
+
+                  // Now print reports on results of fits and calibration.
+                  if (OUTPUT_GAIN) {
+                     if (FitSuccess > 0) {
+                        if (FitSuccess < 3 || FORCE_LINEAR) {
+                           WaveOut << HistName << ":\t" << WaveFit.LinGainFit[0];
+                           WaveOut << "\t" << WaveFit.LinGainFit[1] <<  endl;
+                        } else {
+                           WaveOut << HistName << ":\t" << WaveFit.QuadGainFit[0] << "\t";
+                           WaveOut << WaveFit.QuadGainFit[1] << "\t" << WaveFit.QuadGainFit[2]  << endl;
+                        }
+                     } else {
+                        //WaveOut << HistName << " Fail!!!" << endl;
+                     }
+                  }
+                  if (Config.CalReport) {
+                     if (FitSuccess > 0) {
+                        CalibrationReport(&WaveFit, WaveReportOut, HistName, Settings);
+                     } else {
+                        ReportOut << endl << "------------------------------------------" << endl << HistName << endl <<
+                            "------------------------------------------" << endl << endl;
+                        ReportOut << "Fail Fail Fail! The calibration has failed!" << endl;
+                     }
+                  }
+               } else {
+                  if(Config.PrintVerbose) {cout << endl << "Hist " << HistName << " failed to load." << endl;}
                }
             }
          }
       }
 
    }
+
+   if (Config.CalEnergy) {
+      GainOut.close();
+      if (Config.CalReport) {
+         ReportOut.close();
+      }
+      if(Config.CalFile) {
+         CalFileOut.close();
+      }         
+   }
+   if (Config.CalWave) {
+      WaveOut.close();
+      if (Config.CalReport) {
+         WaveReportOut.close();
+      }
+   }
+   // Write spectra to file again if fits are to be saved
+   if (Config.WriteFits) {
+      outfile->cd();
+      for (Clover = 0; Clover < CLOVERS; Clover++) {
+         for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
+            for (Seg = 0; Seg <= SEGS + 1; Seg++) {
+               dCharge->cd();
+               hCharge[Clover][Crystal][Seg]->Write();
+               dWaveCharge->cd();
+               hWaveCharge[Clover][Crystal][Seg]->Write();
+            }
+         }
+      }
+   }
+
+   
 
    if (PLOT_CALIB_SUMMARY) {
       cCalib2->cd(1);
