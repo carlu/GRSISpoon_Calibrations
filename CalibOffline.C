@@ -199,7 +199,7 @@ int CalibOffline(std::string filename)
                   Settings.SearchThresh = EN_SEARCH_THRESH;
                   Settings.SigmaEstZero = ENERGY_SIGMA_ZERO;
                   Settings.SigmaEst1MeV = ENERGY_SIGMA_1MEV;
-                  Settings.FitZero = INCLUDE_ZERO;
+                  Settings.FitZero = Config.FitZero;
                   Settings.PlotOn = PlotOn;
 
                   FitSuccess = FitGammaSpectrum(Histo, &Fit, Settings);
@@ -233,28 +233,24 @@ int CalibOffline(std::string filename)
                      QuadHist->Fill(Fit.QuadGainFit[2]);
                   }
                   // Now print reports on results of fits and calibration.
-                  if (Config.CalEnergy) {
-                     if (FitSuccess > 0) {
-                        if (FitSuccess < 3 || FORCE_LINEAR) {
-                           GainOut << HistName << ":\t" << Fit.LinGainFit[0];
-                           GainOut << "\t" << Fit.LinGainFit[1] << endl;
-                        } else {
-                           GainOut << HistName << ":\t" << Fit.QuadGainFit[0] << "\t";
-                           GainOut << Fit.QuadGainFit[1] << "\t" << Fit.QuadGainFit[2] << endl;
-                        }
+                  if (FitSuccess > 0) {
+                     if (FitSuccess < 3 || FORCE_LINEAR) {
+                        GainOut << HistName << ":\t" << Fit.LinGainFit[0];
+                        GainOut << "\t" << Fit.LinGainFit[1] << endl;
                      } else {
-                        //GainOut << HistName << " Fail!!!" << endl;
+                        GainOut << HistName << ":\t" << Fit.QuadGainFit[0] << "\t";
+                        GainOut << Fit.QuadGainFit[1] << "\t" << Fit.QuadGainFit[2] << endl;
                      }
+                  } else {
+                     //GainOut << HistName << " Fail!!!" << endl;
                   }
                   // Write full calibration report
-                  if (Config.CalReport) {
-                     if (FitSuccess > 0) {
-                        CalibrationReport(&Fit, ReportOut, HistName, Settings);
-                     } else {
-                        ReportOut << endl << "------------------------------------------" << endl << HistName << endl <<
-                            "------------------------------------------" << endl << endl;
-                        ReportOut << "Fail Fail Fail! The calibration has failed!" << endl;
-                     }
+                  if (FitSuccess > 0) {
+                     CalibrationReport(&Fit, ReportOut, HistName, Settings);
+                  } else {
+                     ReportOut << endl << "------------------------------------------" << endl << HistName << endl <<
+                         "------------------------------------------" << endl << endl;
+                     ReportOut << "Fail Fail Fail! The calibration has failed!" << endl;
                   }
                   // Write .cal file for GRSISpoon
                   if(Config.CalFile) {
@@ -330,7 +326,7 @@ int CalibOffline(std::string filename)
                Settings.SearchThresh = WAVE_SEARCH_THRESH;
                Settings.SigmaEstZero = WAVE_SIGMA_ZERO;
                Settings.SigmaEst1MeV = WAVE_SIGMA_1MEV;
-               Settings.FitZero = INCLUDE_ZERO;
+               Settings.FitZero = Config.FitZero;
                Settings.PlotOn = PlotOn;
 
                FitSuccess = FitGammaSpectrum(Histo, &WaveFit, Settings);

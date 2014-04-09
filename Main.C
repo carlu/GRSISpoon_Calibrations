@@ -442,7 +442,7 @@ int ReadCalibrationFile(std::string filename, vector < string > *CalibNames, vec
    }
 
    std::string line;
-   char name[16];
+   char name[CHAR_BUFFER_SIZE], temp[CHAR_BUFFER_SIZE];
    float g0, g1, g2;
    int n = 0;
 
@@ -451,7 +451,7 @@ int ReadCalibrationFile(std::string filename, vector < string > *CalibNames, vec
          g0 = 0.0;              // reset values
          g1 = 0.0;
          g2 = 0.0;
-         sscanf(line.c_str(), "%s %f %f %f", name, &g0, &g1, &g2);      // grab name and 3 gains
+         sscanf(line.c_str(), "%s %s %f %f %f", name, temp, &g0, &g1, &g2);      // grab name and 3 gains
          vector < float >GainTemp;
          GainTemp.push_back(g0);
          GainTemp.push_back(g1);
@@ -601,6 +601,8 @@ int LoadDefaultSettings()
    Config.PlotCalib = 0;
    Config.PlotCalibSummary = 0;
    memset(&Config.CalibPlots,0,CLOVERS*CRYSTALS*(SEGS+2)*sizeof(bool));
+   // Calibrating options
+   Config.FitZero = 0;
 
    // Options for CoincEff()
    Config.OutputEff = 1;
@@ -630,6 +632,7 @@ int ReadCommandLineSettings(int argc, char **argv)
    // -q : Quiet
    // -n : max number of events
    // -p : plot (Clover) (Crystal) (Seg)
+   // -z : add extra calibration point at 0ch = 0keV
 
    // --cal : run calibration
    // --calof : run calibration on spectrum file rather than fragment tree 
@@ -796,6 +799,11 @@ int ReadCommandLineSettings(int argc, char **argv)
             Config.CalibPlots[Plot[0]][Plot[1]][Plot[2]] = 1;
          }   
       }
+      // add 0ch = 0keV to calibration
+      // -------------------------------------------
+      if (strncmp(argv[i], "-z", 2) == 0) {
+         Config.FitZero = 1;
+      }      
       // Run options
       // -------------------------------------------
       if (strncmp(argv[i], "--", 2) == 0) {     // Long option used.
@@ -848,8 +856,9 @@ void PrintHelp()
    cout <<
        "[-e (energy Calibration File)] - select alternate energy calibration file.  In the absense of an entry in this file, all channels will default to using the calibrated energy from the input TTree."
        << endl;
+   cout << "\tFormat for calibration file should be (TIGNOM) (some other string e.g. chg or wavechg) (g0) (g1) [(g2) (g3)].  Lines begining \"#\" will be ignored." << endl;   
    cout <<
-       "[-w (Wave calibration file)] - select calibration for energy derived from waveforms.  No defaults. Required for succesfully running XTalk analysis."
+       "[-w (Wave calibration file)] - select calibration for energy derived from waveforms.  No defaults. Required for succesfully running XTalk analysis. Format same as for energy calibration file."
        << endl;
    cout << "[-s (Source e.g. 60Co, 152eu)] - select source to be used for calibration." << endl;
    cout << "[-n N] - limit the number of events processed to N" << endl;
@@ -861,6 +870,7 @@ void PrintHelp()
        "[--calof] - run offline calibration on a histogram file (CalibOutXXXX.root).  This option overrides all other run options."
        << endl;
    cout << "[-q] - Quiet mode.  [-v] - Verbose mode.  Default prints progress through run and configuration.  Quiet doesn't.  Verbose also prints other stuff" << endl;
-   cout << "[-p (Clover) (Crystal) (Seg)] - Plot certain segment when doing calibration.  ";
+   cout << "[-p (Clover) (Crystal) (Seg)] - Plot certain segment when doing calibration.  " << endl;
+   cout << "[-z] - Include an additional point at 0ch = 0keV in any calibrations." << endl;
    cout << endl;
 }

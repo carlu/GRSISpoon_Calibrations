@@ -283,7 +283,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
                //}
             }
          }
-         if (INCLUDE_ZERO) {
+         if (Settings.FitZero) {
             Energies[LinesUsed] = 0.0;
             Centroids[LinesUsed] = 0.0;
             dCentroids[LinesUsed] = ZERO_ERR;

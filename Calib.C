@@ -532,12 +532,12 @@ void FinalCalib()
 
                   Settings.Source = Source;
                   Settings.Integration = INTEGRATION;
-                  Settings.Dispersion = float (CHARGE_BINS) / float (WAVE_CHARGE_MAX);
-                  Settings.SearchSigma = WAVE_SEARCH_SIGMA;
-                  Settings.SearchThresh = WAVE_SEARCH_THRESH;
-                  Settings.SigmaEstZero = WAVE_SIGMA_ZERO;
-                  Settings.SigmaEst1MeV = WAVE_SIGMA_1MEV;
-                  Settings.FitZero = INCLUDE_ZERO;
+                  Settings.Dispersion = float (CHARGE_BINS) / float (CHARGE_MAX);
+                  Settings.SearchSigma = EN_SEARCH_SIGMA;
+                  Settings.SearchThresh = EN_SEARCH_THRESH;
+                  Settings.SigmaEstZero = ENERGY_SIGMA_ZERO;
+                  Settings.SigmaEst1MeV = ENERGY_SIGMA_1MEV;
+                  Settings.FitZero = Config.FitZero;
                   Settings.PlotOn = PlotOn;
 
                   FitSuccess = FitGammaSpectrum(Histo, &Fit, Settings);
@@ -668,7 +668,7 @@ void FinalCalib()
                   Settings.SearchThresh = WAVE_SEARCH_THRESH;
                   Settings.SigmaEstZero = WAVE_SIGMA_ZERO;
                   Settings.SigmaEst1MeV = WAVE_SIGMA_1MEV;
-                  Settings.FitZero = INCLUDE_ZERO;
+                  Settings.FitZero = Config.FitZero;
                   Settings.PlotOn = PlotOn;
 
                   FitSuccess = FitGammaSpectrum(Histo, &WaveFit, Settings);

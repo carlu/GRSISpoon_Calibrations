@@ -144,6 +144,7 @@ struct RunConfig {              // this struct will hold all information
 
    // Physics settings for individual functions
    // ------------------------------------------
+   
    // Calib() and CalibOffline()
    // What to do
    bool CalEnergy;              // fit charge spectra
@@ -157,6 +158,9 @@ struct RunConfig {              // this struct will hold all information
    bool CalibPlots[CLOVERS][CRYSTALS][SEGS+2];
    bool PlotCalib;
    bool PlotCalibSummary;
+   // Calibration options
+   bool FitZero;  // Add extra calibration point at 0ch = 0keV
+   
    // CoincEff()
    // What to plot
    bool PlotEff;

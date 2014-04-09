@@ -98,7 +98,6 @@ void PropXtalk(std::vector < TTigFragment > &ev)
 {
 
    int temp = 0;
-   //cout << "Here " << temp++ << endl;
 
    int i;
    int HitClover, HitCrystal, HitSeg;
