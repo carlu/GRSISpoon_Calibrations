@@ -24,8 +24,6 @@
 #define CRYSTALS  4
 #define SEGS      8
 #define INTEGRATION 125         // Integration factor applied to charge values
-// Options for sorting
-#define USE_ALT_CALIB 0
 // Constants
 #define PI 3.14159265359
 

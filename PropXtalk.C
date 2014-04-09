@@ -162,7 +162,7 @@ void PropXtalk(std::vector < TTigFragment > &ev)
       hHitPattern->Fill(ev[i].ChannelNumber);
 
       // Get calibrated charge
-      if (!USE_ALT_CALIB) {
+      if (!Config.HaveAltEnergyCalibration) {
          //cout << "Using standard calibration..." << endl;
          En = ev[i].ChargeCal;
       } else {
@@ -617,10 +617,6 @@ void InitPropXtalk()
 
    }
 
-   // Initialise alternate gains
-   if (USE_ALT_CALIB) {
-      //SetGains();
-   }
 
 }
 
