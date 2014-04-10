@@ -52,8 +52,8 @@ static TH1F *hWaveCharge[CLOVERS][CRYSTALS][SEGS + 2] = { };    // charge from w
 
 static TH1F *hMidasTime = 0;
 static TH1F *hCrystalChargeTemp[CLOVERS][CRYSTALS] = { };       // Only doing these guys for the cores
-static TH1F *hCrystalGain[CRYSTALS * CLOVERS] = { };
-static TH1F *hCrystalOffset[CRYSTALS * CLOVERS] = { };
+static TH1F *hCrystalGain[CRYSTALS][CLOVERS] = { };
+static TH1F *hCrystalOffset[CRYSTALS][CLOVERS] = { };
 
 static TH1F *WaveHist = 0;
 
@@ -92,49 +92,48 @@ void InitCalib()
    int Clover, Crystal, Seg, NumBins;
 
 
-   for (Clover = 0; Clover < CLOVERS; Clover++) {
+   for (Clover = 1; Clover <= CLOVERS; Clover++) {
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
          // temp charge histo
          dTemp->cd();
-         sprintf(name, "TIG%02d%c Tmp Chg", Clover + 1, Colours[Crystal]);
-         sprintf(title, "TIG%02d%c Temp Core Charge (arb)", Clover + 1, Colours[Crystal]);
-         hCrystalChargeTemp[Clover][Crystal] = new TH1F(name, title, CHARGE_BINS, 0, CHARGE_MAX);
+         sprintf(name, "TIG%02d%c Tmp Chg", Clover, Colours[Crystal]);
+         sprintf(title, "TIG%02d%c Temp Core Charge (arb)", Clover, Colours[Crystal]);
+         hCrystalChargeTemp[Clover-1][Crystal] = new TH1F(name, title, CHARGE_BINS, 0, CHARGE_MAX);
          // histo for record of calibration from temp spectra
          dOther->cd();
-         sprintf(name, "TIG%02d%c Gain", Clover + 1, Colours[Crystal]);
-         sprintf(title, "TIG%02d%c Gain vs Time", Clover + 1, Colours[Crystal]);
-         hCrystalGain[((Clover * 4) + Crystal)] = new TH1F(name, title, TIME_BINS, 0, MAX_TIME);
-         sprintf(name, "TIG%02d%c Offset", Clover + 1, Colours[Crystal]);
+         sprintf(name, "TIG%02d%c Gain", Clover, Colours[Crystal]);
+         sprintf(title, "TIG%02d%c Gain vs Time", Clover, Colours[Crystal]);
+         hCrystalGain[Clover-1][Crystal] = new TH1F(name, title, TIME_BINS, 0, MAX_TIME);
+         sprintf(name, "TIG%02d%c Offset", Clover, Colours[Crystal]);
          sprintf(title, "TIG%02d%c Offset vs Time", Clover + 1, Colours[Crystal]);
-         hCrystalOffset[((Clover * 4) + Crystal)] = new TH1F(name, title, TIME_BINS, 0, MAX_TIME);
+         hCrystalOffset[Clover-1][Crystal] = new TH1F(name, title, TIME_BINS, 0, MAX_TIME);
          // Spectra for charge from FPGA
          dCharge->cd();
          Seg = 0;
-         sprintf(name, "TIG%02d%cN%02da Chg", Clover + 1, Colours[Crystal], Seg);
-         sprintf(title, "TIG%02d%cN%02da Charge (arb)", Clover + 1, Colours[Crystal], Seg);
-         hCharge[Clover][Crystal][Seg] = new TH1F(name, title, CHARGE_BINS, 0, CHARGE_MAX);
-         sprintf(name, "TIG%02d%cN%02db Chg", Clover + 1, Colours[Crystal], Seg);
-         sprintf(title, "TIG%02d%cN%02db Charge (arb)", Clover + 1, Colours[Crystal], Seg);
-         hCharge[Clover][Crystal][9] = new TH1F(name, title, CHARGE_BINS, 0, CHARGE_MAX);
+         sprintf(name, "TIG%02d%cN%02da Chg", Clover, Colours[Crystal], Seg);
+         sprintf(title, "TIG%02d%cN%02da Charge (arb)", Clover, Colours[Crystal], Seg);
+         hCharge[Clover-1][Crystal][Seg] = new TH1F(name, title, CHARGE_BINS, 0, CHARGE_MAX);
+         sprintf(name, "TIG%02d%cN%02db Chg", Clover, Colours[Crystal], Seg);
+         sprintf(title, "TIG%02d%cN%02db Charge (arb)", Clover, Colours[Crystal], Seg);
+         hCharge[Clover-1][Crystal][9] = new TH1F(name, title, CHARGE_BINS, 0, CHARGE_MAX);
          for (Seg = 1; Seg <= SEGS; Seg++) {
-            //cout << "Clov,Col,Seg :" << Clover+1 << ", " << Colours[Crystal] << ", " << Seg << endl;         
-            sprintf(name, "TIG%02d%cP%02dx Chg", Clover + 1, Colours[Crystal], Seg);
-            sprintf(title, "TIG%02d%cP%02dx Charge (arb)", Clover + 1, Colours[Crystal], Seg);
-            hCharge[Clover][Crystal][Seg] = new TH1F(name, title, CHARGE_BINS, 0, CHARGE_MAX);
+            sprintf(name, "TIG%02d%cP%02dx Chg", Clover, Colours[Crystal], Seg);
+            sprintf(title, "TIG%02d%cP%02dx Charge (arb)", Clover, Colours[Crystal], Seg);
+            hCharge[Clover-1][Crystal][Seg] = new TH1F(name, title, CHARGE_BINS, 0, CHARGE_MAX);
          }
          // and charge derived from waveform
          dWaveCharge->cd();
          Seg = 0;
-         sprintf(name, "TIG%02d%cN%02da WaveChg", Clover + 1, Colours[Crystal], Seg);
-         sprintf(title, "TIG%02d%cN%02da Waveform Charge (arb)", Clover + 1, Colours[Crystal], Seg);
-         hWaveCharge[Clover][Crystal][Seg] = new TH1F(name, title, CHARGE_BINS, 0, WAVE_CHARGE_MAX);
-         sprintf(name, "TIG%02d%cN%02db WaveChg", Clover + 1, Colours[Crystal], Seg);
-         sprintf(title, "TIG%02d%cN%02db Waveform Charge (arb)", Clover + 1, Colours[Crystal], Seg);
-         hWaveCharge[Clover][Crystal][9] = new TH1F(name, title, CHARGE_BINS, 0, WAVE_CHARGE_MAX);
+         sprintf(name, "TIG%02d%cN%02da WaveChg", Clover, Colours[Crystal], Seg);
+         sprintf(title, "TIG%02d%cN%02da Waveform Charge (arb)", Clover, Colours[Crystal], Seg);
+         hWaveCharge[Clover-1][Crystal][Seg] = new TH1F(name, title, CHARGE_BINS, 0, WAVE_CHARGE_MAX);
+         sprintf(name, "TIG%02d%cN%02db WaveChg", Clover, Colours[Crystal], Seg);
+         sprintf(title, "TIG%02d%cN%02db Waveform Charge (arb)", Clover, Colours[Crystal], Seg);
+         hWaveCharge[Clover-1][Crystal][9] = new TH1F(name, title, CHARGE_BINS, 0, WAVE_CHARGE_MAX);
          for (Seg = 1; Seg <= SEGS; Seg++) {
-            sprintf(name, "TIG%02d%cP%02dx WaveChg", Clover + 1, Colours[Crystal], Seg);
-            sprintf(title, "TIG%02d%cP%02dx Waveform Charge (arb)", Clover + 1, Colours[Crystal], Seg);
-            hWaveCharge[Clover][Crystal][Seg] = new TH1F(name, title, CHARGE_BINS, 0, WAVE_CHARGE_MAX);
+            sprintf(name, "TIG%02d%cP%02dx WaveChg", Clover, Colours[Crystal], Seg);
+            sprintf(title, "TIG%02d%cP%02dx Waveform Charge (arb)", Clover, Colours[Crystal], Seg);
+            hWaveCharge[Clover-1][Crystal][Seg] = new TH1F(name, title, CHARGE_BINS, 0, WAVE_CHARGE_MAX);
          }
       }
    }
@@ -272,12 +271,11 @@ void Calib(std::vector < TTigFragment > &ev)
                if (ev[i].Charge > 0) {
                   // Increment raw charge spectra
                   if (DEBUG) {
-                     cout << "A: Filling " << Clover -
-                         1 << ", " << Crystal << ", 0, " << mnemonic.
+                     cout << "A: Filling " << Clover 
+                          << ", " << Crystal << ", 0, " << mnemonic.
                          outputsensor << " with charge = " << ev[i].Charge << endl;
                   }
                   hCharge[Clover - 1][Crystal][0]->Fill(ev[i].Charge);
-                  //hCrystalChargeTemp[Clover - 1][Crystal]->Fill(ev[i].Charge);
                   hWaveCharge[Clover - 1][Crystal][0]->Fill(WaveCharge);
                }
             } else {
@@ -288,8 +286,7 @@ void Calib(std::vector < TTigFragment > &ev)
                   if (ev[i].Charge > 0) {
                      // Increment raw charge spectra
                      if (DEBUG) {
-                        cout << "B: Filling " << Clover -
-                            1 << ", " << Crystal << ", 0, " << mnemonic.
+                        cout << "B: Filling " << Clover  << ", " << Crystal << ", 0, " << mnemonic.
                             outputsensor << " with charge = " << ev[i].Charge << endl;
                      }
                      hCharge[Clover - 1][Crystal][9]->Fill(ev[i].Charge);
@@ -299,7 +296,6 @@ void Calib(std::vector < TTigFragment > &ev)
             }
          } else {
             if (mnemonic.segment < 9) {
-               //cout << "Clov, Crys, Seg, Chg: " << Clover << " ," << Crystal << ", " << mnemonic.segment << ", " << ev[i].Charge << endl;
                if (ev[i].Charge > 0) {
                   hCharge[Clover - 1][Crystal][mnemonic.segment]->Fill(ev[i].Charge);   // Fill segment spectra
                   hWaveCharge[Clover - 1][Crystal][mnemonic.segment]->Fill(WaveCharge);
@@ -334,7 +330,7 @@ void Calib(std::vector < TTigFragment > &ev)
 
 
             // Loop crystals, fit spectra core , write gains and offsets to spectrum
-            for (j = 0; j < CLOVERS; j++) {
+            for (j = 1; j <= CLOVERS; j++) {
                for (k = 0; k < CRYSTALS; k++) {
                   if (Config.PrintVerbose) {
                      cout << "Clov: " << j << " Crys: " << k;
@@ -353,11 +349,11 @@ void Calib(std::vector < TTigFragment > &ev)
                   Settings.FitZero = INCLUDE_ZERO;
                   Settings.PlotOn = PlotOn;
 
-                  FitSuccess = FitGammaSpectrum(hCharge[Clover][Crystal][0], &Fit, Settings);
+                  FitSuccess = FitGammaSpectrum(hCharge[Clover-1][Crystal][0], &Fit, Settings);
 
                   if (FitSuccess > -1) {
-                     hCrystalGain[(j * 4) + k]->SetBinContent(TimeBin, Fit.LinGainFit[1]);
-                     hCrystalOffset[(j * 4) + k]->SetBinContent(TimeBin, Fit.LinGainFit[0]);
+                     hCrystalGain[j-1][k]->SetBinContent(TimeBin, Fit.LinGainFit[1]);
+                     hCrystalOffset[j-1][k]->SetBinContent(TimeBin, Fit.LinGainFit[0]);
                   } else {
                      if (VERBOSE) {
                         switch (FitSuccess) {
@@ -460,19 +456,19 @@ void FinalCalib()
    }
    // Write spectra to file
    outfile->cd();
-   for (Clover = 0; Clover < CLOVERS; Clover++) {
+   for (Clover = 1; Clover <= CLOVERS; Clover++) {
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
          for (Seg = 0; Seg <= SEGS + 1; Seg++) {
             dCharge->cd();
-            hCharge[Clover][Crystal][Seg]->Write();
+            hCharge[Clover-1][Crystal][Seg]->Write();
             dWaveCharge->cd();
-            hWaveCharge[Clover][Crystal][Seg]->Write();
+            hWaveCharge[Clover-1][Crystal][Seg]->Write();
          }
          dTemp->cd();
-         hCrystalChargeTemp[Clover][Crystal]->Write();
+         hCrystalChargeTemp[Clover-1][Crystal]->Write();
          dOther->cd();
-         hCrystalGain[((Clover * 4) + Crystal)]->Write();
-         hCrystalOffset[((Clover * 4) + Crystal)]->Write();
+         hCrystalGain[Clover][Crystal]->Write();
+         hCrystalOffset[Clover][Crystal]->Write();
       }
    }
    hMidasTime->Write();
@@ -484,24 +480,24 @@ void FinalCalib()
          cout << endl << "Now fitting energy spectra from whole run..." << endl;
       }
 
-      for (Clover = 0; Clover < CLOVERS; Clover++) {
+      for (Clover = 1; Clover <= CLOVERS; Clover++) {
          for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
             for (Seg = 0; Seg <= SEGS + 1; Seg++) {
 
                // Set source and histogram name based on seg number
                switch (Seg) {
                case 0:
-                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da Chg", Clover + 1, Num2Col(Crystal), Seg);
+                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da Chg", Clover, Num2Col(Crystal), Seg);
                   HistName = CharBuf;
                   Source = Config.SourceNumCore;
                   break;
                case 9:
-                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db Chg", Clover + 1, Num2Col(Crystal), 0);
+                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db Chg", Clover, Num2Col(Crystal), 0);
                   HistName = CharBuf;
                   Source = Config.SourceNumCore;
                   break;
                default:
-                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx Chg", Clover + 1, Num2Col(Crystal), Seg);
+                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx Chg", Clover, Num2Col(Crystal), Seg);
                   HistName = CharBuf;
                   if (Seg < 5) {
                      Source = Config.SourceNumFront;
@@ -512,7 +508,7 @@ void FinalCalib()
                }
 
                // Load histogram
-               TH1F *Histo = hCharge[Clover][Crystal][Seg];
+               TH1F *Histo = hCharge[Clover-1][Crystal][Seg];
                if (Histo) {
                   if(Config.PrintVerbose) {
                      cout << endl << "------------------------------------" << endl;
@@ -522,7 +518,7 @@ void FinalCalib()
                   // Check if plot should be active for this channel
                   PlotOn = 0;
                   if (Config.PlotFits) {
-                     if (Config.CalibPlots[Clover][Crystal][Seg]) {
+                     if (Config.CalibPlots[Clover-1][Crystal][Seg]) {
                               PlotOn = 1;
                      }
                   }
@@ -546,22 +542,21 @@ void FinalCalib()
                   if (FitSuccess > 0) {
                      switch (Crystal) { // Calculate channel number (old TIGRESS DAQ numbering)
                      case 0:
-                        ItemNum = (Clover * 60) + Seg;
+                        ItemNum = ((Clover-1) * 60) + Seg;
                         break;
                      case 1:
-                        ItemNum = (Clover * 60) + 20 + Seg;
+                        ItemNum = ((Clover-1) * 60) + 20 + Seg;
                         break;
                      case 2:
-                        ItemNum = (Clover * 60) + 30 + Seg;
+                        ItemNum = ((Clover-1) * 60) + 30 + Seg;
                         break;
                      case 3:
-                        ItemNum = (Clover * 60) + 50 + Seg;
+                        ItemNum = ((Clover-1) * 60) + 50 + Seg;
                         break;
                      default:
                         ItemNum = 1000;
                         break;
                      }
-                     //cout << "C,C,S = " << Clover << ", " << Crystal << ", " << Seg << "  ItemNum = " << ItemNum << endl;
                      GainPlot->SetBinContent(ItemNum + 1, Fit.QuadGainFit[1]);  // ItemNum+1 to skip bin 0 which is underflow
                      OffsetPlot->SetBinContent(ItemNum + 1, Fit.QuadGainFit[0]);
                      QuadPlot->SetBinContent(ItemNum + 1, Fit.QuadGainFit[2]);
@@ -615,24 +610,24 @@ void FinalCalib()
              "----------------------------------" << endl;
       }
 
-      for (Clover = 0; Clover < CLOVERS; Clover++) {
+      for (Clover = 1; Clover <= CLOVERS; Clover++) {
          for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
             for (Seg = 0; Seg <= SEGS + 1; Seg++) {
 
                // Set source and histogram name based on seg number
                switch (Seg) {
                case 0:
-                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da WaveChg", Clover + 1, Num2Col(Crystal), Seg);
+                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da WaveChg", Clover, Num2Col(Crystal), Seg);
                   HistName = CharBuf;
                   Source = Config.SourceNumCore;
                   break;
                case 9:
-                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db WaveChg", Clover + 1, Num2Col(Crystal), 0);
+                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db WaveChg", Clover, Num2Col(Crystal), 0);
                   HistName = CharBuf;
                   Source = Config.SourceNumCore;
                   break;
                default:
-                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx WaveChg", Clover + 1, Num2Col(Crystal), Seg);
+                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx WaveChg", Clover, Num2Col(Crystal), Seg);
                   HistName = CharBuf;
                   if (Seg < 5) {
                      Source = Config.SourceNumFront;
@@ -643,7 +638,7 @@ void FinalCalib()
                }
 
                // Load histogram
-               TH1F *Histo = hWaveCharge[Clover][Crystal][Seg];
+               TH1F *Histo = hWaveCharge[Clover-1][Crystal][Seg];
                if (Histo) {
                   if(Config.PrintVerbose) {
                      cout << endl << "------------------------------------" << endl;
@@ -653,7 +648,7 @@ void FinalCalib()
                   // Check if plot should be active for this channel
                   PlotOn = 0;
                   if (Config.PlotFits) {
-                     if (Config.CalibPlots[Clover][Crystal][Seg]) {
+                     if (Config.CalibPlots[Clover-1][Crystal][Seg]) {
                               PlotOn = 1;
                      }
                   }
@@ -724,13 +719,13 @@ void FinalCalib()
    // Write spectra to file again if fits are to be saved
    if (Config.WriteFits) {
       outfile->cd();
-      for (Clover = 0; Clover < CLOVERS; Clover++) {
+      for (Clover = 1; Clover <= CLOVERS; Clover++) {
          for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
             for (Seg = 0; Seg <= SEGS + 1; Seg++) {
                dCharge->cd();
-               hCharge[Clover][Crystal][Seg]->Write();
+               hCharge[Clover-1][Crystal][Seg]->Write();
                dWaveCharge->cd();
-               hWaveCharge[Clover][Crystal][Seg]->Write();
+               hWaveCharge[Clover-1][Crystal][Seg]->Write();
             }
          }
       }
@@ -786,9 +781,9 @@ void FinalCalib()
 void ResetTempSpectra()
 {
    int Clover, Crystal;
-   for (Clover = 0; Clover < CLOVERS; Clover++) {
+   for (Clover = 1; Clover <= CLOVERS; Clover++) {
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
-         hCrystalChargeTemp[Clover][Crystal]->Reset();
+         hCrystalChargeTemp[Clover-1][Crystal]->Reset();
       }
    }
 }

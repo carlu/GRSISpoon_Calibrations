@@ -146,24 +146,24 @@ int CalibOffline(std::string filename)
    // If we're calibrating the FPGA energy...
    if (Config.CalEnergy) {
       // Loop all gamma detectors 
-      for (Clover = 0; Clover < CLOVERS; Clover++) {
+      for (Clover = 1; Clover <= CLOVERS; Clover++) {
          for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
             for (Seg = 0; Seg <= SEGS + 1; Seg++) {
 
                // Set source and histogram name based on seg number
                switch (Seg) {
                case 0:
-                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da Chg", Clover + 1, Num2Col(Crystal), Seg);
+                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da Chg", Clover, Num2Col(Crystal), Seg);
                   HistName = CharBuf;
                   Source = Config.SourceNumCore;
                   break;
                case 9:
-                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db Chg", Clover + 1, Num2Col(Crystal), 0);
+                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db Chg", Clover, Num2Col(Crystal), 0);
                   HistName = CharBuf;
                   Source = Config.SourceNumCore;
                   break;
                default:
-                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx Chg", Clover + 1, Num2Col(Crystal), Seg);
+                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx Chg", Clover, Num2Col(Crystal), Seg);
                   HistName = CharBuf;
                   if (Seg < 5) {
                      Source = Config.SourceNumFront;
@@ -184,7 +184,7 @@ int CalibOffline(std::string filename)
                   // Check if plot should be active for this channel
                   PlotOn = 0;
                   if (Config.PlotFits) {
-                     if (Config.CalibPlots[Clover][Crystal][Seg]) {
+                     if (Config.CalibPlots[Clover-1][Crystal][Seg]) {
                               PlotOn = 1;
                      }
                   }
@@ -208,22 +208,21 @@ int CalibOffline(std::string filename)
                   if (FitSuccess > 0) {
                      switch (Crystal) { // Calculate channel number (old TIGRESS DAQ numbering)
                      case 0:
-                        ItemNum = (Clover * 60) + Seg;
+                        ItemNum = ((Clover-1) * 60) + Seg;
                         break;
                      case 1:
-                        ItemNum = (Clover * 60) + 20 + Seg;
+                        ItemNum = ((Clover-1) * 60) + 20 + Seg;
                         break;
                      case 2:
-                        ItemNum = (Clover * 60) + 30 + Seg;
+                        ItemNum = ((Clover-1) * 60) + 30 + Seg;
                         break;
                      case 3:
-                        ItemNum = (Clover * 60) + 50 + Seg;
+                        ItemNum = ((Clover-1) * 60) + 50 + Seg;
                         break;
                      default:
                         ItemNum = 1000;
                         break;
                      }
-                     //cout << "C,C,S = " << Clover << ", " << Crystal << ", " << Seg << "  ItemNum = " << ItemNum << endl;
                      GainPlot->SetBinContent(ItemNum + 1, Fit.QuadGainFit[1]);  // ItemNum+1 to skip bin 0 which is underflow
                      OffsetPlot->SetBinContent(ItemNum + 1, Fit.QuadGainFit[0]);
                      QuadPlot->SetBinContent(ItemNum + 1, Fit.QuadGainFit[2]);
@@ -273,8 +272,7 @@ int CalibOffline(std::string filename)
       if (Config.PrintVerbose) {
          if(Config.PrintBasic) {cout << "-------------------" << endl << "Now fitting Wave Energy Spectra" << endl << "-------------------"<< endl;}
       }
-      for (Clover = 0; Clover < CLOVERS; Clover++) {
-      //for (Clover = 11; Clover < 12; Clover++) {
+      for (Clover = 1; Clover <= CLOVERS; Clover++) {
          for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
             for (Seg = 0; Seg <= SEGS + 1; Seg++) {
 
@@ -291,14 +289,14 @@ int CalibOffline(std::string filename)
                if (Seg == 0 || Seg == 9) {
                   Source = SOURCE_NUM_CORE;
                   if (Seg == 0) {
-                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da WaveChg", Clover + 1, Colours[Crystal], Seg);
+                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da WaveChg", Clover, Colours[Crystal], Seg);
                      HistName = CharBuf;
                   } else {
-                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db WaveChg", Clover + 1, Colours[Crystal], 0);
+                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db WaveChg", Clover, Colours[Crystal], 0);
                      HistName = CharBuf;
                   }
                } else {
-                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx WaveChg", Clover + 1, Colours[Crystal], Seg);
+                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx WaveChg", Clover, Colours[Crystal], Seg);
                   HistName = CharBuf;
                   if (Seg < 5) {
                      Source = SOURCE_NUM_FRONT;
@@ -311,7 +309,7 @@ int CalibOffline(std::string filename)
                // Check if plot should be active for this channel
                PlotOn = 0;
                if (Config.PlotFits) {
-                  if (Config.CalibPlots[Clover][Crystal][Seg]) {
+                  if (Config.CalibPlots[Clover-1][Crystal][Seg]) {
                            PlotOn = 1;
                   }
                }

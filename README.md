@@ -29,3 +29,13 @@ PropXtalk.C : Builds calibrated energy and fold spectra.  Performs analysis of p
 CalibTools.C : Helper functions for Calib.C.
 
 CalibOffline.C : Offline version of calib.C which carries out peak search and fits but uses the histograms output by Calib.C rather than building the spectra from scratch.  Uses the same functions from CalibTools.C so changes there should checked to work here too. 
+
+
+Other Information.
+------------------
+
+CLOVERS, CRYSTALS, SEGS should refer to the number of clovers, crystals and segments in TIGRESS (or GRIFFIN) i.e. 16, 4, 8.
+Clover, Crystal, Seg should refer to the number of an individual clover, crystal or segment.
+Clover should always count from 1 to 16 not 0 to 15 in order to match the offical TRIUMF GRSI naming convention.
+Seg may count from 0 to 9, if primary and secondary cores are included in the loop at 0 and 9.  
+Crystal should also count form 1 to 4.
