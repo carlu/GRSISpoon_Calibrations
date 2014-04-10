@@ -169,7 +169,7 @@ void PropXtalk(std::vector < TTigFragment > &ev)
          int NewCoeffFound = 0;
          std::vector < float >Coefficients;
          for (CalChan = 0; CalChan < EnCalibNames.size(); CalChan++) {
-            if (strncmp(EnCalibNames[CalChan].c_str(), Name.c_str(), 9) == 0) { // bug!  this will match the first core
+            if (strncmp(EnCalibNames[CalChan].c_str(), Name.c_str(), 10) == 0) { // bug!  this will match the first core
                // name it finds to either a OR b.  Compare 10 chars woud work but then case sensitivity isses on the x/a/b 
                // at the end.  Don't really need second core energy right now so I will come back to this later
                NewCoeffFound = 1;
@@ -192,7 +192,7 @@ void PropXtalk(std::vector < TTigFragment > &ev)
          int NewCoeffFound = 0;
          std::vector < float >Coefficients;
          for (CalChan = 0; CalChan < WaveCalibNames.size(); CalChan++) {
-            if (strncmp(WaveCalibNames[CalChan].c_str(), Name.c_str(), 9) == 0) {       // bug!  this will match the first core
+            if (strncmp(WaveCalibNames[CalChan].c_str(), Name.c_str(), 10) == 0) {       // bug!  this will match the first core
                // name it finds to either a OR b.  Compare 10 chars woud work but then case sensitivity isses on the x/a/b 
                // at the end.  Don't really need second core energy right now so I will come back to this later
                NewCoeffFound = 1;
