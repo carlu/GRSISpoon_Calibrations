@@ -467,8 +467,8 @@ void FinalCalib()
          dTemp->cd();
          hCrystalChargeTemp[Clover-1][Crystal]->Write();
          dOther->cd();
-         hCrystalGain[Clover][Crystal]->Write();
-         hCrystalOffset[Clover][Crystal]->Write();
+         hCrystalGain[Clover-1][Crystal]->Write();
+         hCrystalOffset[Clover-1][Crystal]->Write();
       }
    }
    hMidasTime->Write();
