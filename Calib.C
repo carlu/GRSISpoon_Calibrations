@@ -52,8 +52,8 @@ static TH1F *hWaveCharge[CLOVERS][CRYSTALS][SEGS + 2] = { };    // charge from w
 
 static TH1F *hMidasTime = 0;
 static TH1F *hCrystalChargeTemp[CLOVERS][CRYSTALS] = { };       // Only doing these guys for the cores
-static TH1F *hCrystalGain[CRYSTALS][CLOVERS] = { };
-static TH1F *hCrystalOffset[CRYSTALS][CLOVERS] = { };
+static TH1F *hCrystalGain[CLOVERS][CRYSTALS] = { };
+static TH1F *hCrystalOffset[CLOVERS][CRYSTALS] = { };
 
 static TH1F *WaveHist = 0;
 
