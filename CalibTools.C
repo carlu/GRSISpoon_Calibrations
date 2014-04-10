@@ -215,10 +215,11 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
             cout << "Gain: " << G << " +/- " << dG << ", Offset: " << O << " +/- " << dO << endl;
          }
 
-         if (Settings.PlotOn) { 
+         if (Settings.PlotOn) { // && Clover==9) {
             cCalib1->cd(1);
             cCalib1->Update();
             App->Run(1);
+            //App->Run();
          }
          //-------------------------------------------------------------//
          // Loop the remaining lines and fit them                       //
@@ -234,6 +235,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
                FitSinglePeak(Histo, Line, Centre, FitRange[Line], &FitRes[Line], Settings);
             }
          }
+         //cin >> temp;
 
          //-------------------------------------------------------------//
          // Finally fit energy vs peak centroid for final calibration   //
