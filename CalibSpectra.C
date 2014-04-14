@@ -1,5 +1,3 @@
-// g++ CalibOffline.C CalibTools.C --std=c++0x -o CalibOffline -O2 `root-config --cflags --libs` -lSpectrum -lgsl -lgslcblas -g
-
 using namespace std;
 // C/C++ libraries:
 #include <iostream>
@@ -55,7 +53,7 @@ extern TApplication *App;       // Pointer to root environment for plotting etc
 
 extern TCanvas *cCalib1, *cCalib1a, *cCalib2, *cWave1, *ctemp;
 
-int CalibOffline(std::string filename)
+int CalibSpectra(std::string filename)
 {
 
    // Variables
@@ -120,7 +118,7 @@ int CalibOffline(std::string filename)
    std::string tempstring;
    TFile *outfile;
    if (Config.WriteFits) {
-      tempstring = Config.OutPath + Config.CalOfOut;
+      tempstring = Config.OutPath + Config.CalSpecOut;
       outfile = TFile::Open(tempstring.c_str(), "RECREATE");
    }
 

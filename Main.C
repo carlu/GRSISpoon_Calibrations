@@ -1,5 +1,5 @@
 //To compile:
-// g++ Main.C CoincEff.C Calib.C PropXtalk.C CalibTools.C CalibOffline.C -I$GRSISYS/include --std=c++0x -o Sort $GRSISYS/libraries/TigFormat/libFormat.so $GRSISYS/libraries/libCalManager.so $GRSISYS/libraries/libRootIOManager.so -O0 `root-config --cflags --libs` -lTreePlayer -lSpectrum -lgsl -lgslcblas -g
+// g++ Main.C CoincEff.C Calib.C PropXtalk.C CalibTools.C CalibSpectra.C -I$GRSISYS/include --std=c++0x -o Sort $GRSISYS/libraries/TigFormat/libFormat.so $GRSISYS/libraries/libCalManager.so $GRSISYS/libraries/libRootIOManager.so -O0 `root-config --cflags --libs` -lTreePlayer -lSpectrum -lgsl -lgslcblas -g
 //To run:
 // ./Sort -f InFile1 [InFile2...] [-e (energy Calibration File)] [-w (Wave calibration file)] [-s (Source)]
 // --------------------------------------------------------------------------------
@@ -110,7 +110,7 @@ void Calib(std::vector < TTigFragment > &ev);
 void InitCalib();
 void FinalCalib();
 
-int CalibOffline(std::string filename);
+int CalibSpectra(std::string filename);
 
 void PropXtalk(std::vector < TTigFragment > &ev);
 void InitPropXtalk();
@@ -141,7 +141,7 @@ int main(int argc, char **argv)
 
    // Offline calibration here
    // need to initialise TCanvas's for Calib and CalibOffline here:
-   if (Config.RunOffCal == 1 || Config.RunCalibration == 1) {
+   if (Config.RunSpecCal == 1 || Config.RunCalibration == 1) {
       // Condition here to test if plotting will be used
 
       // Initialise TCanvas's
@@ -161,12 +161,12 @@ int main(int argc, char **argv)
    //    - check the file list for a suitable set of spectra
    //    - call the offline calibration function
    //    - return from here rather than running the TChain stuff below.
-   if (Config.RunOffCal == 1) {
+   if (Config.RunSpecCal == 1) {
       for (i = 0; i < Config.files.size(); i++) {
          if(Config.PrintBasic) {
             cout << "Attempting offline calibration on histograms in file: " << Config.files.at(i) << endl;
          }
-         if(CalibOffline(Config.files.at(i))==0) {  // return after one succesful file so outputs are not overwritten.
+         if(CalibSpectra(Config.files.at(i))==0) {  // return after one succesful file so outputs are not overwritten.
             return 0;
          }
       }
@@ -525,7 +525,7 @@ float CalcWaveCharge(std::vector < int >wavebuffer)
 int LoadDefaultSettings()
 {
    Config.RunCalibration = SORT_CALIB;
-   Config.RunOffCal = SORT_OFFCAL;
+   Config.RunSpecCal = SORT_SPECCAL;
    Config.RunEfficiency = SORT_EFF;
    Config.RunPropCrosstalk = SORT_PROP;
    Config.RunWaveform = SORT_WAVES;
@@ -533,7 +533,7 @@ int LoadDefaultSettings()
 
    Config.OutPath = "./";
    Config.CalOut = "CalibOut.root";
-   Config.CalOfOut = "CalibOffOut.root";
+   Config.CalSpecOut = "CalibSpecOut.root";
    Config.EffOut = "CoincEffOut.root";
    Config.EffTxtOut = "CoincEffOut.txt";
    Config.PropOut = "PropXTalkOut.root";
@@ -633,7 +633,7 @@ int ReadCommandLineSettings(int argc, char **argv)
    // -z : add extra calibration point at 0ch = 0keV
 
    // --cal : run calibration
-   // --calof : run calibration on spectrum file rather than fragment tree 
+   // --calspec : run calibration on spectrum file rather than fragment tree 
    // --eff : run efficiency
    // --prop: run propxtalk
 
@@ -814,8 +814,8 @@ int ReadCommandLineSettings(int argc, char **argv)
             RunConfGiven = 1;
          }
          // offline calibration
-         if (strncmp(argv[i], "--calof", 7) == 0) {
-            Config.RunOffCal = 1;
+         if (strncmp(argv[i], "--calspec", 7) == 0) {
+            Config.RunSpecCal = 1;
          }
          // calibration
          if (strncmp(argv[i], "--cal", 5) == 0) {
@@ -865,8 +865,10 @@ void PrintHelp()
        "[--cal/--eff/--prop] - run the calibration, efficiency, or proportianal crosstalk parts of the code on a fragment tree input."
        << endl;
    cout <<
-       "[--calof] - run offline calibration on a histogram file (CalibOutXXXX.root).  This option overrides all other run options."
+       "[--calspec] - run calibration on a histogram file (CalibOutXXXX.root, hisXXXX.root).  This option overrides all other run options."
        << endl;
+   cout << "\tCalibOutX.root format assumes spectra named according to those produced by --cal." << endl;
+   cout << "\thisX.root assumes no wave spectra and format ChrgXXXX names with numbers according to TIGRESS DAQ analyser convention" << endl;
    cout << "[-q] - Quiet mode.  [-v] - Verbose mode.  Default prints progress through run and configuration.  Quiet doesn't.  Verbose also prints other stuff" << endl;
    cout << "[-p (Clover) (Crystal) (Seg)] - Plot certain segment when doing calibration.  " << endl;
    cout << "[-z] - Include an additional point at 0ch = 0keV in any calibrations." << endl;

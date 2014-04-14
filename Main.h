@@ -4,7 +4,7 @@
 
 // Which parts of code to run:
 #define SORT_CALIB 1
-#define SORT_OFFCAL 0
+#define SORT_SPECCAL 0
 #define SORT_EFF   0
 #define SORT_WAVES 0
 #define SORT_PROP  0
@@ -94,7 +94,7 @@ struct RunConfig {              // this struct will hold all information
    // ---------------------------------------
    // Which parts of code to run
    bool RunCalibration;
-   bool RunOffCal;
+   bool RunSpecCal;
    bool RunEfficiency;
    bool RunPropCrosstalk;
    bool RunWaveform;
@@ -104,7 +104,7 @@ struct RunConfig {              // this struct will hold all information
    // root output files
     std::string OutPath;
     std::string CalOut;         // First 8 letters of this should match any file loaded in to offline cal
-    std::string CalOfOut;
+    std::string CalSpecOut;
     std::string EffOut;
     std::string PropOut;
    // text output files
