@@ -27,6 +27,7 @@ using namespace std;
 #include <TApplication.h>
 #include <TGraphErrors.h>
 #include <TStyle.h>
+#include <TFolder.h>
 
 
 // TriScope libraries
@@ -64,11 +65,13 @@ int CalibOffline(std::string filename)
    int Source = 0;
    int FitSuccess = 0;
    bool PlotOn = 0;
+   int FileType = 0;
    int Integration = 0;
    float Dispersion = 0.0;
-   int i;
+   int i,x;
    char CharBuf[CHAR_BUFFER_SIZE];
    string HistName;
+   string OutputName;
    char Charge[10];
    char Colours[] = "BGRW";
    TH1F *GainPlot, *OffsetPlot, *QuadPlot;
@@ -83,6 +86,16 @@ int CalibOffline(std::string filename)
    int NumFits;
 
    float CalibEn = 0.0;
+   string TestString = "his";
+
+   // Check file type
+   if (strncmp(filename.c_str(), Config.CalOut.c_str(), 8) == 0) {
+      FileType = 1; // File is from output of Calib()
+   }
+   if (strncmp(filename.c_str(), TestString.c_str() ,2) == 0) {
+      FileType = 2;  // file is from TIGRESS DAQ analyser
+      Config.CalWave = 0;
+   }
 
    // File
    TFile *file = TFile::Open(filename.c_str());
@@ -92,7 +105,18 @@ int CalibOffline(std::string filename)
       if(Config.PrintBasic) {cout << "Failed to open " << filename << "!" << endl;}
       return 0;
    }
-
+   
+   // Open TFolder if required
+   TFolder *Folder;
+   if(FileType==2) {
+      Folder = (TFolder *) file->FindObjectAny("histos");
+   }
+   if(!Folder && FileType==2) {
+      cout << "Folder not loaded" << endl;
+      return -1;
+   }
+   
+   // Prepare output root file.
    std::string tempstring;
    TFile *outfile;
    if (Config.WriteFits) {
@@ -142,7 +166,7 @@ int CalibOffline(std::string filename)
        new TH1F("Quadratic Histogram", "Histogram of Quadratic component of all fitted channels", 512, -0.000001,
                 0.000001);
    QuadHist->GetXaxis()->SetTitle("keV/ch^2");
-
+   TH1F *Histo;
    // If we're calibrating the FPGA energy...
    if (Config.CalEnergy) {
       // Loop all gamma detectors 
@@ -150,31 +174,90 @@ int CalibOffline(std::string filename)
          for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
             for (Seg = 0; Seg <= SEGS + 1; Seg++) {
 
-               // Set source and histogram name based on seg number
-               switch (Seg) {
-               case 0:
-                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da Chg", Clover, Num2Col(Crystal), Seg);
-                  HistName = CharBuf;
-                  Source = Config.SourceNumCore;
-                  break;
-               case 9:
-                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db Chg", Clover, Num2Col(Crystal), 0);
-                  HistName = CharBuf;
-                  Source = Config.SourceNumCore;
-                  break;
-               default:
-                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx Chg", Clover, Num2Col(Crystal), Seg);
-                  HistName = CharBuf;
-                  if (Seg < 5) {
-                     Source = Config.SourceNumFront;
-                  } else {
-                     Source = Config.SourceNumBack;
+               // Set source and histogram name and output name based on seg number and file type
+               if(FileType==1) {
+                  switch (Seg) {
+                  case 0:
+                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da Chg", Clover, Num2Col(Crystal), Seg);
+                     HistName = CharBuf;
+                     OutputName = CharBuf;
+                     Source = Config.SourceNumCore;
+                     break;
+                  case 9:
+                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db Chg", Clover, Num2Col(Crystal), 0);
+                     HistName = CharBuf;
+                     OutputName = CharBuf;
+                     Source = Config.SourceNumCore;
+                     break;
+                  default:
+                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx Chg", Clover, Num2Col(Crystal), Seg);
+                     HistName = CharBuf;
+                     OutputName = CharBuf;
+                     if (Seg < 5) {
+                        Source = Config.SourceNumFront;
+                     } else {
+                        Source = Config.SourceNumBack;
+                     }
+                     break;
                   }
-                  break;
+               }
+               if(FileType==2) {
+                  switch (Crystal) {
+                  case 0:
+                     x= 0;
+                     break;
+                  case 1:
+                     x= 20;
+                     break;
+                  case 2:
+                     x= 30;
+                     break;
+                  case 3:
+                     x= 50;
+                     break; 
+                  }
+                  switch (Seg) {
+                  case 0:
+                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "Chrg0%03d", ((Clover-1)*60)+x);
+                     HistName = CharBuf;
+                     OutputName = CharBuf; OutputName += "\t";
+                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da Chg", Clover, Num2Col(Crystal), Seg);
+                     OutputName += CharBuf;
+                     Source = Config.SourceNumCore;
+                     break;
+                  case 9:
+                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "Chrg0%03d", ((Clover-1)*60)+x+9);
+                     HistName = CharBuf;      
+                     OutputName = CharBuf; OutputName += "\t";          
+                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db Chg", Clover, Num2Col(Crystal), 0);
+                     OutputName += CharBuf;
+                     Source = Config.SourceNumCore;
+                     break;
+                  default:
+                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "Chrg0%03d", ((Clover-1)*60)+x+Seg);
+                     HistName = CharBuf;
+                     OutputName = CharBuf; OutputName += "\t";
+                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx Chg", Clover, Num2Col(Crystal), Seg);
+                     OutputName += CharBuf;
+                     if (Seg < 5) {
+                        Source = Config.SourceNumFront;
+                     } else {
+                        Source = Config.SourceNumBack;
+                     }
+                     break;
+                  }
+
+               
                }
 
                // Load histogram
-               TH1F *Histo = (TH1F *) file->FindObjectAny(HistName.c_str());
+               if(FileType == 1) {
+                  Histo = (TH1F *) file->FindObjectAny(HistName.c_str());
+               }
+               else {
+                  Histo = (TH1F *) Folder->FindObjectAny(HistName.c_str());
+               }
+               
                if (Histo) {
                   if(Config.PrintVerbose) {
                      cout << endl << "------------------------------------" << endl;
@@ -193,8 +276,14 @@ int CalibOffline(std::string filename)
                   FitSettings Settings = { 0 };
 
                   Settings.Source = Source;
-                  Settings.Integration = INTEGRATION;
-                  Settings.Dispersion = float (CHARGE_BINS) / float (CHARGE_MAX);
+                  if(FileType==1) {
+                     Settings.Integration = INTEGRATION;
+                     Settings.Dispersion = float (CHARGE_BINS) / float (CHARGE_MAX);
+                  }
+                  if(FileType==2) {  // histogram file from analyser
+                     Settings.Integration = 1;
+                     Settings.Dispersion = 1;
+                  }
                   Settings.SearchSigma = EN_SEARCH_SIGMA;
                   Settings.SearchThresh = EN_SEARCH_THRESH;
                   Settings.SigmaEstZero = ENERGY_SIGMA_ZERO;
@@ -234,10 +323,10 @@ int CalibOffline(std::string filename)
                   // Now print reports on results of fits and calibration.
                   if (FitSuccess > 0) {
                      if (FitSuccess < 3 || FORCE_LINEAR) {
-                        GainOut << HistName << ":\t" << Fit.LinGainFit[0];
+                        GainOut << OutputName << ":\t" << Fit.LinGainFit[0];
                         GainOut << "\t" << Fit.LinGainFit[1] << endl;
                      } else {
-                        GainOut << HistName << ":\t" << Fit.QuadGainFit[0] << "\t";
+                        GainOut << OutputName << ":\t" << Fit.QuadGainFit[0] << "\t";
                         GainOut << Fit.QuadGainFit[1] << "\t" << Fit.QuadGainFit[2] << endl;
                      }
                   } else {
@@ -245,9 +334,9 @@ int CalibOffline(std::string filename)
                   }
                   // Write full calibration report
                   if (FitSuccess > 0) {
-                     CalibrationReport(&Fit, ReportOut, HistName, Settings);
+                     CalibrationReport(&Fit, ReportOut, OutputName, Settings);
                   } else {
-                     ReportOut << endl << "------------------------------------------" << endl << HistName << endl <<
+                     ReportOut << endl << "------------------------------------------" << endl << OutputName << endl <<
                          "------------------------------------------" << endl << endl;
                      ReportOut << "Fail Fail Fail! The calibration has failed!" << endl;
                   }

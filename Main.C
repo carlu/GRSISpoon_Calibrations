@@ -163,15 +163,13 @@ int main(int argc, char **argv)
    //    - return from here rather than running the TChain stuff below.
    if (Config.RunOffCal == 1) {
       for (i = 0; i < Config.files.size(); i++) {
-         if (strncmp(Config.files.at(i).c_str(), Config.CalOut.c_str(), 8) == 0) {
-            if(Config.PrintBasic) {
-               cout << "Attempting offline calibration on histograms in file: " << Config.files.at(i) << endl;
-            }
-            CalibOffline(Config.files.at(i));
+         if(Config.PrintBasic) {
+            cout << "Attempting offline calibration on histograms in file: " << Config.files.at(i) << endl;
+         }
+         if(CalibOffline(Config.files.at(i))==0) {  // return after one succesful file so outputs are not overwritten.
+            return 0;
          }
       }
-
-      return 0;
    }
    // ---- End of offline calibration -----
 
