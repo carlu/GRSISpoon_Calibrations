@@ -533,8 +533,8 @@ int CalibrationReport(SpectrumFit * Fit, ofstream & ReportOut, std::string HistN
 
    //char HistName[1024];
    //sprintf(HistName,"TempHist");
-
-   if (Config.CalReport) {
+   
+   if(Config.CalReport) {
       // Heading for this channel
       ReportOut << endl << "------------------------------------------" << endl << HistName << endl <<
           "------------------------------------------" << endl << endl;
@@ -604,14 +604,13 @@ int CalibrationReport(SpectrumFit * Fit, ofstream & ReportOut, std::string HistN
          //cCalib1->cd(1);
       }
    }
-   if (Config.CalFile) {
-
+   if(Config.CalFile) {
+      
    }
 
 }
 
-int WriteCalFile(SpectrumFit * Fit, ofstream & CalFileOut, std::string HistName, FitSettings Settings)
-{
+int WriteCalFile(SpectrumFit *Fit, ofstream &CalFileOut, std::string HistName, FitSettings Settings) {
 
 
 
