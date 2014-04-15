@@ -66,7 +66,7 @@ int CalibSpectra(std::string filename)
    int FileType = 0;
    int Integration = 0;
    float Dispersion = 0.0;
-   int i,x;
+   int i, x;
    char CharBuf[CHAR_BUFFER_SIZE];
    string HistName;
    string OutputName;
@@ -85,44 +85,46 @@ int CalibSpectra(std::string filename)
 
    float CalibEn = 0.0;
    string TestString = "his";
-   
+
    bool FileTypeFound = 0;
 
    // Check file type
    if (strncmp(filename.c_str(), Config.CalOut.c_str(), 8) == 0) {
-      FileType = 1; // File is from output of Calib()
+      FileType = 1;             // File is from output of Calib()
       FileTypeFound = 1;
    }
-   if (strncmp(filename.c_str(), TestString.c_str() ,3) == 0) {
-      FileType = 2;  // file is from TIGRESS DAQ analyser
+   if (strncmp(filename.c_str(), TestString.c_str(), 3) == 0) {
+      FileType = 2;             // file is from TIGRESS DAQ analyser
       Config.CalWave = 0;
       FileTypeFound = 1;
    }
 
-   if(FileTypeFound == 0) {
+   if (FileTypeFound == 0) {
       cout << "Histogram file type not determined!" << endl;
       return -1;
    }
-
    // File
    TFile *file = TFile::Open(filename.c_str());
    if (file->IsOpen()) {
-      if(Config.PrintBasic) {cout << filename << " opened!" << endl;}
+      if (Config.PrintBasic) {
+         cout << filename << " opened!" << endl;
+      }
    } else {
-      if(Config.PrintBasic) {cout << "Failed to open " << filename << "!" << endl;}
+      if (Config.PrintBasic) {
+         cout << "Failed to open " << filename << "!" << endl;
+      }
       return -1;
    }
-   
+
    // Open TFolder if required
    TFolder *Folder;
-   if(FileType==2) {
+   if (FileType == 2) {
       Folder = (TFolder *) file->FindObjectAny("histos");
    }
-   if(!Folder && FileType==2) {
+   if (!Folder && FileType == 2) {
       cout << "Folder not loaded" << endl;
       return -1;
    }
-   
    // Prepare output root file.
    std::string tempstring;
    TFile *outfile;
@@ -130,7 +132,6 @@ int CalibSpectra(std::string filename)
       tempstring = Config.OutPath + Config.CalSpecOut;
       outfile = TFile::Open(tempstring.c_str(), "RECREATE");
    }
-
    // Prepare energy calibration output files
    if (Config.CalEnergy) {
       tempstring = Config.OutPath + "GainsOut.txt";
@@ -150,7 +151,7 @@ int CalibSpectra(std::string filename)
       }
    }
    // Prepare .cal file
-   if(Config.CalFile) {
+   if (Config.CalFile) {
       tempstring = Config.OutPath + "EnergyCalibration.cal";
       CalFileOut.open(tempstring.c_str());
    }
@@ -180,13 +181,12 @@ int CalibSpectra(std::string filename)
       for (Clover = 1; Clover <= CLOVERS; Clover++) {
          for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
             for (Seg = 0; Seg <= SEGS + 1; Seg++) {
-            
-               if(Config.CalList[Clover-1][Crystal][Seg] == 0) {
+
+               if (Config.CalList[Clover - 1][Crystal][Seg] == 0) {     // check if this channel is to be fitted.
                   continue;
                }
-
                // Set source and histogram name and output name based on seg number and file type
-               if(FileType==1) {
+               if (FileType == 1) {
                   switch (Seg) {
                   case 0:
                      snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da Chg", Clover, Num2Col(Crystal), Seg);
@@ -212,42 +212,45 @@ int CalibSpectra(std::string filename)
                      break;
                   }
                }
-               if(FileType==2) {
+               if (FileType == 2) {
                   switch (Crystal) {
                   case 0:
-                     x= 0;
+                     x = 0;
                      break;
                   case 1:
-                     x= 20;
+                     x = 20;
                      break;
                   case 2:
-                     x= 30;
+                     x = 30;
                      break;
                   case 3:
-                     x= 50;
-                     break; 
+                     x = 50;
+                     break;
                   }
                   switch (Seg) {
                   case 0:
-                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "Chrg0%03d", ((Clover-1)*60)+x);
+                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "Chrg0%03d", ((Clover - 1) * 60) + x);
                      HistName = CharBuf;
-                     OutputName = CharBuf; OutputName += "\t";
+                     OutputName = CharBuf;
+                     OutputName += "\t";
                      snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da Chg", Clover, Num2Col(Crystal), Seg);
                      OutputName += CharBuf;
                      Source = Config.SourceNumCore;
                      break;
                   case 9:
-                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "Chrg0%03d", ((Clover-1)*60)+x+9);
-                     HistName = CharBuf;      
-                     OutputName = CharBuf; OutputName += "\t";          
+                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "Chrg0%03d", ((Clover - 1) * 60) + x + 9);
+                     HistName = CharBuf;
+                     OutputName = CharBuf;
+                     OutputName += "\t";
                      snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db Chg", Clover, Num2Col(Crystal), 0);
                      OutputName += CharBuf;
                      Source = Config.SourceNumCore;
                      break;
                   default:
-                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "Chrg0%03d", ((Clover-1)*60)+x+Seg);
+                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "Chrg0%03d", ((Clover - 1) * 60) + x + Seg);
                      HistName = CharBuf;
-                     OutputName = CharBuf; OutputName += "\t";
+                     OutputName = CharBuf;
+                     OutputName += "\t";
                      snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx Chg", Clover, Num2Col(Crystal), Seg);
                      OutputName += CharBuf;
                      if (Seg < 5) {
@@ -258,19 +261,17 @@ int CalibSpectra(std::string filename)
                      break;
                   }
 
-               
-               }
 
-               // Load histogram
-               if(FileType == 1) {  // Files where the histogram can be found directly
-                  Histo = (TH1F *) file->FindObjectAny(HistName.c_str());
                }
-               else {  // Files where it needs to be puled from a TFolder i.e. TIGRESS DAQ files
+               // Load histogram
+               if (FileType == 1) {     // Files where the histogram can be found directly
+                  Histo = (TH1F *) file->FindObjectAny(HistName.c_str());
+               } else {         // Files where it needs to be puled from a TFolder i.e. TIGRESS DAQ files
                   Histo = (TH1F *) Folder->FindObjectAny(HistName.c_str());
                }
-               
+
                if (Histo) {
-                  if(Config.PrintVerbose) {
+                  if (Config.PrintVerbose) {
                      cout << endl << "------------------------------------" << endl;
                      cout << "Hist " << HistName << " loaded" << endl;
                      cout << "------------------------------------" << endl << endl;
@@ -278,8 +279,8 @@ int CalibSpectra(std::string filename)
                   // Check if plot should be active for this channel
                   PlotOn = 0;
                   if (Config.PlotFits) {
-                     if (Config.CalibPlots[Clover-1][Crystal][Seg]) {
-                              PlotOn = 1;
+                     if (Config.CalibPlots[Clover - 1][Crystal][Seg]) {
+                        PlotOn = 1;
                      }
                   }
                   // Perform Fit                  
@@ -287,11 +288,11 @@ int CalibSpectra(std::string filename)
                   FitSettings Settings = { 0 };
 
                   Settings.Source = Source;
-                  if(FileType==1) {
+                  if (FileType == 1) {
                      Settings.Integration = INTEGRATION;
                      Settings.Dispersion = float (CHARGE_BINS) / float (CHARGE_MAX);
                   }
-                  if(FileType==2) {  // histogram file from analyser
+                  if (FileType == 2) {  // histogram file from analyser
                      Settings.Integration = 1;
                      Settings.Dispersion = 1;
                   }
@@ -308,16 +309,16 @@ int CalibSpectra(std::string filename)
                   if (FitSuccess > 0) {
                      switch (Crystal) { // Calculate channel number (old TIGRESS DAQ numbering)
                      case 0:
-                        ItemNum = ((Clover-1) * 60) + Seg;
+                        ItemNum = ((Clover - 1) * 60) + Seg;
                         break;
                      case 1:
-                        ItemNum = ((Clover-1) * 60) + 20 + Seg;
+                        ItemNum = ((Clover - 1) * 60) + 20 + Seg;
                         break;
                      case 2:
-                        ItemNum = ((Clover-1) * 60) + 30 + Seg;
+                        ItemNum = ((Clover - 1) * 60) + 30 + Seg;
                         break;
                      case 3:
-                        ItemNum = ((Clover-1) * 60) + 50 + Seg;
+                        ItemNum = ((Clover - 1) * 60) + 50 + Seg;
                         break;
                      default:
                         ItemNum = 1000;
@@ -352,7 +353,7 @@ int CalibSpectra(std::string filename)
                      ReportOut << "Fail Fail Fail! The calibration has failed!" << endl;
                   }
                   // Write .cal file for GRSISpoon
-                  if(Config.CalFile) {
+                  if (Config.CalFile) {
                      WriteCalFile(&Fit, CalFileOut, HistName, Settings);
                   }
                   // Write histo with fits
@@ -361,7 +362,9 @@ int CalibSpectra(std::string filename)
                      Histo->Write();
                   }
                } else {
-                  if(Config.PrintBasic) {cout << endl << "Hist " << HistName << " failed to load." << endl;}
+                  if (Config.PrintBasic) {
+                     cout << endl << "Hist " << HistName << " failed to load." << endl;
+                  }
                }
             }
          }
@@ -370,13 +373,16 @@ int CalibSpectra(std::string filename)
    // Now run the fit for the waveform spectrum if required
    if (Config.CalWave) {
       if (Config.PrintVerbose) {
-         if(Config.PrintBasic) {cout << "-------------------" << endl << "Now fitting Wave Energy Spectra" << endl << "-------------------"<< endl;}
+         if (Config.PrintBasic) {
+            cout << "-------------------" << endl << "Now fitting Wave Energy Spectra" << endl << "-------------------"
+                << endl;
+         }
       }
       for (Clover = 1; Clover <= CLOVERS; Clover++) {
          for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
             for (Seg = 0; Seg <= SEGS + 1; Seg++) {
 
-               if(Config.CalList[Clover-1][Crystal][Seg] == 0) {
+               if (Config.CalList[Clover - 1][Crystal][Seg] == 0) {     // check if this channel is to be fitted.
                   continue;
                }
 
@@ -408,8 +414,8 @@ int CalibSpectra(std::string filename)
                // Check if plot should be active for this channel
                PlotOn = 0;
                if (Config.PlotFits) {
-                  if (Config.CalibPlots[Clover-1][Crystal][Seg]) {
-                           PlotOn = 1;
+                  if (Config.CalibPlots[Clover - 1][Crystal][Seg]) {
+                     PlotOn = 1;
                   }
                }
                // Perform Fit                  
@@ -433,7 +439,7 @@ int CalibSpectra(std::string filename)
                      WaveOut << HistName << "\t" << WaveFit.LinGainFit[0];
                      WaveOut << "\t" << WaveFit.LinGainFit[1] << endl;
                   } else {
-                     WaveOut << HistName << ":\t" << WaveFit.QuadGainFit[0] <<  "\t";
+                     WaveOut << HistName << ":\t" << WaveFit.QuadGainFit[0] << "\t";
                      WaveOut << WaveFit.QuadGainFit[1] << "\t" << WaveFit.QuadGainFit[2] << endl;
                   }
                } else {
@@ -443,8 +449,8 @@ int CalibSpectra(std::string filename)
                   if (FitSuccess > 0) {
                      CalibrationReport(&WaveFit, WaveReportOut, HistName, Settings);
                   } else {
-                     WaveReportOut << endl << "------------------------------------------" << endl << HistName << endl <<
-                         "------------------------------------------" << endl << endl;
+                     WaveReportOut << endl << "------------------------------------------" << endl << HistName << endl
+                         << "------------------------------------------" << endl << endl;
                      WaveReportOut << "Fail Fail Fail! The calibration has failed!" << endl;
                   }
                }

@@ -17,7 +17,7 @@
 #define MAX_EVENTS 0
 #define DEBUG_TREE_LOOP 0
 // ROOT Stuff
-#define ROOT_VIRT_SIZE    10000000   // 1x10^7 or ~10Mb seems to run fast-ish but not freeze the system completely.
+#define ROOT_VIRT_SIZE    10000000      // 1x10^7 or ~10Mb seems to run fast-ish but not freeze the system completely.
                                      // that's on my 6Gb 2.6GHz i5 (YMMV)
 // Stuff about the experimental setup
 #define CLOVERS  16
@@ -142,25 +142,25 @@ struct RunConfig {              // this struct will hold all information
 
    // Physics settings for individual functions
    // ------------------------------------------
-   
+
    // Calib() and CalibOffline()
    // What to do
    bool CalEnergy;              // fit charge spectra
    bool CalWave;                // fit wave-charge spectra
    bool CalReport;              // write full report on peak fitting as well as list of gains
    bool CalFile;                // produce a .cal file, readable by GRSISpoon
-   bool CalList[CLOVERS][CRYSTALS][SEGS+2]; // mask to determine which channels CalibSpectra() should run on
+   bool CalList[CLOVERS][CRYSTALS][SEGS + 2];   // mask to determine which channels CalibSpectra() should run on
    bool CalListProvided;
    // Output
    bool WriteFits;              // --cal: write histo after fits, --calof: write new file with histos and fits
    // What to plot
    bool PlotFits;
-   bool CalibPlots[CLOVERS][CRYSTALS][SEGS+2];
+   bool CalibPlots[CLOVERS][CRYSTALS][SEGS + 2];
    bool PlotCalib;
    bool PlotCalibSummary;
    // Calibration options
-   bool FitZero;  // Add extra calibration point at 0ch = 0keV
-   
+   bool FitZero;                // Add extra calibration point at 0ch = 0keV
+
    // CoincEff()
    // What to plot
    bool PlotEff;

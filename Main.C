@@ -163,10 +163,10 @@ int main(int argc, char **argv)
    //    - return from here rather than running the TChain stuff below.
    if (Config.RunSpecCal == 1) {
       for (i = 0; i < Config.files.size(); i++) {
-         if(Config.PrintBasic) {
+         if (Config.PrintBasic) {
             cout << "Attempting offline calibration on histograms in file: " << Config.files.at(i) << endl;
          }
-         if(CalibSpectra(Config.files.at(i)) >=  0) {  // return after one succesful file so outputs are not overwritten.
+         if (CalibSpectra(Config.files.at(i)) >= 0) {   // return after one succesful file so outputs are not overwritten.
             return 0;
          }
       }
@@ -177,7 +177,7 @@ int main(int argc, char **argv)
    if (Config.HaveAltEnergyCalibration) {
       int NumCal;
       NumCal = ReadCalibrationFile(Config.EnergyCalibrationFile, &EnCalibNames, &EnCalibValues);
-      if(Config.PrintBasic) {
+      if (Config.PrintBasic) {
          cout << "Alternate energy calibratrion values: " << endl;
          for (i = 0; i < NumCal; i++) {
             cout << i;
@@ -190,7 +190,7 @@ int main(int argc, char **argv)
    if (Config.HaveWaveCalibration) {
       int NumCal;
       NumCal = ReadCalibrationFile(Config.WaveCalibrationFile, &WaveCalibNames, &WaveCalibValues);
-      if(Config.PrintBasic) {
+      if (Config.PrintBasic) {
          cout << "Wave energy calibratrion values: " << endl;
          //cout << WaveCalibNames.size() << endl << WaveCalibValues.size() << endl;
          for (i = 0; i < NumCal; i++) {
@@ -204,15 +204,21 @@ int main(int argc, char **argv)
    // Initialise spectra   
 
    if (Config.RunEfficiency) {
-      if(Config.PrintBasic) {cout << "Initialising Efficiency Spectra..." << endl;}
+      if (Config.PrintBasic) {
+         cout << "Initialising Efficiency Spectra..." << endl;
+      }
       InitCoincEff();
    }
    if (Config.RunCalibration) {
-      if(Config.PrintBasic) {cout << "Initialising Calibration Spectra..." << endl;}
+      if (Config.PrintBasic) {
+         cout << "Initialising Calibration Spectra..." << endl;
+      }
       InitCalib();
    }
    if (Config.RunPropCrosstalk) {
-      if(Config.PrintBasic) {cout << "Initialising Cross-talk Spectra..." << endl;}
+      if (Config.PrintBasic) {
+         cout << "Initialising Cross-talk Spectra..." << endl;
+      }
       InitPropXtalk();
    }
 
@@ -231,7 +237,7 @@ int main(int argc, char **argv)
    int NumChainEntries = Chain->GetEntries();
    int NumChainEvents = (int) Chain->GetMaximum("TriggerId");   // This doesn't work, TrigID reset for each tree on chain.
 
-   if(Config.PrintBasic) {
+   if (Config.PrintBasic) {
       cout << "Chain Entries (frags) : " << NumChainEntries << endl;
       cout << "Chain Events          : " << NumChainEvents << endl;
    }
@@ -250,9 +256,9 @@ int main(int argc, char **argv)
       TreeNum = Chain->GetTreeNumber();
 
       if (TreeNum != LastTreeNum) {
-         if(Config.PrintBasic) {
+         if (Config.PrintBasic) {
             cout << "Switching to TreeNum " << TreeNum + 1 << " from " << LastTreeNum +
-               1 << " at chain entry " << ChainEvent << endl;
+                1 << " at chain entry " << ChainEvent << endl;
          }
          LastTreeNum = TreeNum;
       } else {
@@ -265,10 +271,14 @@ int main(int argc, char **argv)
       TTree *Tree = Chain->GetTree();
 
       if (!Tree->GetTreeIndex()) {
-         if(Config.PrintBasic) {printf("\nTree Index not found, Building index...");}
+         if (Config.PrintBasic) {
+            printf("\nTree Index not found, Building index...");
+         }
          fflush(stdout);
          Tree->BuildIndex("TriggerId", "FragmentId");
-         if(Config.PrintBasic) {printf("  Done\n");}
+         if (Config.PrintBasic) {
+            printf("  Done\n");
+         }
          fflush(stdout);
       }
 
@@ -287,7 +297,7 @@ int main(int argc, char **argv)
       // cout << "HERE!!!! " << NumChainEntries << " " << NumTreeEntries << " " << NumTreeEvents << endl;
 
       for (int TreeEvent = 0; TreeEvent < NumTreeEvents; TreeEvent++) {
-      //for (int TreeEvent = FirstTreeEvent; TreeEvent < NumTreeEvents; TreeEvent++) {   
+         //for (int TreeEvent = FirstTreeEvent; TreeEvent < NumTreeEvents; TreeEvent++) {   
          evFrags.clear();
          int FragNum = 1;
 
@@ -313,7 +323,9 @@ int main(int argc, char **argv)
 
          // do something with the evFrag vector (contains a built event)... ProcessEvent(evFrags); 
          if (Config.EventLimit > 0 && EventCount >= Config.EventLimit) {
-            if(Config.PrintBasic) {cout << "Maximum number of events (" << Config.EventLimit << ") reached.  Terminating..." << endl;}
+            if (Config.PrintBasic) {
+               cout << "Maximum number of events (" << Config.EventLimit << ") reached.  Terminating..." << endl;
+            }
             break;
          }
          if (Config.RunEfficiency) {
@@ -343,7 +355,7 @@ int main(int argc, char **argv)
          }
 
       }
-      
+
       if (Config.EventLimit > 0 && EventCount >= Config.EventLimit) {
          break;
       }
@@ -429,14 +441,20 @@ char Num2Col(int Crystal)
 int ReadCalibrationFile(std::string filename, vector < string > *CalibNames, vector < vector < float >>*CalibValues)
 {
 
-   if(Config.PrintBasic) {printf("Reading calibration file %s...\t", filename.c_str());}
+   if (Config.PrintBasic) {
+      printf("Reading calibration file %s...\t", filename.c_str());
+   }
    ifstream file;
    file.open(filename);
    if (!file) {
-      if(Config.PrintBasic) {printf("could not open file.\n");}
+      if (Config.PrintBasic) {
+         printf("could not open file.\n");
+      }
       return -1;
    } else {
-      if(Config.PrintBasic) {printf("File opened.\n");}
+      if (Config.PrintBasic) {
+         printf("File opened.\n");
+      }
    }
 
    std::string line;
@@ -449,7 +467,7 @@ int ReadCalibrationFile(std::string filename, vector < string > *CalibNames, vec
          g0 = 0.0;              // reset values
          g1 = 0.0;
          g2 = 0.0;
-         sscanf(line.c_str(), "%s %s %f %f %f", name, temp, &g0, &g1, &g2);      // grab name and 3 gains
+         sscanf(line.c_str(), "%s %s %f %f %f", name, temp, &g0, &g1, &g2);     // grab name and 3 gains
          vector < float >GainTemp;
          GainTemp.push_back(g0);
          GainTemp.push_back(g1);
@@ -593,15 +611,15 @@ int LoadDefaultSettings()
    Config.CalWave = 1;
    Config.CalReport = 1;
    Config.CalFile = 0;
-   memset(&Config.CalList,1,CLOVERS*CRYSTALS*(SEGS+2)*sizeof(bool));
+   memset(&Config.CalList, 1, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
    Config.CalListProvided = 0;
    // Output
-   Config.WriteFits = 1;   
+   Config.WriteFits = 1;
    // Plots
    Config.PlotFits = 0;
    Config.PlotCalib = 0;
    Config.PlotCalibSummary = 0;
-   memset(&Config.CalibPlots,0,CLOVERS*CRYSTALS*(SEGS+2)*sizeof(bool));
+   memset(&Config.CalibPlots, 0, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
    // Calibrating options
    Config.FitZero = 0;
 
@@ -635,7 +653,7 @@ int ReadCommandLineSettings(int argc, char **argv)
    // -p : (p)lot (Clover) (Crystal) (Seg)
    // -z : add extra calibration point at (z)ero  i.e. 0ch = 0keV
    // -d : select (d)etector to be calibrated.  
-   
+
    // --cal : run calibration
    // --calspec : run calibration on spectrum file rather than fragment tree 
    // --eff : run efficiency
@@ -644,7 +662,7 @@ int ReadCommandLineSettings(int argc, char **argv)
    int i, j, n;
    int Plot[3];
    int FitList[3];
-   int Limits[3] = {CLOVERS,CRYSTALS,SEGS+2};
+   int Limits[3] = { CLOVERS, CRYSTALS, SEGS + 2 };
    bool test;
    bool RunConfGiven = 0;
 
@@ -673,12 +691,12 @@ int ReadCommandLineSettings(int argc, char **argv)
                break;           // break if at last item in arg list
             }
          }
-         if(Config.PrintBasic) {
+         if (Config.PrintBasic) {
             cout << "Input files:  " << endl;
-            for (j = 0; j < Config.files.size(); j++) {    // print list of files back to screen
+            for (j = 0; j < Config.files.size(); j++) { // print list of files back to screen
                cout << "\t" << Config.files.at(j) << endl;
             }
-         }   
+         }
       }
       // Energy Calibration file
       // -------------------------------------------
@@ -766,68 +784,70 @@ int ReadCommandLineSettings(int argc, char **argv)
       if (strncmp(argv[i], "-q", 2) == 0) {
          Config.PrintBasic = 0;
          Config.PrintVerbose = 0;
-      }         
+      }
       // Plots 
       // ----------------------------------------
-      if(strncmp(argv[i], "-p", 2) == 0) {
+      if (strncmp(argv[i], "-p", 2) == 0) {
          if (i >= argc - 1 || strncmp(argv[i + 1], "-", 1) == 0) {      // return error if no file
             cout << "Plotting all fits." << endl;
             Config.PlotFits = 1;
-            memset(&Config.CalibPlots,1,CLOVERS*CRYSTALS*(SEGS+2)*sizeof(bool));
-         }
-         else {
+            memset(&Config.CalibPlots, 1, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
+         } else {
             Config.PlotFits = 1;
-            n=0;
-            while (strncmp(argv[i + 1], "-", 1) > 0) {     // loop plot items 
-               Plot[n] = atoi(argv[++i]);  
+            n = 0;
+            while (strncmp(argv[i + 1], "-", 1) > 0) {  // loop plot items 
+               Plot[n] = atoi(argv[++i]);
                cout << "n,Plot[n] = " << n << ", " << Plot[n] << endl;
-               if((Plot[n] < 0) || (Plot[n] > Limits[n])) {
+               if ((Plot[n] < 0) || (Plot[n] > Limits[n])) {
                   cout << "Error with plot specification!" << endl;
                   return -1;
                }
                n++;
-               if (n==3) {break;}
+               if (n == 3) {
+                  break;
+               }
                if (i >= argc - 1) {
                   cout << "Need to specify (Clover) (Crystal) (Seg) for plots" << endl;
                   return -1;
                }
             }
             cout << "Plotting Cl: " << Plot[0] << " Cr: " << Plot[1] << " Seg: " << Plot[2] << endl;
-            Config.CalibPlots[Plot[0]-1][Plot[1]][Plot[2]] = 1;
-         }   
+            Config.CalibPlots[Plot[0] - 1][Plot[1]][Plot[2]] = 1;
+         }
       }
       // add 0ch = 0keV to calibration
       // -------------------------------------------
       if (strncmp(argv[i], "-z", 2) == 0) {
          Config.FitZero = 1;
-      }      
+      }
       // List of detectors to fit
       // -------------------------------------------
       if (strncmp(argv[i], "-d", 2) == 0) {
          if (i >= argc - 1 || strncmp(argv[i + 1], "-", 1) == 0) {
             cout << "Need to specify (Clover) (Crystal) (Seg) with \"-d\" option." << endl;
             return -1;
-         }
-         else {
-            n=0;
-            while (strncmp(argv[i + 1], "-", 1) > 0) { 
+         } else {
+            n = 0;
+            while (strncmp(argv[i + 1], "-", 1) > 0) {
                FitList[n] = atoi(argv[++i]);
-               if((FitList[n] < 0) || (FitList[n] > Limits[n])) {
+               if ((FitList[n] < 0) || (FitList[n] > Limits[n])) {
                   cout << "Error with plot specification!" << endl;
                   return -1;
                }
                n++;
-               if (n==3) {break;}
+               if (n == 3) {
+                  break;
+               }
                if (i >= argc - 1) {
                   cout << "Need to specify (Clover) (Crystal) (Seg) with \"-d\" option." << endl;
                   return -1;
                }
             }
-            if(Config.CalListProvided==0) {
+            if (Config.CalListProvided == 0) {
                Config.CalListProvided = 1;
-               memset(&Config.CalList,0,CLOVERS*CRYSTALS*(SEGS+2)*sizeof(bool));
+               memset(&Config.CalList, 0, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
             }
-            Config.CalList[FitList[0]-1][FitList[1]][FitList[2]] = 1;
+            Config.CalList[FitList[0] - 1][FitList[1]][FitList[2]] = 1;
          }
       }
       // Run options
@@ -882,7 +902,9 @@ void PrintHelp()
    cout <<
        "[-e (energy Calibration File)] - select alternate (e)nergy calibration file.  In the absense of an entry in this file, all channels will default to using the calibrated energy from the input TTree."
        << endl;
-   cout << "Format for calibration file should be (TIGNOM) (some other string e.g. chg or wavechg) (g0) (g1) [(g2) (g3)].  Lines begining \"#\" will be ignored." << endl;   
+   cout <<
+       "Format for calibration file should be (TIGNOM) (some other string e.g. chg or wavechg) (g0) (g1) [(g2) (g3)].  Lines begining \"#\" will be ignored."
+       << endl;
    cout <<
        "[-w (Wave calibration file)] - select calibration for energy derived from (w)aveforms.  No defaults. Required for succesfully running XTalk analysis. Format same as for energy calibration file."
        << endl;
@@ -892,14 +914,22 @@ void PrintHelp()
    cout <<
        "[--cal/--eff/--prop] - run the calibration, efficiency, or proportianal crosstalk parts of the code on a fragment tree input."
        << endl;
-   cout << 
+   cout <<
        "[--calspec] - run calibration on a histogram file (CalibOutXXXX.root, hisXXXX.root).  This option overrides all other run options."
        << endl;
    cout << "\tCalibOutX.root format assumes spectra named according to those produced by --cal." << endl;
-   cout << "\thisX.root assumes no wave spectra and format ChrgXXXX names with numbers according to TIGRESS DAQ analyser convention" << endl;
-   cout << "[-q] - Quiet mode.  [-v] - Verbose mode.  Default prints progress through run and configuration.  Quiet doesn't.  Verbose also prints other stuff" << endl;
-   cout << "[-p (Clover) (Crystal) (Seg)] - Plot certain segment when doing calibration.  With no additional arguments will plot all." << endl;
+   cout <<
+       "\thisX.root assumes no wave spectra and format ChrgXXXX names with numbers according to TIGRESS DAQ analyser convention"
+       << endl;
+   cout <<
+       "[-q] - Quiet mode.  [-v] - Verbose mode.  Default prints progress through run and configuration.  Quiet doesn't.  Verbose also prints other stuff"
+       << endl;
+   cout <<
+       "[-p (Clover) (Crystal) (Seg)] - Plot certain segment when doing calibration.  With no additional arguments will plot all."
+       << endl;
    cout << "[-z] - Include an additional point at 0ch = 0keV in any calibrations." << endl;
-   cout << "[-d (Clover) (Crystal) (Seg)] - Selects a particular (d)etection element to fit.  Defaults to all. Affect --calspec only" << endl;
+   cout <<
+       "[-d (Clover) (Crystal) (Seg)] - Selects a particular (d)etection element to fit.  Defaults to all. Affect --calspec only"
+       << endl;
    cout << endl;
 }
