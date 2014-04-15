@@ -85,14 +85,23 @@ int CalibSpectra(std::string filename)
 
    float CalibEn = 0.0;
    string TestString = "his";
+   
+   bool FileTypeFound = 0;
 
    // Check file type
    if (strncmp(filename.c_str(), Config.CalOut.c_str(), 8) == 0) {
       FileType = 1; // File is from output of Calib()
+      FileTypeFound = 1;
    }
-   if (strncmp(filename.c_str(), TestString.c_str() ,2) == 0) {
+   if (strncmp(filename.c_str(), TestString.c_str() ,3) == 0) {
       FileType = 2;  // file is from TIGRESS DAQ analyser
       Config.CalWave = 0;
+      FileTypeFound = 1;
+   }
+
+   if(FileTypeFound == 0) {
+      cout << "Histogram file type not determined!" << endl;
+      return -1;
    }
 
    // File
@@ -101,7 +110,7 @@ int CalibSpectra(std::string filename)
       if(Config.PrintBasic) {cout << filename << " opened!" << endl;}
    } else {
       if(Config.PrintBasic) {cout << "Failed to open " << filename << "!" << endl;}
-      return 0;
+      return -1;
    }
    
    // Open TFolder if required
@@ -171,6 +180,10 @@ int CalibSpectra(std::string filename)
       for (Clover = 1; Clover <= CLOVERS; Clover++) {
          for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
             for (Seg = 0; Seg <= SEGS + 1; Seg++) {
+            
+               if(Config.CalList[Clover-1][Crystal][Seg] == 0) {
+                  continue;
+               }
 
                // Set source and histogram name and output name based on seg number and file type
                if(FileType==1) {
@@ -249,10 +262,10 @@ int CalibSpectra(std::string filename)
                }
 
                // Load histogram
-               if(FileType == 1) {
+               if(FileType == 1) {  // Files where the histogram can be found directly
                   Histo = (TH1F *) file->FindObjectAny(HistName.c_str());
                }
-               else {
+               else {  // Files where it needs to be puled from a TFolder i.e. TIGRESS DAQ files
                   Histo = (TH1F *) Folder->FindObjectAny(HistName.c_str());
                }
                
@@ -363,9 +376,8 @@ int CalibSpectra(std::string filename)
          for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
             for (Seg = 0; Seg <= SEGS + 1; Seg++) {
 
-               PlotOn = 1;
-               if (Seg == 0) {
-                  PlotOn = 1;
+               if(Config.CalList[Clover-1][Crystal][Seg] == 0) {
+                  continue;
                }
 
                if (Config.PrintVerbose) {

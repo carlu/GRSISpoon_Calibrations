@@ -166,7 +166,7 @@ int main(int argc, char **argv)
          if(Config.PrintBasic) {
             cout << "Attempting offline calibration on histograms in file: " << Config.files.at(i) << endl;
          }
-         if(CalibSpectra(Config.files.at(i))==0) {  // return after one succesful file so outputs are not overwritten.
+         if(CalibSpectra(Config.files.at(i)) >=  0) {  // return after one succesful file so outputs are not overwritten.
             return 0;
          }
       }
@@ -592,6 +592,9 @@ int LoadDefaultSettings()
    Config.CalEnergy = 1;
    Config.CalWave = 1;
    Config.CalReport = 1;
+   Config.CalFile = 0;
+   memset(&Config.CalList,1,CLOVERS*CRYSTALS*(SEGS+2)*sizeof(bool));
+   Config.CalListProvided = 0;
    // Output
    Config.WriteFits = 1;   
    // Plots
@@ -619,19 +622,20 @@ int LoadDefaultSettings()
 int ReadCommandLineSettings(int argc, char **argv)
 {
 
-   // -f : input files
-   // -e : EnergyCalFile
-   // -w : WaveCalFile
-   // -s : specify source 60Co 152Eu...
-   // -c : specify config options file  #COMMENT\nNAME VALUE\nNAME VALUE
-   // -o : output path (prepended to all output files)
-   // -h : print help and exit
-   // -v : verbose
-   // -q : Quiet
-   // -n : max number of events
-   // -p : plot (Clover) (Crystal) (Seg)
-   // -z : add extra calibration point at 0ch = 0keV
-
+   // -f : input (f)iles
+   // -e : (E)nergyCalFile
+   // -w : (W)aveCalFile
+   // -s : specify (s)ource 60Co 152Eu...
+   // -c : specify (c)onfig options file  #COMMENT\nNAME VALUE\nNAME VALUE
+   // -o : (o)utput path (prepended to all output files)
+   // -h : print (h)elp and exit
+   // -v : (v)erbose
+   // -q : (Q)uiet
+   // -n : max (n)umber of events
+   // -p : (p)lot (Clover) (Crystal) (Seg)
+   // -z : add extra calibration point at (z)ero  i.e. 0ch = 0keV
+   // -d : select (d)etector to be calibrated.  
+   
    // --cal : run calibration
    // --calspec : run calibration on spectrum file rather than fragment tree 
    // --eff : run efficiency
@@ -639,14 +643,10 @@ int ReadCommandLineSettings(int argc, char **argv)
 
    int i, j, n;
    int Plot[3];
+   int FitList[3];
+   int Limits[3] = {CLOVERS,CRYSTALS,SEGS+2};
    bool test;
    bool RunConfGiven = 0;
-
-   /*cout << "List of arguments (" << argc << " total)" << endl;
-      for(i=0;i<argc;i++) {
-      cout << i << ": " << argv[i] << "\t";
-      }
-      cout << endl << endl; */
 
    if (argc < 3) {
       cout << "No input file provided!" << endl << endl;
@@ -768,6 +768,7 @@ int ReadCommandLineSettings(int argc, char **argv)
          Config.PrintVerbose = 0;
       }         
       // Plots 
+      // ----------------------------------------
       if(strncmp(argv[i], "-p", 2) == 0) {
          if (i >= argc - 1 || strncmp(argv[i + 1], "-", 1) == 0) {      // return error if no file
             cout << "Plotting all fits." << endl;
@@ -780,21 +781,19 @@ int ReadCommandLineSettings(int argc, char **argv)
             while (strncmp(argv[i + 1], "-", 1) > 0) {     // loop plot items 
                Plot[n] = atoi(argv[++i]);  
                cout << "n,Plot[n] = " << n << ", " << Plot[n] << endl;
-               if((Plot[n] < 0) || (Plot[n] > CLOVERS)) {
+               if((Plot[n] < 0) || (Plot[n] > Limits[n])) {
                   cout << "Error with plot specification!" << endl;
                   return -1;
                }
                n++;
-               if (n==3) {
-                  break;
-               }
+               if (n==3) {break;}
                if (i >= argc - 1) {
                   cout << "Need to specify (Clover) (Crystal) (Seg) for plots" << endl;
                   return -1;
                }
             }
             cout << "Plotting Cl: " << Plot[0] << " Cr: " << Plot[1] << " Seg: " << Plot[2] << endl;
-            Config.CalibPlots[Plot[0]][Plot[1]][Plot[2]] = 1;
+            Config.CalibPlots[Plot[0]-1][Plot[1]][Plot[2]] = 1;
          }   
       }
       // add 0ch = 0keV to calibration
@@ -802,6 +801,35 @@ int ReadCommandLineSettings(int argc, char **argv)
       if (strncmp(argv[i], "-z", 2) == 0) {
          Config.FitZero = 1;
       }      
+      // List of detectors to fit
+      // -------------------------------------------
+      if (strncmp(argv[i], "-d", 2) == 0) {
+         if (i >= argc - 1 || strncmp(argv[i + 1], "-", 1) == 0) {
+            cout << "Need to specify (Clover) (Crystal) (Seg) with \"-d\" option." << endl;
+            return -1;
+         }
+         else {
+            n=0;
+            while (strncmp(argv[i + 1], "-", 1) > 0) { 
+               FitList[n] = atoi(argv[++i]);
+               if((FitList[n] < 0) || (FitList[n] > Limits[n])) {
+                  cout << "Error with plot specification!" << endl;
+                  return -1;
+               }
+               n++;
+               if (n==3) {break;}
+               if (i >= argc - 1) {
+                  cout << "Need to specify (Clover) (Crystal) (Seg) with \"-d\" option." << endl;
+                  return -1;
+               }
+            }
+            if(Config.CalListProvided==0) {
+               Config.CalListProvided = 1;
+               memset(&Config.CalList,0,CLOVERS*CRYSTALS*(SEGS+2)*sizeof(bool));
+            }
+            Config.CalList[FitList[0]-1][FitList[1]][FitList[2]] = 1;
+         }
+      }
       // Run options
       // -------------------------------------------
       if (strncmp(argv[i], "--", 2) == 0) {     // Long option used.
@@ -852,25 +880,26 @@ void PrintHelp()
    cout << "To run:" << endl << "./Sort -f InFile1 [InFile2...] " << endl;
    cout << "Options: " << endl;
    cout <<
-       "[-e (energy Calibration File)] - select alternate energy calibration file.  In the absense of an entry in this file, all channels will default to using the calibrated energy from the input TTree."
+       "[-e (energy Calibration File)] - select alternate (e)nergy calibration file.  In the absense of an entry in this file, all channels will default to using the calibrated energy from the input TTree."
        << endl;
-   cout << "\tFormat for calibration file should be (TIGNOM) (some other string e.g. chg or wavechg) (g0) (g1) [(g2) (g3)].  Lines begining \"#\" will be ignored." << endl;   
+   cout << "Format for calibration file should be (TIGNOM) (some other string e.g. chg or wavechg) (g0) (g1) [(g2) (g3)].  Lines begining \"#\" will be ignored." << endl;   
    cout <<
-       "[-w (Wave calibration file)] - select calibration for energy derived from waveforms.  No defaults. Required for succesfully running XTalk analysis. Format same as for energy calibration file."
+       "[-w (Wave calibration file)] - select calibration for energy derived from (w)aveforms.  No defaults. Required for succesfully running XTalk analysis. Format same as for energy calibration file."
        << endl;
-   cout << "[-s (Source e.g. 60Co, 152eu)] - select source to be used for calibration." << endl;
-   cout << "[-n N] - limit the number of events processed to N" << endl;
-   cout << "[-o (path)] - save all output to (path) rather than ./" << endl;
+   cout << "[-s (Source e.g. 60Co, 152eu)] - select (s)ource to be used for calibration." << endl;
+   cout << "[-n N] - limit the (n)umber of events processed to N" << endl;
+   cout << "[-o (path)] - save all (o)utput to (path) rather than ./" << endl;
    cout <<
        "[--cal/--eff/--prop] - run the calibration, efficiency, or proportianal crosstalk parts of the code on a fragment tree input."
        << endl;
-   cout <<
+   cout << 
        "[--calspec] - run calibration on a histogram file (CalibOutXXXX.root, hisXXXX.root).  This option overrides all other run options."
        << endl;
    cout << "\tCalibOutX.root format assumes spectra named according to those produced by --cal." << endl;
    cout << "\thisX.root assumes no wave spectra and format ChrgXXXX names with numbers according to TIGRESS DAQ analyser convention" << endl;
    cout << "[-q] - Quiet mode.  [-v] - Verbose mode.  Default prints progress through run and configuration.  Quiet doesn't.  Verbose also prints other stuff" << endl;
-   cout << "[-p (Clover) (Crystal) (Seg)] - Plot certain segment when doing calibration.  " << endl;
+   cout << "[-p (Clover) (Crystal) (Seg)] - Plot certain segment when doing calibration.  With no additional arguments will plot all." << endl;
    cout << "[-z] - Include an additional point at 0ch = 0keV in any calibrations." << endl;
+   cout << "[-d (Clover) (Crystal) (Seg)] - Selects a particular (d)etection element to fit.  Defaults to all. Affect --calspec only" << endl;
    cout << endl;
 }

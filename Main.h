@@ -148,7 +148,9 @@ struct RunConfig {              // this struct will hold all information
    bool CalEnergy;              // fit charge spectra
    bool CalWave;                // fit wave-charge spectra
    bool CalReport;              // write full report on peak fitting as well as list of gains
-   bool CalFile;                // produc a .cal file, readable by GRSISpoon
+   bool CalFile;                // produce a .cal file, readable by GRSISpoon
+   bool CalList[CLOVERS][CRYSTALS][SEGS+2]; // mask to determine which channels CalibSpectra() should run on
+   bool CalListProvided;
    // Output
    bool WriteFits;              // --cal: write histo after fits, --calof: write new file with histos and fits
    // What to plot
