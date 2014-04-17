@@ -12,7 +12,7 @@
 // Printing info
 #define PRINT_OUTPUT 1
 #define PRINT_VERBOSE 0
-#define PRINT_FREQ 50000
+#define PRINT_FREQ 5000
 // Main loop control
 #define MAX_EVENTS 0
 #define DEBUG_TREE_LOOP 0
@@ -121,7 +121,10 @@ struct RunConfig {              // this struct will hold all information
    bool PrintVerbose;
    // Limit on number of events
    int EventLimit;
-
+   // ROOT stuff
+   unsigned int ROOT_MaxVirtSize = ROOT_VIRT_SIZE;
+   
+   
    // Global physics settings
    // ------------------------------------------
    // Properties of waveforms stored in the data

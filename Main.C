@@ -287,7 +287,7 @@ int main(int argc, char **argv)
       //cout << "HERE!!!" << endl;
 
       Branch->SetAddress(&pFrag);
-      Tree->SetMaxVirtualSize(ROOT_VIRT_SIZE);
+      Tree->SetMaxVirtualSize(Config.ROOT_MaxVirtSize);
       Branch->LoadBaskets();
 
       NumTreeEntries = Tree->GetEntries();
@@ -647,13 +647,14 @@ int ReadCommandLineSettings(int argc, char **argv)
    // -c : specify (c)onfig options file  #COMMENT\nNAME VALUE\nNAME VALUE
    // -o : (o)utput path (prepended to all output files)
    // -h : print (h)elp and exit
+   // -vr: Set ROOT virtual memory size in bytes
    // -v : (v)erbose
    // -q : (Q)uiet
    // -n : max (n)umber of events
    // -p : (p)lot (Clover) (Crystal) (Seg)
    // -z : add extra calibration point at (z)ero  i.e. 0ch = 0keV
    // -d : select (d)etector to be calibrated.  
-
+   
    // --cal : run calibration
    // --calspec : run calibration on spectrum file rather than fragment tree 
    // --eff : run efficiency
@@ -772,6 +773,22 @@ int ReadCommandLineSettings(int argc, char **argv)
             return -1;
          }
          Config.OutPath = argv[++i];
+      }
+      // ROOT virtual memory max size
+      // -----------------------------------
+      if (strncmp(argv[i],"-vr", 3)==0) {
+         if (i >= argc - 1 || strncmp(argv[i + 1], "-", 1) == 0) { 
+            cout << "No size specified after \"-vr\" option" << endl;
+            return -1;
+         }
+         if (Config.EventLimit < 0) {
+            cout << "Negative Virtual RAM size specified" << endl;
+            return -1;
+         }
+         else {
+            Config.ROOT_MaxVirtSize = atoi(argv[++i]);
+         }
+         
       }
       // Verbose mode
       // -------------------------------------------
