@@ -78,8 +78,10 @@ static TRandom3 rand1;
 
 // Counters
 int FileCount = 0;
-int EventCount = 0;
-int FragCount = 0;
+int TreeEventCount = 0;
+int ChainEventCount = 0;
+int TreeFragCount = 0;
+int ChainFragCount = 0;
 int EmptyEventCount = 0;
 
 // Storing run settings
@@ -247,6 +249,7 @@ int main(int argc, char **argv)
    int NumTreeEntries = -1;
    int NumTreeEvents = -1;
    int FirstTreeEvent = -1;
+   int ProcessedFragments = 0;
 
    for (ChainEvent = 0; ChainEvent < NumChainEntries; ChainEvent++) {
 
@@ -291,19 +294,22 @@ int main(int argc, char **argv)
       Branch->LoadBaskets();
 
       NumTreeEntries = Tree->GetEntries();
-      NumTreeEvents = (int) Tree->GetMaximum("TriggerId");
       FirstTreeEvent = (int) Tree->GetMinimum("TriggerId");
+      NumTreeEvents = ((int) Tree->GetMaximum("TriggerId") ) - FirstTreeEvent;
+      
 
       // cout << "HERE!!!! " << NumChainEntries << " " << NumTreeEntries << " " << NumTreeEvents << endl;
-
-      for (int TreeEvent = 0; TreeEvent < NumTreeEvents; TreeEvent++) {
+      TreeFragCount = 0;
+      TreeEventCount = 0;
+      for (int TreeEvent = 0; TreeEvent < (NumTreeEvents+FirstTreeEvent); TreeEvent++) {
          //for (int TreeEvent = FirstTreeEvent; TreeEvent < NumTreeEvents; TreeEvent++) {   
          evFrags.clear();
          int FragNum = 1;
 
          while (Tree->GetEntryWithIndex(TreeEvent, FragNum++) != -1) {
             evFrags.push_back(*pFrag);
-            FragCount++;
+            TreeFragCount++;
+            ChainFragCount++;
             if (DEBUG_TREE_LOOP) {
                cout << "FragNum: " << FragNum << " j: " << TreeEvent;
             }
@@ -318,11 +324,12 @@ int main(int argc, char **argv)
             //cout << "HERE!!!!! " << EmptyEventCount << endl;
             continue;
          } else {
-            EventCount++;
+            TreeEventCount++;
+            ChainEventCount++;
          }
 
          // do something with the evFrag vector (contains a built event)... ProcessEvent(evFrags); 
-         if (Config.EventLimit > 0 && EventCount >= Config.EventLimit) {
+         if (Config.EventLimit > 0 && ChainEventCount >= Config.EventLimit) {
             if (Config.PrintBasic) {
                cout << "Maximum number of events (" << Config.EventLimit << ") reached.  Terminating..." << endl;
             }
@@ -343,20 +350,18 @@ int main(int argc, char **argv)
          // Print info to stdout
          if (Config.PrintBasic && (TreeEvent % PRINT_FREQ) == 0) {
             cout << "----------------------------------------------------------" << endl;
-            cout << "  Tree  " << TreeNum + 1 << " / " << nTrees << endl;
-            //cout << "  Event " << EventCount +
-            //    EmptyEventCount << " / " << NumChainEvents << "   (" << EventCount << " good, " << EmptyEventCount <<
-            //    " empty)" << endl;
-            cout << "  Event " << EventCount << " / " << NumChainEvents << endl;
-            cout << "  Frag  " << FragCount << " / " << NumChainEntries << endl;
-            cout << "\t  in " << StopWatch.RealTime() << " seconds." << endl;
+            cout << "  Tree  " << TreeNum + 1 << " / " << nTrees << "  (Frag ";
+            cout << ChainFragCount << " / " << NumChainEntries << "):" << endl;
+            cout << "\tEvent " << TreeEventCount << " / " << NumTreeEvents << endl;
+            cout << "\tFrag  " << TreeFragCount << " / " << NumTreeEntries << endl;
+            cout << "  Time: " << StopWatch.RealTime() << " seconds." << endl;
             StopWatch.Continue();
             cout << "----------------------------------------------------------" << endl;
          }
 
       }
 
-      if (Config.EventLimit > 0 && EventCount >= Config.EventLimit) {
+      if (Config.EventLimit > 0 && ChainEventCount >= Config.EventLimit) {
          break;
       }
 

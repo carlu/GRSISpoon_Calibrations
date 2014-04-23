@@ -12,13 +12,14 @@
 // Printing info
 #define PRINT_OUTPUT 1
 #define PRINT_VERBOSE 0
-#define PRINT_FREQ 5000
+#define PRINT_FREQ 50000
 // Main loop control
 #define MAX_EVENTS 0
 #define DEBUG_TREE_LOOP 0
 // ROOT Stuff
-#define ROOT_VIRT_SIZE    10000000      // 1x10^7 or ~10Mb seems to run fast-ish but not freeze the system completely.
+#define ROOT_VIRT_SIZE    500000000      // 1x10^7 or ~10Mb seems to run fast-ish but not freeze the system completely.
                                      // that's on my 6Gb 2.6GHz i5 (YMMV)
+                                     // Correction: for a longer run file 10^9 was needed
 // Stuff about the experimental setup
 #define CLOVERS  16
 #define CRYSTALS  4
