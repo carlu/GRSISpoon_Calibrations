@@ -627,6 +627,8 @@ int LoadDefaultSettings()
    memset(&Config.CalibPlots, 0, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
    // Calibrating options
    Config.FitZero = 0;
+   memset(&Config.ManualPeakSelect, 0, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
+   Config.ManualPeakCorrection = 0;
 
    // Options for CoincEff()
    Config.OutputEff = 1;
@@ -657,6 +659,8 @@ int ReadCommandLineSettings(int argc, char **argv)
    // -q : (Q)uiet
    // -n : max (n)umber of events
    // -p : (p)lot (Clover) (Crystal) (Seg)
+   // -mp: (m)anual (p)eak  (Clover) (Crystal) (Seg)  : manually selcect peaks to be used on this seg
+   //                                                    or all segs if none specified
    // -z : add extra calibration point at (z)ero  i.e. 0ch = 0keV
    // -d : select (d)etector to be calibrated.  
    
@@ -837,6 +841,36 @@ int ReadCommandLineSettings(int argc, char **argv)
             Config.CalibPlots[Plot[0] - 1][Plot[1]][Plot[2]] = 1;
          }
       }
+      // Manual PEak Selection
+      // -------------------------------------------
+      if (strncmp(argv[i],"-mp", 3)==0) {
+         if (i >= argc - 1 || strncmp(argv[i + 1], "-", 1) == 0) { // if last arg or next is new option
+            cout << "--------------------------------------" << endl;
+            cout << "Manual Peak Selection For Calibration!" << endl;
+            cout << "--------------------------------------" << endl;
+            memset(&Config.ManualPeakSelect, 1, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
+         } else {
+            n = 0;
+            while (strncmp(argv[i + 1], "-", 1) > 0) {  // loop plot items 
+               Plot[n] = atoi(argv[++i]);
+               cout << "n,Plot[n] = " << n << ", " << Plot[n] << endl;
+               if ((Plot[n] < 0) || (Plot[n] > Limits[n])) {  // allowed range is the same as for plotting
+                  cout << "Error with specification of manual peak select!" << endl;
+                  return -1;
+               }
+               n++;
+               if (n == 3) {
+                  break;
+               }
+               if (i >= argc - 1) {
+                  cout << "Need to specify (Clover) (Crystal) (Seg) for manual peak select" << endl;
+                  return -1;
+               }
+            }
+            cout << "Manually selecting peaks for Cl: " << Plot[0] << " Cr: " << Plot[1] << " Seg: " << Plot[2] << endl;
+            Config.ManualPeakSelect[Plot[0] - 1][Plot[1]][Plot[2]] = 1;
+         }
+      }
       // add 0ch = 0keV to calibration
       // -------------------------------------------
       if (strncmp(argv[i], "-z", 2) == 0) {
@@ -952,6 +986,9 @@ void PrintHelp()
    cout << "[-z] - Include an additional point at 0ch = 0keV in any calibrations." << endl;
    cout <<
        "[-d (Clover) (Crystal) (Seg)] - Selects a particular (d)etection element to fit.  Defaults to all. Affect --calspec only"
+       << endl;
+   cout <<
+       "[-mp (Clover) (Crystal) (Seg)] - Manually selects calibration peaks for a particular (d)etection element to   Defaults to all."
        << endl;
    cout << endl;
 }

@@ -159,12 +159,14 @@ struct RunConfig {              // this struct will hold all information
    bool WriteFits;              // --cal: write histo after fits, --calof: write new file with histos and fits
    // What to plot
    bool PlotFits;
-   bool CalibPlots[CLOVERS][CRYSTALS][SEGS + 2];
+   bool CalibPlots[CLOVERS][CRYSTALS][SEGS + 2];  // records if fits should be plotted for each channel
    bool PlotCalib;
    bool PlotCalibSummary;
    // Calibration options
    bool FitZero;                // Add extra calibration point at 0ch = 0keV
-
+   bool ManualPeakSelect[CLOVERS][CRYSTALS][SEGS + 2];  // records if manual peak selection should be used
+   bool ManualPeakCorrection;  // Manual peak selection if auto fails
+   
    // CoincEff()
    // What to plot
    bool PlotEff;

@@ -172,8 +172,6 @@ void InitCalib()
 void Calib(std::vector < TTigFragment > &ev)
 {
 
-   //cout << "HERE!!!!!! " << ev.size() << endl;
-
    //Variables
    int i, j, k;
    int Samp, Length;
@@ -360,7 +358,7 @@ void Calib(std::vector < TTigFragment > &ev)
                   Settings.SigmaEstZero = ENERGY_SIGMA_ZERO;
                   Settings.SigmaEst1MeV = ENERGY_SIGMA_1MEV;
                   Settings.FitZero = INCLUDE_ZERO;
-                  Settings.PlotOn = PlotOn;
+                  Settings.PlotOn = 0;  // don't plot temp spectra fits
 
                   FitSuccess = FitGammaSpectrum(hCharge[Clover - 1][Crystal][0], &Fit, Settings);
 
@@ -406,7 +404,8 @@ void FinalCalib()
    int Crystal = 0;
    int Seg = 0;
    int FitSuccess = 0;
-   int PlotOn = 0;
+   bool PlotOn = 0;
+   bool PeakSelect=0;
    int Source = 0;
    int i;
    ofstream GainOut;
@@ -535,6 +534,13 @@ void FinalCalib()
                         PlotOn = 1;
                      }
                   }
+                  // Check if Manual peak select should be active
+                  if (Config.CalibPlots[Clover - 1][Crystal][Seg]) {
+                     PeakSelect  = 1;
+                  }
+                  else {
+                     PeakSelect = 0;
+                  }
                   // Perform Fit                  
                   SpectrumFit Fit = { 0 };
                   FitSettings Settings = { 0 };
@@ -548,6 +554,7 @@ void FinalCalib()
                   Settings.SigmaEst1MeV = ENERGY_SIGMA_1MEV;
                   Settings.FitZero = Config.FitZero;
                   Settings.PlotOn = PlotOn;
+                  Settings.PeakSelect = PeakSelect;
 
                   FitSuccess = FitGammaSpectrum(Histo, &Fit, Settings);
 
@@ -667,6 +674,13 @@ void FinalCalib()
                         PlotOn = 1;
                      }
                   }
+                  // Check if Manual peak select should be active
+                  if (Config.CalibPlots[Clover - 1][Crystal][Seg]) {
+                     PeakSelect  = 1;
+                  }
+                  else {
+                     PeakSelect = 0;
+                  }
                   // Perform Fit                  
                   SpectrumFit WaveFit = { 0 };
                   FitSettings Settings = { 0 };
@@ -680,6 +694,7 @@ void FinalCalib()
                   Settings.SigmaEst1MeV = WAVE_SIGMA_1MEV;
                   Settings.FitZero = Config.FitZero;
                   Settings.PlotOn = PlotOn;
+                  Settings.PeakSelect = PeakSelect;
 
                   FitSuccess = FitGammaSpectrum(Histo, &WaveFit, Settings);
 
