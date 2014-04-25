@@ -90,12 +90,14 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
    } else {
       cout << "Bad histo! " << endl;
    }
+
    if (Config.PrintVerbose) {
       cout << "\tIntegral: " << Integral;
    }
    if (Integral > MIN_FIT_COUNTS) {
 
-      if (Settings.PlotOn) {
+      if (Settings.PlotOn || Settings.PeakSelect || Settings.BackupPeakSelect) {
+         cout << "Canvas Update 1" << endl;
          cCalib1->cd(1);
          cCalib1->Modified();
          cCalib1->Update();
@@ -143,13 +145,13 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
       } else {
          return -2;
       }
-      
-      
+       
       // Plot spectrum 
       if(Settings.PlotOn || Settings.PeakSelect || (PeakFound==0 && Settings.BackupPeakSelect)) {
+         cout << "Canvas Update 2" << endl;
          cCalib1->cd(1);
          Histo->Draw();
-         cCalib1->Modified();
+         //cCalib1->Modified();
          cCalib1->Update();
          App->Run(1);
       }
@@ -169,7 +171,8 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
          }
          
          //gSystem->ProcessEvents();
-         //Histo->Draw();
+         cout << "Canvas Update 3" << endl;
+         Histo->Draw();
          cCalib1->Update();
          App->Run(1);
 
@@ -520,7 +523,7 @@ int FitSinglePeak(TH1F * Histo, int Line, float Centre, TF1 * FitRange, FitResul
    if (Config.PrintVerbose) {
       cout << "Fitting line " << Line << " Min: " << Min << " Max: " << Max << endl;
    }
-   if (PLOT_FITS) {
+   if (Settings.PlotOn) {
       cCalib1->cd();
    }
 
@@ -584,6 +587,7 @@ int FitSinglePeak(TH1F * Histo, int Line, float Centre, TF1 * FitRange, FitResul
    }
 
    if (Settings.PlotOn) {
+      cout << "Canvas Update 4" << endl;
       cCalib1->cd();
       Histo->Draw();
       cCalib1->Update();
