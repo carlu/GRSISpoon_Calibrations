@@ -572,10 +572,11 @@ int LoadDefaultSettings()
    Config.WaveCalibrationFile = "./WCal.txt";
    Config.HaveWaveCalibration = 0;
 
-   float Sources[3][10] = {
+   float Sources[4][10] = {
       {1173.237, 1332.501},     // 60Co
       {121.7817, 1408.006, 244.6975, 344.2785, 411.116, 778.9040, 964.079, 1112.074},   // 152Eu
-      {344.2785, 1408.006, 244.6975, 411.116, 778.9040, 964.079, 1112.074}      // 152Eu (no 121)
+      {344.2785, 1408.006, 244.6975, 411.116, 778.9040, 964.079, 1112.074},      // 152Eu (no 121)
+      {356.017,  80.9971,  276.398,  302.853, 383.851} // 133Ba
    };
 
    // Global physics settings
@@ -596,7 +597,12 @@ int LoadDefaultSettings()
       SourceTemp.push_back(Sources[2][i]);
    }
    Config.Sources.push_back(SourceTemp);
-
+   SourceTemp.clear();
+   for (int i = 0; i < 5; i++) {
+      SourceTemp.push_back(Sources[3][i]);
+   }
+   Config.Sources.push_back(SourceTemp);
+   
    Config.SourceNumCore = SOURCE_NUM_CORE;
    Config.SourceNumFront = SOURCE_NUM_FRONT;
    Config.SourceNumBack = SOURCE_NUM_BACK;
@@ -748,6 +754,12 @@ int ReadCommandLineSettings(int argc, char **argv)
             Config.SourceNumCore = 1;
             Config.SourceNumFront = 1;
             Config.SourceNumBack = 2;
+            test = 1;
+         }
+         if (strncmp(argv[i + 1], "133Ba", 5) == 0 || strncmp(argv[i + 1], "Ba133", 5) == 0 || strncmp(argv[i + 1], "133ba", 5) == 0 || strncmp(argv[i + 1], "ba133", 5) == 0) {        // or is it 133Ba
+            Config.SourceNumCore = 3;
+            Config.SourceNumFront = 3;
+            Config.SourceNumBack = 3;
             test = 1;
          }
          if (test == 0) {       // or is it somethimng else
