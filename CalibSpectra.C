@@ -63,6 +63,7 @@ int CalibSpectra(std::string filename)
    int Source = 0;
    int FitSuccess = 0;
    bool PlotOn = 0;
+   bool PeakSelect=0;
    int FileType = 0;
    int Integration = 0;
    float Dispersion = 0.0;
@@ -283,6 +284,13 @@ int CalibSpectra(std::string filename)
                         PlotOn = 1;
                      }
                   }
+                  // Check if Manual peak select should be active
+                  if (Config.ManualPeakSelect[Clover - 1][Crystal][Seg]) {
+                     PeakSelect  = 1;
+                  }
+                  else {
+                     PeakSelect = 0;
+                  }
                   // Perform Fit                  
                   SpectrumFit Fit = { 0 };
                   FitSettings Settings = { 0 };
@@ -302,7 +310,9 @@ int CalibSpectra(std::string filename)
                   Settings.SigmaEst1MeV = ENERGY_SIGMA_1MEV;
                   Settings.FitZero = Config.FitZero;
                   Settings.PlotOn = PlotOn;
-
+                  Settings.PeakSelect = PeakSelect;
+                  Settings.BackupPeakSelect = 0;
+                  
                   FitSuccess = FitGammaSpectrum(Histo, &Fit, Settings);
 
                   // If fit succesful, generate output....
@@ -418,6 +428,14 @@ int CalibSpectra(std::string filename)
                      PlotOn = 1;
                   }
                }
+               // Check if Manual peak select should be active
+               if (Config.ManualPeakSelect[Clover - 1][Crystal][Seg]) {
+                  PeakSelect  = 1;
+               }
+               else {
+                  PeakSelect = 0;
+               }
+                  
                // Perform Fit                  
                SpectrumFit WaveFit = { 0 };
                FitSettings Settings = { 0 };
@@ -431,7 +449,9 @@ int CalibSpectra(std::string filename)
                Settings.SigmaEst1MeV = WAVE_SIGMA_1MEV;
                Settings.FitZero = Config.FitZero;
                Settings.PlotOn = PlotOn;
-
+               Settings.PeakSelect = PeakSelect;
+               Settings.BackupPeakSelect = 0;
+               
                FitSuccess = FitGammaSpectrum(Histo, &WaveFit, Settings);
 
                if (FitSuccess > 0) {

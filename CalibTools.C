@@ -26,7 +26,7 @@ using namespace std;
 #include <TCanvas.h>
 #include <TApplication.h>
 #include <TGraphErrors.h>
-
+#include <TSystem.h>
 
 // TriScope libraries
 //#include "TTigFragment.h"
@@ -65,6 +65,10 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
    float FitCentre, G, O, dG, dO;       // Fits and values for fast 2 point calibration.
    float Energies[MAX_LINES + 1], dEnergies[MAX_LINES + 1], Centroids[MAX_LINES + 1], dCentroids[MAX_LINES + 1];        // Data for full calibration
    float En1, En2;              // line energies for two point calib
+   int CustomPeak1;
+   int CustomPeak2;
+   float CustomCentroid1;
+   float CustomCentroid2;
    En1 = Config.Sources[Settings.Source][0];
    En2 = Config.Sources[Settings.Source][1];
    float IdealRatio = En1 / En2;
@@ -133,17 +137,81 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
             }
          }
          if (Config.PrintVerbose && PeakFound) {
-            cout << "Best Peak1: " << BestPeak1 << " BestPeak2: " << BestPeak2 << " Ratio: " << PeakPositions[BestPeak1]
+            cout << "BestPeak1: " << BestPeak1 << " BestPeak2: " << BestPeak2 << " Ratio: " << PeakPositions[BestPeak1]
                 / PeakPositions[BestPeak2] << endl;
          }
       } else {
          return -2;
       }
+      
+      // Manual Peak Selection
+      if (Settings.PeakSelect || (PeakFound==0 && Settings.BackupPeakSelect)) {
+         cout << "Peaks: " << endl;
+         for(i=0; i<NumPeaks; i++) {
+            cout << i << ":\t" << PeakPositions[i];
+            if(i==BestPeak1) {
+               cout << "\t**Peak1 (" << En1 << " keV)";
+            }
+            if(i==BestPeak2) {
+               cout << "\t**Peak2 (" << En2 << " keV)";
+            }
+            cout << endl;
+         }
+         cCalib1->cd(1);
+         Histo->Draw();
+         Histo->ls();
+         cCalib1->Modified();
+         cCalib1->Update();
+         App->Run(1);
+         //gSystem->ProcessEvents();
+
+         cout << "Please enter peak number for " << En1 << " keV (-1 to specify custom centroid)" << endl;
+         cin >> CustomPeak1;
+         if(CustomPeak1>NumPeaks) {
+            cout << "What?!" << endl;
+            return -3;
+         }
+         if(CustomPeak1<0){
+            cout << "Enter custom centroid:" << endl;
+            cin >> CustomCentroid1;
+         }
+         else {
+            CustomCentroid1 = PeakPositions[CustomPeak1];
+         }
+         
+         cout << "Please enter peak number for " << En2 << " keV (-1 to specify custom centroid)" << endl;
+         cin >> CustomPeak2;
+         if(CustomPeak2>NumPeaks) {
+            cout << "What?!" << endl;
+            return -3;
+         }
+         if(CustomPeak2<0){
+            cout << "Enter custom centroid:" << endl;
+            cin >> CustomCentroid2;
+         }
+         else {
+            CustomCentroid2 = PeakPositions[CustomPeak2];
+         }
+         
+         PeakPositions[0] = CustomCentroid1;
+         BestPeak1 = 0;
+         PeakPositions[1] = CustomCentroid2;
+         BestPeak2 = 1;
+         PeakFound = 1;
+         cout << "Proceeding with calibration using the following peaks: " << endl;
+         cout << "\t" << PeakPositions[0] << " ch = " << En1 << " keV" << endl;
+         cout << "\t" << PeakPositions[1] << " ch = " << En2 << " keV" << endl;
+      
+      }
+
+     
 
       if (PeakFound == 0) {
          cout << "No matching peaks found!" << endl;
          return -3;
       }
+      
+      
 
 
       if (BestDiff < 0.1) {

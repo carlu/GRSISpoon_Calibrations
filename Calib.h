@@ -58,7 +58,8 @@ struct FitSettings {
    float SigmaEst1MeV;          // "                            "
    bool FitZero;                // Included 0ch=0keV in calibration?
    bool PlotOn;                 // Plot fits
-   bool PeakSelect;
+   bool PeakSelect;             // Select primary peaks rather than find auto
+   bool BackupPeakSelect;       // Fallback to manual peak select if auto fails.
 };
 
 struct FitResult {

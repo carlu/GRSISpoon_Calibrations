@@ -359,7 +359,9 @@ void Calib(std::vector < TTigFragment > &ev)
                   Settings.SigmaEst1MeV = ENERGY_SIGMA_1MEV;
                   Settings.FitZero = INCLUDE_ZERO;
                   Settings.PlotOn = 0;  // don't plot temp spectra fits
-
+                  Settings.PeakSelect = 0;
+                  Settings.BackupPeakSelect = 0;
+                  
                   FitSuccess = FitGammaSpectrum(hCharge[Clover - 1][Crystal][0], &Fit, Settings);
 
                   if (FitSuccess > -1) {
@@ -535,7 +537,7 @@ void FinalCalib()
                      }
                   }
                   // Check if Manual peak select should be active
-                  if (Config.CalibPlots[Clover - 1][Crystal][Seg]) {
+                  if (Config.ManualPeakSelect[Clover - 1][Crystal][Seg]) {
                      PeakSelect  = 1;
                   }
                   else {
@@ -555,7 +557,8 @@ void FinalCalib()
                   Settings.FitZero = Config.FitZero;
                   Settings.PlotOn = PlotOn;
                   Settings.PeakSelect = PeakSelect;
-
+                  Settings.BackupPeakSelect = 0;
+                  
                   FitSuccess = FitGammaSpectrum(Histo, &Fit, Settings);
 
                   // If fit succesful, generate output....
@@ -675,7 +678,7 @@ void FinalCalib()
                      }
                   }
                   // Check if Manual peak select should be active
-                  if (Config.CalibPlots[Clover - 1][Crystal][Seg]) {
+                  if (Config.ManualPeakSelect[Clover - 1][Crystal][Seg]) {
                      PeakSelect  = 1;
                   }
                   else {
@@ -695,7 +698,8 @@ void FinalCalib()
                   Settings.FitZero = Config.FitZero;
                   Settings.PlotOn = PlotOn;
                   Settings.PeakSelect = PeakSelect;
-
+                  Settings.BackupPeakSelect = 0;
+                  
                   FitSuccess = FitGammaSpectrum(Histo, &WaveFit, Settings);
 
                   // Now print reports on results of fits and calibration.
