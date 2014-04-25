@@ -95,7 +95,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
    }
    if (Integral > MIN_FIT_COUNTS) {
 
-      if (PLOT_FITS) {
+      if (Settings.PlotOn) {
          cCalib1->cd(1);
          cCalib1->Modified();
          cCalib1->Update();
@@ -144,26 +144,34 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
          return -2;
       }
       
+      
+      // Plot spectrum 
+      if(Settings.PlotOn || Settings.PeakSelect || (PeakFound==0 && Settings.BackupPeakSelect)) {
+         cCalib1->cd(1);
+         Histo->Draw();
+         cCalib1->Modified();
+         cCalib1->Update();
+         App->Run(1);
+      }
+      
       // Manual Peak Selection
       if (Settings.PeakSelect || (PeakFound==0 && Settings.BackupPeakSelect)) {
          cout << "Peaks: " << endl;
          for(i=0; i<NumPeaks; i++) {
             cout << i << ":\t" << PeakPositions[i];
             if(i==BestPeak1) {
-               cout << "\t**Peak1 (" << En1 << " keV)";
+               cout << "  **Peak1 (" << En1 << " keV)";
             }
             if(i==BestPeak2) {
-               cout << "\t**Peak2 (" << En2 << " keV)";
+               cout << "  **Peak2 (" << En2 << " keV)";
             }
             cout << endl;
          }
-         cCalib1->cd(1);
-         Histo->Draw();
-         Histo->ls();
-         cCalib1->Modified();
+         
+         //gSystem->ProcessEvents();
+         //Histo->Draw();
          cCalib1->Update();
          App->Run(1);
-         //gSystem->ProcessEvents();
 
          cout << "Please enter peak number for " << En1 << " keV (-1 to specify custom centroid)" << endl;
          cin >> CustomPeak1;
@@ -204,15 +212,10 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
       
       }
 
-     
-
       if (PeakFound == 0) {
          cout << "No matching peaks found!" << endl;
          return -3;
       }
-      
-      
-
 
       if (BestDiff < 0.1) {
 

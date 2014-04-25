@@ -321,7 +321,6 @@ int main(int argc, char **argv)
 
          if (FragNum < 3) {     // Init to 1, incremented on first GetEntryWithIndex, so should be at least 3 if any frags found      
             EmptyEventCount++;
-            //cout << "HERE!!!!! " << EmptyEventCount << endl;
             continue;
          } else {
             TreeEventCount++;
@@ -576,7 +575,7 @@ int LoadDefaultSettings()
       {1173.237, 1332.501},     // 60Co
       {121.7817, 1408.006, 244.6975, 344.2785, 411.116, 778.9040, 964.079, 1112.074},   // 152Eu
       {344.2785, 1408.006, 244.6975, 411.116, 778.9040, 964.079, 1112.074},      // 152Eu (no 121)
-      {356.017,  80.9971,  276.398,  302.853, 383.851} // 133Ba
+      {276.398,  356.017,  80.9971, 302.853, 383.851} // 133Ba
    };
 
    // Global physics settings
@@ -618,10 +617,10 @@ int LoadDefaultSettings()
 
    // Options for Calib() and CalibOffline()
    // What to do
-   Config.CalEnergy = 1;
-   Config.CalWave = 1;
-   Config.CalReport = 1;
-   Config.CalFile = 0;
+   Config.CalEnergy = 1;  // Calibrate charge spectra?
+   Config.CalWave = 1;    // Calibrate wave spectra?
+   Config.CalReport = 1;   // Generate report on fits etc
+   Config.CalFile = 0;     // Generate .cal file as used by GRSISpoon 
    memset(&Config.CalList, 1, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
    Config.CalListProvided = 0;
    // Output
@@ -634,7 +633,7 @@ int LoadDefaultSettings()
    // Calibrating options
    Config.FitZero = 0;
    memset(&Config.ManualPeakSelect, 0, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
-   Config.ManualPeakCorrection = 0;
+   Config.ManualPeakCorrection = 1;
 
    // Options for CoincEff()
    Config.OutputEff = 1;
