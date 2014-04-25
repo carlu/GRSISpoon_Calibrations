@@ -663,9 +663,11 @@ int ReadCommandLineSettings(int argc, char **argv)
    // -v : (v)erbose
    // -q : (Q)uiet
    // -n : max (n)umber of events
+   
    // -p : (p)lot (Clover) (Crystal) (Seg)
    // -mp: (m)anual (p)eak  (Clover) (Crystal) (Seg)  : manually selcect peaks to be used on this seg
    //                                                    or all segs if none specified
+   
    // -z : add extra calibration point at (z)ero  i.e. 0ch = 0keV
    // -d : select (d)etector to be calibrated.  
    
