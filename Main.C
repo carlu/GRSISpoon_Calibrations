@@ -232,7 +232,11 @@ int main(int argc, char **argv)
       FileCount++;
    }
 
-   TTigFragment *pFrag = 0;
+   //TTigFragment *pFrag = 0;  
+   // changed above line to one below trying to fix memory leak when looping chain.  
+   // It didn't work but root website suggests doing it with"new" so I will stick with it for now.
+   TTigFragment *pFrag = new TTigFragment();  
+   
    std::vector < TTigFragment > evFrags;
 
    int nTrees = Chain->GetNtrees();
