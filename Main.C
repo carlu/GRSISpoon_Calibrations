@@ -565,6 +565,8 @@ int LoadDefaultSettings()
    Config.PrintVerbose = 0;
 
    Config.EventLimit = MAX_EVENTS;
+   
+   Config.ROOT_MaxVirtSize = ROOT_VIRT_SIZE;
 
    Config.EnergyCalibrationFile = "./ECal.txt";
    Config.HaveAltEnergyCalibration = 0;

@@ -17,7 +17,7 @@
 #define MAX_EVENTS 0
 #define DEBUG_TREE_LOOP 0
 // ROOT Stuff
-#define ROOT_VIRT_SIZE    500000000      // 1x10^7 or ~10Mb seems to run fast-ish but not freeze the system completely.
+#define ROOT_VIRT_SIZE    1024*1024*1024      // 1x10^7 or ~10Mb seems to run fast-ish but not freeze the system completely.
                                      // that's on my 6Gb 2.6GHz i5 (YMMV)
                                      // Correction: for a longer run file 10^9 was needed
 // Stuff about the experimental setup
@@ -123,7 +123,7 @@ struct RunConfig {              // this struct will hold all information
    // Limit on number of events
    int EventLimit;
    // ROOT stuff
-   unsigned int ROOT_MaxVirtSize = ROOT_VIRT_SIZE;
+   unsigned int ROOT_MaxVirtSize;
    
    
    // Global physics settings
