@@ -44,6 +44,8 @@ extern TApplication *App;
 // File pointers:
 static TFile *outfile = 0;
 
+static TDirectory *dEnergy, *dAddBack, *dOther = {0};
+
 // Spectra pointers here, thinking I will start all pointer names with h
 static TH1F *hTestSpectrum = 0;
 static TH1F *hCrystalEn[CLOVERS][CRYSTALS] = { 0 };
@@ -190,21 +192,23 @@ void InitCoincEff()
    // Initialise output file                
    std::string tempstring = Config.OutPath + Config.EffOut;
    outfile = new TFile(tempstring.c_str(), "RECREATE");
+   
+   dEnergy = outfile->mkdir("Energy");
+   dAddBack = outfile->mkdir("AddBack");
+   dOther = outfile->mkdir("Other");
 
    char name[CHAR_BUFFER_SIZE], title[CHAR_BUFFER_SIZE];
    int Clover, Crystal;
+   dOther->cd();
    hTestSpectrum = new TH1F("TS", "Test Spectrum", 4096, 0, 4095);
+   
+   dEnergy->cd();
    hArrayEn = new TH1F("TIG Sum En", "TIGRESS Sum Energy (keV)", EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
    for (Clover = 0; Clover < CLOVERS; Clover++) {
       sprintf(name, "TIG%02d En", Clover + 1);
       sprintf(title, "TIG%02d Clover Energy (keV)", Clover + 1);
       hCloverEn[Clover] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
-      sprintf(name, "TIG%02d AB", Clover + 1);
-      sprintf(title, "TIG%02d Clover Add-Back Energy (keV)", Clover + 1);
-      hCloverABEn[Clover] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
-      sprintf(name, "TIG%02d Gated AB", Clover + 1);
-      sprintf(title, "TIG%02d Gated Clover Add-Back Energy (keV)", Clover + 1);
-      hCloverABEnGated[Clover] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
+      
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
          sprintf(name, "TIG%02d%c En", Clover + 1, Colours[Crystal]);
          sprintf(title, "TIG%02d%c Core Energy (keV)", Clover + 1, Colours[Crystal]);
@@ -216,6 +220,16 @@ void InitCoincEff()
          sprintf(title, "TIG%02d%c Gated Core Energy (keV)", Clover + 1, Colours[Crystal]);
          hCrystalEnGated[Clover][Crystal] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
       }
+   }
+   
+   dAddBack->cd();
+   for (Clover = 0; Clover < CLOVERS; Clover++) {
+      sprintf(name, "TIG%02d AB", Clover + 1);
+      sprintf(title, "TIG%02d Clover Add-Back Energy (keV)", Clover + 1);
+      hCloverABEn[Clover] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
+      sprintf(name, "TIG%02d Gated AB", Clover + 1);
+      sprintf(title, "TIG%02d Gated Clover Add-Back Energy (keV)", Clover + 1);
+      hCloverABEnGated[Clover] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
    }
 }
 
@@ -290,18 +304,24 @@ void FinalCoincEff()
 
    // Write histograms
    outfile->cd();
+   dOther->cd();
    hTestSpectrum->Write();
+   
+   dEnergy->cd();
    hArrayEn->Write();
    for (Clover = 0; Clover < CLOVERS; Clover++) {
       hCloverEn[Clover]->Write();
-      hCloverABEn[Clover]->Write();
-      hCloverABEnGated[Clover]->Write();
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
          hCrystalEn[Clover][Crystal]->Write();
          hCrystalEnGated[Clover][Crystal]->Write();
       }
    }
-
+   dAddBack->cd();
+   for (Clover = 0; Clover < CLOVERS; Clover++) {
+      hCloverABEn[Clover]->Write();
+      hCloverABEnGated[Clover]->Write();
+   }
+   
    outfile->Close();
    if (OUTPUT_EFF) {
       EffOut.close();
