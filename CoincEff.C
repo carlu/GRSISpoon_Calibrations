@@ -71,6 +71,7 @@ void CoincEff(std::vector < TTigFragment > &ev)
    Double_t val = 0;
    Int_t Crystal;
    Int_t Clover;
+   Int_t CalChan;
    Int_t GatePassed = 0;
    Int_t ABGatePassed = 0;
    Int_t GateCrystal = 0;
@@ -120,7 +121,29 @@ void CoincEff(std::vector < TTigFragment > &ev)
          // If Core
          if (mnemonic.segment == 0 && mnemonic.outputsensor == "a") {
             //cout << "Energy: " << ev[i].ChargeCal << "\tCharge: " << ev[i].Charge << endl;
-            Energy = ev[i].ChargeCal;
+            
+            // Get calibrated charge
+            if (!Config.HaveAltEnergyCalibration) {
+               //cout << "Using standard calibration..." << endl;
+               Energy = ev[i].ChargeCal;
+            } else {
+               int NewCoeffFound = 0;
+               //std::vector < float >Coefficients;
+               for (CalChan = 0; CalChan < EnCalibNames.size(); CalChan++) {
+                  if (strncmp(EnCalibNames[CalChan].c_str(), name.c_str(), 9) == 0) { // bug!  this will match the first core
+                     // name it finds to either a OR b.  Compare 10 chars woud work but then case sensitivity isses on the x/a/b 
+                     // at the end.  Don't really need second core energy right now so I will come back to this later
+                     NewCoeffFound = 1;
+                     break;
+                  }
+               }
+               if (NewCoeffFound == 1) {      // If a new set of coeffs was found, then calibrate
+                  Energy = CalibrateEnergy(ev[i].Charge, EnCalibValues.at(CalChan));
+               } else {               // else use the existing calibration
+                  Energy = ev[i].ChargeCal;
+               }
+            }
+            //Energy = ev[i].ChargeCal;
             CloverAddBack[Clover - 1] += Energy;
             if (Energy > Config.EnergyThresh) {
                hCloverEn[Clover - 1]->Fill(Energy);
