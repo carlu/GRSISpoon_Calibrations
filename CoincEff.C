@@ -254,6 +254,7 @@ void FinalCoincEff()
    // First the clover add-back Spectra
    if (OUTPUT_EFF) {
       EffOut << "Clover Addback: (" << hTestSpectrum->GetBinContent(4) << " counts in 1173 gate):" << endl;
+      EffOut << "Const   dConst\tMean   dMean\tSigma   dSigma\tCounts   dCounts\tEff   dEff" << endl;
    }
    for (Clover = 0; Clover < CLOVERS; Clover++) {
       memset(&FitRes, 0.0, sizeof(FitResult));  // Clear this, should be overwritten every time but just in case...
@@ -278,6 +279,7 @@ void FinalCoincEff()
    // then crystal spectra
    if (OUTPUT_EFF) {
       EffOut << endl << "Crystals: (" << hTestSpectrum->GetBinContent(2) << " counts in 1173 gate):" << endl;
+      EffOut << "Const   dConst\tMean   dMean\tSigma   dSigma\tCounts   dCounts\tEff   dEff" << endl;
    }
    for (Clover = 0; Clover < CLOVERS; Clover++) {
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
