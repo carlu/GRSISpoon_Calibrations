@@ -97,7 +97,6 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
    if (Integral > MIN_FIT_COUNTS) {
 
       if (Settings.PlotOn || Settings.PeakSelect || Settings.BackupPeakSelect) {
-         cout << "Canvas Update 1" << endl;
          cCalib1->cd(1);
          cCalib1->Modified();
          cCalib1->Update();
@@ -148,7 +147,6 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
        
       // Plot spectrum 
       if(Settings.PlotOn || Settings.PeakSelect || (PeakFound==0 && Settings.BackupPeakSelect)) {
-         cout << "Canvas Update 2" << endl;
          cCalib1->cd(1);
          Histo->Draw();
          //cCalib1->Modified();
@@ -171,7 +169,6 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
          }
          
          //gSystem->ProcessEvents();
-         cout << "Canvas Update 3" << endl;
          Histo->Draw();
          cCalib1->Update();
          App->Run(1);
@@ -587,7 +584,6 @@ int FitSinglePeak(TH1F * Histo, int Line, float Centre, TF1 * FitRange, FitResul
    }
 
    if (Settings.PlotOn) {
-      cout << "Canvas Update 4" << endl;
       cCalib1->cd();
       Histo->Draw();
       cCalib1->Update();
