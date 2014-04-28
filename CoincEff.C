@@ -336,7 +336,7 @@ void FinalCoincEff()
    CrystalEffPlot.SetMarkerStyle(20);
    CrystalEffPlot.SetMarkerSize(1.0);
    CrystalEffPlot.SetTitle("Crystal Efficiency");
-   CrystalEffPlot.GetYaxis()->SetRange(0,0.05);
+   CrystalEffPlot.GetYaxis()->SetRange(0,1);
    CrystalEffPlot.GetXaxis()->SetBinLabel(1,"TIG01B");
    
    TGraphErrors ABEffPlot(CLOVERS, CloverNumbers, ABEff, NULL, dABEff);
@@ -344,7 +344,7 @@ void FinalCoincEff()
    ABEffPlot.SetMarkerStyle(20);
    ABEffPlot.SetMarkerSize(1.0);
    ABEffPlot.SetTitle("Clover Add-back Efficiency");
-   ABEffPlot.GetYaxis()->SetRange(0,0.05);
+   ABEffPlot.GetYaxis()->SetRange(0,1);
 
    // Write histograms
    outfile->cd();
