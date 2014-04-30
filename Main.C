@@ -173,7 +173,7 @@ int main(int argc, char **argv)
          }
       }
    }
-   // ---- End of offline calibration -----
+   // ---- End of histogram calibration -----
 
    // Load any alternate calibration information 
    if (Config.HaveAltEnergyCalibration) {

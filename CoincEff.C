@@ -266,7 +266,7 @@ void FinalCoincEff()
    float Counts, dCounts, dCountsFit, dCountsStat, Eff, dEff;
    FitResult FitRes;
    ofstream EffOut;
-   char str[256];
+   char str[CHAR_BUFFER_SIZE];
    float CrystalEff[CLOVERS*CRYSTALS] = {0.0};
    float dCrystalEff[CLOVERS*CRYSTALS] = {0.0};
    float ABEff[CLOVERS] = {0.0};
@@ -360,7 +360,10 @@ void FinalCoincEff()
    CrystalEffPlot.SetMarkerSize(1.0);
    CrystalEffPlot.SetTitle("Crystal Efficiency");
    CrystalEffPlot.GetYaxis()->SetRange(0,1);
-   CrystalEffPlot.GetXaxis()->SetBinLabel(1,"TIG01B");
+   for(Clover=1;Clover<=CLOVERS;Clover++) {
+      //sprintf(str,"TIG%02dB",Clover);
+      //CrystalEffPlot.GetXaxis()->SetBinLabel(((Clover-1)*(CRYSTALS+1)),str); 
+   }
    
    TGraphErrors ABEffPlot(CLOVERS, CloverNumbers, ABEff, NULL, dABEff);
    ABEffPlot.SetMarkerColor(2);
@@ -368,11 +371,17 @@ void FinalCoincEff()
    ABEffPlot.SetMarkerSize(1.0);
    ABEffPlot.SetTitle("Clover Add-back Efficiency");
    ABEffPlot.GetYaxis()->SetRange(0,1);
+   for(Clover=1;Clover<=CLOVERS;Clover++) {
+      //sprintf(str,"TIG%02d",Clover);
+      //ABEffPlot.GetXaxis()->SetBinLabel(Clover,str); 
+   }
 
-   // Write histograms
+   // Write plots
    outfile->cd();
    CrystalEffPlot.Write();
    ABEffPlot.Write();
+   
+   // Write histograms
    dOther->cd();
    hTestSpectrum->Write();
    
@@ -400,7 +409,6 @@ void FinalCoincEff()
 
 void FitPeak(TH1F * Histo, float Min, float Max, FitResult * FitRes)
 {
-
    int Integral = Histo->Integral();
    //TSpectrum *Spec = new TSpectrum();
    std::string FitOptions = ("RQEM");
@@ -426,7 +434,7 @@ void FitPeak(TH1F * Histo, float Min, float Max, FitResult * FitRes)
       Centre = (Min + Max) / 2.0;
       FitRange->SetParameter(1, Centre);
       FitRange->SetParameter(2, ENERGY_SIGMA_ZERO + ENERGY_SIGMA_1MEV);
-      BG = (Histo->GetBinContent(xaxis->FindBin(Min)) + Histo->GetBinContent(xaxis->FindBin(Min))) / 2.0;
+      BG = (Histo->GetBinContent(xaxis->FindBin(Min)) + Histo->GetBinContent(xaxis->FindBin(Max))) / 2.0;
       FitRange->SetParameter(3, BG);
 
       Histo->Fit(FitRange, "R,Q");
@@ -439,9 +447,5 @@ void FitPeak(TH1F * Histo, float Min, float Max, FitResult * FitRes)
       FitRes->dSigma = FitRange->GetParError(2);
       FitRes->ConstantBG = FitRange->GetParameter(3);
       FitRes->dConstantBG = FitRange->GetParError(3);
-
-      //cout << FitRes->Const << " " << FitRes->dConst << " " << FitRes->Mean << " " << FitRes->dMean << " " << FitRes->
-      //  Sigma << " " << FitRes->dSigma << endl;
    }
-
 }
