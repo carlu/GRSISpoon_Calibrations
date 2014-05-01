@@ -1,10 +1,3 @@
-
-
-
-// --------------------------------------------------------
-// Data:
-// --------------------------------------------------------
-
 // Structure to hold TIGRESS channel name Mnemonic
 struct Mnemonic {
    int arrayposition;

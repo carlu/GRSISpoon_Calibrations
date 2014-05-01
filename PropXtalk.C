@@ -32,9 +32,10 @@ using namespace std;
 //#include "TTriFoil.h"
 
 // My libraries
-#include "Main.h"
-#include "PropXtalk.h"
 #include "Options.h"
+#include "SortTrees.h"
+#include "PropXtalk.h"
+
 
 // Gain arrays
 //#include "Gains.h"

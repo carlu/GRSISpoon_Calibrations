@@ -11,18 +11,6 @@
 // ----    - C Unsworth                                                        ----
 // --------------------------------------------------------------------------------
 
-
-/*
-
-Medium Term:
-- Add folloowing codes for sorting:
-      - CoincEff.C
-      - Calib.C
-      - PropXtalk.C
-      - Waves.C
-      - DiffXtalk.C
-*/
-
 // C/C++ libraries:
 #include <iostream>
 #include <unordered_set>
@@ -54,7 +42,7 @@ using namespace std;
 #include "TTigFragment.h"
 
 // My libraries
-#include "Main.h"
+#include "SortTrees.h"
 #include "Options.h"
 
 

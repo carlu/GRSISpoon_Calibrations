@@ -31,7 +31,7 @@ using namespace std;
 
 // My libraries
 #include "Options.h"
-#include "Main.h"
+#include "SortTrees.h"
 #include "Calib.h"
 #include "CalibTools.h"
 

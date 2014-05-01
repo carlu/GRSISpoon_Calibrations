@@ -33,9 +33,9 @@ using namespace std;
 //#include "TTriFoil.h"
 
 // My libraries
-#include "CoincEff.h"
-#include "Main.h"
 #include "Options.h"
+#include "SortTrees.h"
+#include "CoincEff.h"
 
 //TStopwatch watch;
 
