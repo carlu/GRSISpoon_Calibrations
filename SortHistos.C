@@ -1,3 +1,6 @@
+// This code is currently being refactored to compile as a standalone executable.
+// To  compile: g++ SortHistos.C CalibTools.C -I$GRSISYS/include --std=c++0x -o SortHistos $GRSISYS/libraries/TigFormat/libFormat.so $GRSISYS/libraries/libCalManager.so $GRSISYS/libraries/libRootIOManager.so -O0 `root-config --cflags --libs`  -lSpectrum -lgsl -lgslcblas -g
+
 using namespace std;
 // C/C++ libraries:
 #include <iostream>
@@ -50,14 +53,16 @@ float InitialSigma = 50.0;
 float InitialGain = 0.16;
 
 
-extern TApplication *App;       // Pointer to root environment for plotting etc
+TApplication *App;       // Pointer to root environment for plotting etc
 
-extern TCanvas *cCalib1, *cCalib1a, *cCalib2, *cWave1, *ctemp;
+// Canvas for plots
+TCanvas *cCalib1, *cCalib1a, *cCalib2, *cWave1, *ctemp;
 
-int CalibSpectra(std::string filename)
+int main(int argc, char **argv)
 {
-
-   // Variables
+   // Variables, Constants, etc
+   int i, j;
+   unsigned int ChainEvent, TreeEvent;
    int Clover = 0;
    int Crystal = 0;
    int Seg = 0;
@@ -82,13 +87,51 @@ int CalibSpectra(std::string filename)
    ofstream WaveOut;
    ofstream WaveReportOut;
    ofstream CalFileOut;
-
    int NumFits;
-
    float CalibEn = 0.0;
    string TestString = "his";
-
    bool FileTypeFound = 0;
+
+   // Set default and read custom options
+   LoadDefaultSettings();
+   if (ReadCommandLineSettings(argc, argv) < 0) {
+      cout << "Failed to configure the run - exiting!" << endl;
+      return -1;
+   }
+   // Set options for histo stats
+   gStyle->SetOptStat("iouRMen");
+
+   // create root environment for interacting with plots etc
+   App = new TApplication("Output", 0, NULL);
+
+   // Timing
+   TStopwatch StopWatch;
+   StopWatch.Start();
+
+   // Initialise TCanvas's
+   cCalib1 = new TCanvas("cCalib1", "Fit", 800, 600);        // Canvas for spectrum plots
+
+   cCalib1a = new TCanvas("cCalib1a", "Calibration", 800, 600);      // Canvas for spectrum plots
+   cCalib1a->Divide(1, 2);
+
+   cCalib2 = new TCanvas("cCalib2", "Calibration Summary", 800, 600);        // Canvas for gain plots and histograms
+   cCalib2->Divide(2, 3);
+   cCalib2->Update();
+
+   cCalib1->cd();
+
+   if (Config.RunSpecCal == 1) {
+      for (i = 0; i < Config.files.size(); i++) {
+         if (Config.PrintBasic) {
+            cout << "Attempting offline calibration on histograms in file: " << Config.files.at(i) << endl;
+         }
+         if (CalibSpectra(Config.files.at(i)) >= 0) {   // return after one succesful file so outputs are not overwritten.
+            return 0;
+         }
+      }
+   }
+   // ---- End of histogram calibration -----
+
 
    // Check file type
    if (strncmp(filename.c_str(), Config.CalOut.c_str(), 8) == 0) {
@@ -188,6 +231,7 @@ int CalibSpectra(std::string filename)
                   continue;
                }
                // Set source and histogram name and output name based on seg number and file type
+               // This should be factored out to a separate function
                if (FileType == 1) {
                   switch (Seg) {
                   case 0:

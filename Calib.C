@@ -59,7 +59,9 @@ void FinalCalib();
 // Functions called from here:
 void ResetTempSpectra();
 
-extern TCanvas *cCalib1, *cCalib1a, *cCalib2, *cWave1, *ctemp;
+// canvases for calibration. 
+TCanvas *cCalib1, *cCalib1a, *cCalib2, *cWave1, *ctemp;
+
 // Storing run settings
 extern RunConfig Config;
 
@@ -150,6 +152,18 @@ void InitCalib()
           Sources[Config.SourceNumBack][1] << "keV (Ratio " << Config.Sources[Config.SourceNumBack][0] /
           Config.Sources[Config.SourceNumBack][1] << ")" << endl;
    }
+   
+   // Initialise TCanvas's
+   cCalib1 = new TCanvas("cCalib1", "Fit", 800, 600);        // Canvas for spectrum plots
+
+   cCalib1a = new TCanvas("cCalib1a", "Calibration", 800, 600);      // Canvas for spectrum plots
+   cCalib1a->Divide(1, 2);
+
+   cCalib2 = new TCanvas("cCalib2", "Calibration Summary", 800, 600);        // Canvas for gain plots and histograms
+   cCalib2->Divide(2, 3);
+   cCalib2->Update();
+
+   cCalib1->cd();
 
    if (PLOT_WAVE) {
       cWave1 = new TCanvas();

@@ -1,5 +1,5 @@
 //To compile:
-// g++ Main.C CoincEff.C Calib.C PropXtalk.C CalibTools.C CalibSpectra.C -I$GRSISYS/include --std=c++0x -o Sort $GRSISYS/libraries/TigFormat/libFormat.so $GRSISYS/libraries/libCalManager.so $GRSISYS/libraries/libRootIOManager.so -O0 `root-config --cflags --libs` -lTreePlayer -lSpectrum -lgsl -lgslcblas -g
+// g++ SortTrees.C CoincEff.C Calib.C PropXtalk.C CalibTools.C Options.C -I$GRSISYS/include --std=c++0x -o SortTrees $GRSISYS/libraries/TigFormat/libFormat.so $GRSISYS/libraries/libCalManager.so $GRSISYS/libraries/libRootIOManager.so -O0 `root-config --cflags --libs` -lTreePlayer -lSpectrum -lgsl -lgslcblas -g
 //To run:
 // ./Sort -f InFile1 [InFile2...] [-e (energy Calibration File)] [-w (Wave calibration file)] [-s (Source)]
 // --------------------------------------------------------------------------------
@@ -42,17 +42,15 @@ using namespace std;
 #include "TTigFragment.h"
 
 // My libraries
-#include "SortTrees.h"
 #include "Options.h"
+#include "SortTrees.h"
+
 
 
 // For tracking real time
 TStopwatch watch;
 
 TApplication *App;              // Pointer to root environment for plotting etc
-
-// canvases for calibration.  To be shared between Calib() and CalibOffline() functions
-TCanvas *cCalib1, *cCalib1a, *cCalib2, *cWave1, *ctemp;
 
 // Rand for gain matching
 static TRandom3 rand1;
@@ -73,9 +71,9 @@ vector < string > WaveCalibNames;
 vector < vector < float >>WaveCalibValues;
 
 // Functions
-int LoadDefaultSettings();
-int ReadCommandLineSettings(int argc, char **argv);
-void PrintHelp();
+//int LoadDefaultSettings();
+//int ReadCommandLineSettings(int argc, char **argv);
+//void PrintHelp();
 
 void SortTree(const char *fn);
 void IncSpectra();
@@ -118,40 +116,6 @@ int main(int argc, char **argv)
    // Timing
    TStopwatch StopWatch;
    StopWatch.Start();
-
-   // Offline calibration here
-   // need to initialise TCanvas's for Calib and CalibOffline here:
-   if (Config.RunSpecCal == 1 || Config.RunCalibration == 1) {
-      // Condition here to test if plotting will be used
-
-      // Initialise TCanvas's
-      cCalib1 = new TCanvas("cCalib1", "Fit", 800, 600);        // Canvas for spectrum plots
-
-      cCalib1a = new TCanvas("cCalib1a", "Calibration", 800, 600);      // Canvas for spectrum plots
-      cCalib1a->Divide(1, 2);
-
-      cCalib2 = new TCanvas("cCalib2", "Calibration Summary", 800, 600);        // Canvas for gain plots and histograms
-      cCalib2->Divide(2, 3);
-      cCalib2->Update();
-
-      cCalib1->cd();
-   }
-   //    - at this stage, all setup required for offline calibration should be complete.
-   //    - check if this is what we want to do.
-   //    - check the file list for a suitable set of spectra
-   //    - call the offline calibration function
-   //    - return from here rather than running the TChain stuff below.
-   if (Config.RunSpecCal == 1) {
-      for (i = 0; i < Config.files.size(); i++) {
-         if (Config.PrintBasic) {
-            cout << "Attempting offline calibration on histograms in file: " << Config.files.at(i) << endl;
-         }
-         if (CalibSpectra(Config.files.at(i)) >= 0) {   // return after one succesful file so outputs are not overwritten.
-            return 0;
-         }
-      }
-   }
-   // ---- End of histogram calibration -----
 
    // Load any alternate calibration information 
    if (Config.HaveAltEnergyCalibration) {
