@@ -28,17 +28,12 @@ using namespace std;
 
 // TriScope libraries
 #include "TTigFragment.h"
-//#include "TFSPC_Info.h"
-//#include "TSharc.h"
-//#include "TTigress.h"
-//#include "TRf.h"
-//#include "TTriFoil.h"
 
 // My libraries
-#include "Calib.h"
+#include "Options.h"
 #include "Main.h"
+#include "Calib.h"
 #include "CalibTools.h"
-//#include "FitSpectrum.h"
 
 // File pointers:
 static TFile *outfile = 0;
@@ -63,16 +58,10 @@ void Calib(std::vector < TTigFragment > &ev);
 void FinalCalib();
 // Functions called from here:
 void ResetTempSpectra();
-//int FitSpectrum(TH1F* Histo, float* Gain, float* Offset, float* dGain, float* dOffset);
-//int FitGammaSpectrum(TH1F* Histo, SpectrumFit *Fit, int Source , int PlotOn);
-
-/*float Sources[3][10] = {
-   {1173.237, 1332.501},
-   {121.7817, 1408.006, 244.6975, 344.2785, 411.116, 778.9040, 964.079, 1112.074},
-   {344.2785, 1408.006, 121.7817, 244.6975, 411.116, 778.9040, 964.079, 1112.074}
-};*/
 
 extern TCanvas *cCalib1, *cCalib1a, *cCalib2, *cWave1, *ctemp;
+// Storing run settings
+extern RunConfig Config;
 
 void InitCalib()
 {

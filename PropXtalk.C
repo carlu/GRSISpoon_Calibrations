@@ -34,7 +34,7 @@ using namespace std;
 // My libraries
 #include "Main.h"
 #include "PropXtalk.h"
-//#include "Gains.h"
+#include "Options.h"
 
 // Gain arrays
 //#include "Gains.h"

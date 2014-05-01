@@ -35,10 +35,13 @@ using namespace std;
 // My libraries
 #include "CoincEff.h"
 #include "Main.h"
+#include "Options.h"
 
 //TStopwatch watch;
 
 extern TApplication *App;
+// Storing run settings
+extern RunConfig Config;
 
 // Parameters and constants
 

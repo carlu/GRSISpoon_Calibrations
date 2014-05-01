@@ -30,17 +30,12 @@ using namespace std;
 
 // TriScope libraries
 //#include "TTigFragment.h"
-//#include "TFSPC_Info.h"
-//#include "TSharc.h"
-//#include "TTigress.h"
-//#include "TRf.h"
-//#include "TTriFoil.h"
 
 // My libraries
-#include "Calib.h"
+#include "Options.h"
 #include "Main.h"
+#include "Calib.h"
 #include "CalibTools.h"
-//#include "FitGammaSpectrum.h"
 
 extern TApplication *App;
 
