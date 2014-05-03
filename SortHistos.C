@@ -1,5 +1,5 @@
 // This code is currently being refactored to compile as a standalone executable.
-// To  compile: g++ SortHistos.C CalibTools.C -I$GRSISYS/include --std=c++0x -o SortHistos $GRSISYS/libraries/TigFormat/libFormat.so $GRSISYS/libraries/libCalManager.so $GRSISYS/libraries/libRootIOManager.so -O0 `root-config --cflags --libs`  -lSpectrum -lgsl -lgslcblas -g
+// To  compile: g++ SortHistos.C CalibTools.C Options.C Utils.C -I$GRSISYS/include --std=c++0x -o SortHistos $GRSISYS/libraries/TigFormat/libFormat.so $GRSISYS/libraries/libCalManager.so $GRSISYS/libraries/libRootIOManager.so -O0 `root-config --cflags --libs`  -lSpectrum -lgsl -lgslcblas -g
 
 using namespace std;
 // C/C++ libraries:
@@ -39,6 +39,7 @@ using namespace std;
 #include "SortTrees.h"
 #include "Calib.h"
 #include "CalibTools.h"
+#include "Utils.h"
 
 //Functions
 // Convert crystal Name/number
@@ -61,7 +62,7 @@ TCanvas *cCalib1, *cCalib1a, *cCalib2, *cWave1, *ctemp;
 int main(int argc, char **argv)
 {
    // Variables, Constants, etc
-   int i, j;
+   int i, j, x;
    unsigned int ChainEvent, TreeEvent;
    int Clover = 0;
    int Crystal = 0;
@@ -73,7 +74,6 @@ int main(int argc, char **argv)
    int FileType = 0;
    int Integration = 0;
    float Dispersion = 0.0;
-   int i, x;
    char CharBuf[CHAR_BUFFER_SIZE];
    string HistName;
    string OutputName;
@@ -120,18 +120,18 @@ int main(int argc, char **argv)
 
    cCalib1->cd();
 
+   string filename;
    if (Config.RunSpecCal == 1) {
       for (i = 0; i < Config.files.size(); i++) {
          if (Config.PrintBasic) {
             cout << "Attempting offline calibration on histograms in file: " << Config.files.at(i) << endl;
          }
-         if (CalibSpectra(Config.files.at(i)) >= 0) {   // return after one succesful file so outputs are not overwritten.
-            return 0;
-         }
+         filename = Config.files.at(i);
+         //if (CalibSpectra(Config.files.at(i)) >= 0) {   // return after one succesful file so outputs are not overwritten.
+           // return 0;
+         //}
       }
    }
-   // ---- End of histogram calibration -----
-
 
    // Check file type
    if (strncmp(filename.c_str(), Config.CalOut.c_str(), 8) == 0) {
@@ -149,7 +149,7 @@ int main(int argc, char **argv)
       return -1;
    }
    // File
-   TFile *file = TFile::Open(filename.c_str());
+   TFile *file = TFile::Open(filename.c_str(),"READ");
    if (file->IsOpen()) {
       if (Config.PrintBasic) {
          cout << filename << " opened!" << endl;

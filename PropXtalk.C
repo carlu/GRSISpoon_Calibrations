@@ -35,7 +35,7 @@ using namespace std;
 #include "Options.h"
 #include "SortTrees.h"
 #include "PropXtalk.h"
-
+#include "Utils.h"
 
 // Gain arrays
 //#include "Gains.h"
