@@ -19,7 +19,6 @@ using namespace std;
 #include <TTreeIndex.h>
 #include <TTreePlayer.h>
 #include <TChain.h>
-//#include <TVector3.h>
 #include <TH1F.h>
 #include <TH2F.h>
 #include <TF1.h>
@@ -173,9 +172,13 @@ int main(int argc, char **argv)
    // Prepare output root file.
    std::string tempstring;
    TFile *outfile;
+   TDirectory *dCharge, *dWaveCharge, *dCalibration = { 0 };
    if (Config.WriteFits) {
       tempstring = Config.OutPath + Config.CalSpecOut;
       outfile = TFile::Open(tempstring.c_str(), "RECREATE");
+      dCharge = outfile->mkdir("Charge");
+      dWaveCharge = outfile->mkdir("WaveCharge");
+      dCalibration = outfile->mkdir("Calibration");
    }
    // Prepare energy calibration output files
    if (Config.CalEnergy) {
@@ -413,7 +416,7 @@ int main(int argc, char **argv)
                   }
                   // Write histo with fits
                   if (Config.WriteFits) {
-                     outfile->cd();
+                     dCharge->cd();
                      Histo->Write();
                   }
                } else {
@@ -520,7 +523,7 @@ int main(int argc, char **argv)
                   }
                }
                if (Config.WriteFits) {
-                  outfile->cd();
+                  dWaveCharge->cd();
                   Histo->Write();
                }
             }
