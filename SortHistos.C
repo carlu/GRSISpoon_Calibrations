@@ -1,4 +1,3 @@
-// This code is currently being refactored to compile as a standalone executable.
 // To  compile: g++ SortHistos.C CalibTools.C Options.C Utils.C -I$GRSISYS/include --std=c++0x -o SortHistos $GRSISYS/libraries/TigFormat/libFormat.so $GRSISYS/libraries/libCalManager.so $GRSISYS/libraries/libRootIOManager.so -O0 `root-config --cflags --libs`  -lSpectrum -lgsl -lgslcblas -g
 
 using namespace std;
@@ -29,7 +28,6 @@ using namespace std;
 #include <TStyle.h>
 #include <TFolder.h>
 
-
 // TriScope libraries
 //#include "TTigFragment.h"
 
@@ -41,8 +39,7 @@ using namespace std;
 #include "Utils.h"
 
 //Functions
-// Convert crystal Name/number
-
+int CalibrateFiles(); 
 
 // Fitting stuff
 std::string FitOptions = ("RQE");
@@ -52,7 +49,6 @@ std::string Opts;
 float InitialSigma = 50.0;
 float InitialGain = 0.16;
 
-
 TApplication *App;       // Pointer to root environment for plotting etc
 
 // Canvas for plots
@@ -60,6 +56,58 @@ TCanvas *cCalib1, *cCalib1a, *cCalib2, *cWave1, *ctemp;
 
 int main(int argc, char **argv)
 {
+   // Set default and read custom options
+   LoadDefaultSettings();
+   if (ReadCommandLineSettings(argc, argv) < 0) {
+      cout << "Failed to configure the run - exiting!" << endl;
+      return -1;
+   }
+   
+   // Set options for histo stats
+   gStyle->SetOptStat("iouRMen");
+
+   // create root environment for interacting with plots etc
+   App = new TApplication("Output", 0, NULL);
+
+   // Timing
+   TStopwatch StopWatch;
+   StopWatch.Start();
+
+   // Initialise TCanvas's
+   if (Config.RunSpecCal == 1) {
+      cCalib1 = new TCanvas("cCalib1", "Fit", 800, 600);        // Canvas for spectrum plots
+
+      cCalib1a = new TCanvas("cCalib1a", "Calibration", 800, 600);      // Canvas for spectrum plots
+      cCalib1a->Divide(1, 2);
+
+      cCalib2 = new TCanvas("cCalib2", "Calibration Summary", 800, 600);        // Canvas for gain plots and histograms
+      cCalib2->Divide(2, 3);
+      cCalib2->Update();
+
+      cCalib1->cd();
+   }
+   
+   // Check what we are supposed to be doing call function
+   if (Config.RunSpecCal == 1) {
+      CalibrateFiles();
+      //filename = Config.files.at(i);
+   }
+   
+   if(Config.RunSpecEff == 1)  {
+      
+   }
+   
+   
+   return 0;
+   
+   
+
+}
+
+
+
+int CalibrateFiles() {
+   
    // Variables, Constants, etc
    int i, j, x;
    unsigned int ChainEvent, TreeEvent;
@@ -90,38 +138,9 @@ int main(int argc, char **argv)
    float CalibEn = 0.0;
    string TestString = "his";
    bool FileTypeFound = 0;
-
-   // Set default and read custom options
-   LoadDefaultSettings();
-   if (ReadCommandLineSettings(argc, argv) < 0) {
-      cout << "Failed to configure the run - exiting!" << endl;
-      return -1;
-   }
-   // Set options for histo stats
-   gStyle->SetOptStat("iouRMen");
-
-   // create root environment for interacting with plots etc
-   App = new TApplication("Output", 0, NULL);
-
-   // Timing
-   TStopwatch StopWatch;
-   StopWatch.Start();
-
-   // Initialise TCanvas's
-   cCalib1 = new TCanvas("cCalib1", "Fit", 800, 600);        // Canvas for spectrum plots
-
-   cCalib1a = new TCanvas("cCalib1a", "Calibration", 800, 600);      // Canvas for spectrum plots
-   cCalib1a->Divide(1, 2);
-
-   cCalib2 = new TCanvas("cCalib2", "Calibration Summary", 800, 600);        // Canvas for gain plots and histograms
-   cCalib2->Divide(2, 3);
-   cCalib2->Update();
-
-   cCalib1->cd();
-
+   
    string filename;
-   if (Config.RunSpecCal == 1) {
-      for (i = 0; i < Config.files.size(); i++) {
+   for (i = 0; i < Config.files.size(); i++) {
          if (Config.PrintBasic) {
             cout << "Attempting offline calibration on histograms in file: " << Config.files.at(i) << endl;
          }
@@ -129,15 +148,18 @@ int main(int argc, char **argv)
          //if (CalibSpectra(Config.files.at(i)) >= 0) {   // return after one succesful file so outputs are not overwritten.
            // return 0;
          //}
-      }
    }
-
+   
+   
    // Check file type
-   if (strncmp(filename.c_str(), Config.CalOut.c_str(), 8) == 0) {
+   cout << "Filename: " << filename << endl;
+   if (strncmp(filename.c_str(), Config.CalOut.c_str(), 7) == 0) {
+      cout << "1: " << Config.CalOut.c_str() << endl;
       FileType = 1;             // File is from output of Calib()
       FileTypeFound = 1;
    }
    if (strncmp(filename.c_str(), TestString.c_str(), 3) == 0) {
+      cout << "2: " << TestString.c_str() << endl;
       FileType = 2;             // file is from TIGRESS DAQ analyser
       Config.CalWave = 0;
       FileTypeFound = 1;
@@ -577,5 +599,6 @@ int main(int argc, char **argv)
    }
 
    return 0;
-
+   
 }
+

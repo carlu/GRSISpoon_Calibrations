@@ -689,7 +689,7 @@ void FinalCalib()
                      PeakSelect = 0;
                   }
                   // Perform Fit                  
-                  SpectrumFit WaveFit = { 0 };
+                  SpectrumFit WaveFit  = { 0 };
                   FitSettings Settings = { 0 };
 
                   Settings.Source = Source;

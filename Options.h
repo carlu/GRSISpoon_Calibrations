@@ -84,6 +84,7 @@ struct RunConfig {              // this struct will hold all information
    bool RunCalibration;
    bool RunSpecCal;
    bool RunEfficiency;
+   bool RunSpecEff;
    bool RunPropCrosstalk;
    bool RunWaveform;
    bool RunDiffCrosstalk;

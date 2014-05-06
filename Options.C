@@ -25,6 +25,7 @@ int LoadDefaultSettings()
    Config.RunCalibration = SORT_CALIB;
    Config.RunSpecCal = SORT_SPECCAL;
    Config.RunEfficiency = SORT_EFF;
+   Config.RunSpecEff = 0;
    Config.RunPropCrosstalk = SORT_PROP;
    Config.RunWaveform = SORT_WAVES;
    Config.RunDiffCrosstalk = SORT_DIFF;
