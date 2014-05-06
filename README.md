@@ -8,17 +8,23 @@ The idea is to provide a simple means of performing all initial calibrations for
 To compile
 ----------
 
-g++ Main.C CoincEff.C Calib.C PropXtalk.C CalibTools.C CalibOffline.C -I$GRSISYS/include --std=c++0x -o Sort $GRSISYS/libraries/TigFormat/libFormat.so $GRSISYS/libraries/libCalManager.so $GRSISYS/libraries/libRootIOManager.so -O0 `root-config --cflags --libs` -lTreePlayer -lSpectrum -lgsl -lgslcblas -g
+Fragment Tree Sort:
+g++ SortTrees.C CoincEff.C Calib.C PropXtalk.C CalibTools.C Options.C Utils.C -I$GRSISYS/include --std=c++0x -o SortTrees $GRSISYS/libraries/TigFormat/libFormat.so $GRSISYS/libraries/libCalManager.so $GRSISYS/libraries/libRootIOManager.so -O0 `root-config --cflags --libs` -lTreePlayer -lSpectrum -lgsl -lgslcblas -g
+
+Histogram Sort:
+To  compile: g++ SortHistos.C CalibTools.C Options.C Utils.C -I$GRSISYS/include --std=c++0x -o SortHistos $GRSISYS/libraries/TigFormat/libFormat.so $GRSISYS/libraries/libCalManager.so $GRSISYS/libraries/libRootIOManager.so -O0 `root-config --cflags --libs`  -lSpectrum -lgsl -lgslcblas -g
+
 
 To run
 ------
 
-./Sort -f InFile1 [InFile2...] [-e (energy Calibration File)] [-w (Wave calibration file)] [-s (Source)]
+./SortTrees -f InFile1 [InFile2...] [-e (energy Calibration File)] [-w (Wave calibration file)] [-s (Source)]  --cal/--prop/--eff
+./SortHitos -f his??????.root/CalibOut??????.root  [-s (Source)]  --calspec/--caleff
 
 Files and their jobs
 --------------------
 
-Main.C : Builds TChain of multiple input files.  Builds index of assembled events if one is not already present in the file. Calls initialisation functions for other parts of the code.  Loops all built events passing each to any other parts of the code which active.  Calls finalisation functions.  Also contains some helper functions used elsewhere.
+SortTrees.C : Builds TChain of multiple input files.  Builds index of assembled events if one is not already present in the file. Calls initialisation functions for other parts of the code.  Loops all built events passing each to any other parts of the code which active.  Calls finalisation functions.  Also contains some helper functions used elsewhere.
 
 Calib.C : Builds charge spectra and hit patterns.  Finds and identifies peaks in spectra, fits the peaks and performs a calibration.  Also fits core spectra at regular intervals through the run and keeps a record of results to check for gain drift.  This is a slow way to build histograms from a ROOT TTree but need to loop the events to do crosstalk stuff so may as well build energy histograms while we do so.
 
@@ -28,7 +34,7 @@ PropXtalk.C : Builds calibrated energy and fold spectra.  Performs analysis of p
 
 CalibTools.C : Helper functions for Calib.C.
 
-CalibSpectra.C : Offline version of calib.C which carries out peak search and fits but uses the histograms output by Calib.C rather than building the spectra from scratch.  Uses the same functions from CalibTools.C so changes there should checked to work here too. 
+SortHistos.C : Offline version of calib.C which carries out peak search and fits but uses the histograms output by Calib.C or the TIGRESS online analyser rather than building the spectra from scratch.  Uses the same functions from CalibTools.C so changes there should checked to work here too. 
 
 
 Other Information.
