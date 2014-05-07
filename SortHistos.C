@@ -148,7 +148,7 @@ int CalibrateFiles() {
    
    // Check we have sources for all runs
    if(Config.files.size() != Config.SourceNumCore.size()) {
-      cout << "Number of files (" << Config.files.size() << ") must equal number of sources (" << Config.SourceNumCore.size()  << ")" << endl;
+      cout << "For histogram calibration the number of files (" << Config.files.size() << ") must equal number of sources (" << Config.SourceNumCore.size()  << ")" << endl;
       return -1;
    }
    

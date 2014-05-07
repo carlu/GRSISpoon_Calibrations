@@ -79,17 +79,17 @@ int ReadCalibrationFile(std::string filename, vector < string > *EnCalibNames,
                         vector < vector < float >>*EnCalibValues);
 
 void CoincEff(std::vector < TTigFragment > &ev);
-void InitCoincEff();
+int InitCoincEff();
 void FinalCoincEff();
 
 void Calib(std::vector < TTigFragment > &ev);
-void InitCalib();
+int InitCalib();
 void FinalCalib();
 
 int CalibSpectra(std::string filename);
 
 void PropXtalk(std::vector < TTigFragment > &ev);
-void InitPropXtalk();
+int InitPropXtalk();
 void FinalPropXtalk();
 
 int main(int argc, char **argv)
@@ -149,19 +149,28 @@ int main(int argc, char **argv)
       if (Config.PrintBasic) {
          cout << "Initialising Efficiency Spectra..." << endl;
       }
-      InitCoincEff();
+      if(InitCoincEff() != 0) {
+         cout << "InitCoincEff Failed!" << endl;
+         return 1;
+      }
    }
    if (Config.RunCalibration) {
       if (Config.PrintBasic) {
          cout << "Initialising Calibration Spectra..." << endl;
       }
-      InitCalib();
+      if(InitCalib() != 0) {
+         cout << "InitCalib Failed!" << endl;
+         return 1;
+      }
    }
    if (Config.RunPropCrosstalk) {
       if (Config.PrintBasic) {
          cout << "Initialising Cross-talk Spectra..." << endl;
       }
-      InitPropXtalk();
+      if(InitPropXtalk() != 0) {
+         cout << "InitPropXtalk Failed!" << endl;
+         return 1;
+      }
    }
 
    TChain *Chain = new TChain("FragmentTree");

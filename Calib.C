@@ -54,7 +54,7 @@ static TH1F *hCrystalOffset[CLOVERS][CRYSTALS] = { };
 static TH1F *WaveHist = 0;
 
 // Functions called from main:   
-void InitCalib();
+int InitCalib();
 void Calib(std::vector < TTigFragment > &ev);
 void FinalCalib();
 // Functions called from here:
@@ -66,7 +66,7 @@ TCanvas *cCalib1, *cCalib1a, *cCalib2, *cWave1, *ctemp;
 // Storing run settings
 extern RunConfig Config;
 
-void InitCalib()
+int InitCalib()
 {
 
    char Colours[] = "BGRW";
@@ -141,17 +141,23 @@ void InitCalib()
       WaveHist = new TH1F(name, title, Config.WaveformSamples, 0, Config.WaveformSamples);
    }
 
+   // Check one source only given
+   if (Config.SourceNumCore.size() != 1) {
+      cout << "Only one source should be given for calibration of TTree as the sort will sum all input files." << endl;
+      return 1;
+   }
+
    if (Config.PrintVerbose) {
-      cout << "Searching for core Peaks: " << Config.Sources[Config.SourceNumCore][0] << "kev and " << Config.
-          Sources[Config.SourceNumCore]
-          [1] << "keV (Ratio " << Config.Sources[Config.SourceNumCore][0] /
-          Config.Sources[Config.SourceNumCore][1] << ")" << endl;
-      cout << "Searching for front seg peaks: " << Config.Sources[Config.SourceNumFront][0] << "kev and " << Config.
-          Sources[Config.SourceNumFront][1] << "keV (Ratio " << Config.Sources[Config.SourceNumFront][0] /
-          Config.Sources[Config.SourceNumFront][1] << ")" << endl;
-      cout << "Searching for back seg peaks: " << Config.Sources[Config.SourceNumBack][0] << "kev and " << Config.
-          Sources[Config.SourceNumBack][1] << "keV (Ratio " << Config.Sources[Config.SourceNumBack][0] /
-          Config.Sources[Config.SourceNumBack][1] << ")" << endl;
+      cout << "Searching for core Peaks: " << Config.Sources[Config.SourceNumCore[0]][0] << "kev and " << Config.
+          Sources[Config.SourceNumCore[0]]
+          [1] << "keV (Ratio " << Config.Sources[Config.SourceNumCore[0]][0] /
+          Config.Sources[Config.SourceNumCore[0]][1] << ")" << endl;
+      cout << "Searching for front seg peaks: " << Config.Sources[Config.SourceNumFront[0]][0] << "kev and " << Config.
+          Sources[Config.SourceNumFront[0]][1] << "keV (Ratio " << Config.Sources[Config.SourceNumFront[0]][0] /
+          Config.Sources[Config.SourceNumFront[0]][1] << ")" << endl;
+      cout << "Searching for back seg peaks: " << Config.Sources[Config.SourceNumBack[0]][0] << "kev and " << Config.
+          Sources[Config.SourceNumBack[0]][1] << "keV (Ratio " << Config.Sources[Config.SourceNumBack[0]][0] /
+          Config.Sources[Config.SourceNumBack[0]][1] << ")" << endl;
    }
    
    // Initialise TCanvas's
@@ -169,7 +175,8 @@ void InitCalib()
    if (PLOT_WAVE) {
       cWave1 = new TCanvas();
    }
-
+   
+   return 0;
 }
 
 
@@ -354,7 +361,7 @@ void Calib(std::vector < TTigFragment > &ev)
                   SpectrumFit Fit = { 0 };
                   FitSettings Settings = { 0 };
 
-                  Settings.Source = Config.SourceNumCore;
+                  Settings.Source = Config.SourceNumCore[0];
                   Settings.Integration = INTEGRATION;
                   Settings.Dispersion = float (CHARGE_BINS) / float (CHARGE_MAX);
                   Settings.SearchSigma = EN_SEARCH_SIGMA;
@@ -507,20 +514,20 @@ void FinalCalib()
                case 0:
                   snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da Chg", Clover, Num2Col(Crystal), Seg);
                   HistName = CharBuf;
-                  Source = Config.SourceNumCore;
+                  Source = Config.SourceNumCore[0];
                   break;
                case 9:
                   snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db Chg", Clover, Num2Col(Crystal), 0);
                   HistName = CharBuf;
-                  Source = Config.SourceNumCore;
+                  Source = Config.SourceNumCore[0];
                   break;
                default:
                   snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx Chg", Clover, Num2Col(Crystal), Seg);
                   HistName = CharBuf;
                   if (Seg < 5) {
-                     Source = Config.SourceNumFront;
+                     Source = Config.SourceNumFront[0];
                   } else {
-                     Source = Config.SourceNumBack;
+                     Source = Config.SourceNumBack[0];
                   }
                   break;
                }
@@ -648,20 +655,20 @@ void FinalCalib()
                case 0:
                   snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da WaveChg", Clover, Num2Col(Crystal), Seg);
                   HistName = CharBuf;
-                  Source = Config.SourceNumCore;
+                  Source = Config.SourceNumCore[0];
                   break;
                case 9:
                   snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db WaveChg", Clover, Num2Col(Crystal), 0);
                   HistName = CharBuf;
-                  Source = Config.SourceNumCore;
+                  Source = Config.SourceNumCore[0];
                   break;
                default:
                   snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx WaveChg", Clover, Num2Col(Crystal), Seg);
                   HistName = CharBuf;
                   if (Seg < 5) {
-                     Source = Config.SourceNumFront;
+                     Source = Config.SourceNumFront[0];
                   } else {
-                     Source = Config.SourceNumBack;
+                     Source = Config.SourceNumBack[0];
                   }
                   break;
                }

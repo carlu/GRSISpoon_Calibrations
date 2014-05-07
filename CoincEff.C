@@ -64,7 +64,7 @@ static TH1F *hArrayEn = 0;
 // Other stuff
 
 // Functions
-void InitCoincEff();
+int InitCoincEff();
 void FinalCoincEff();
 void FitPeak(TH1F * Histo, float Min, float Max, FitResult * FitRes);
 //void ParseMnemonic(std::string *name,Mnemonic *mnemonic);
@@ -213,7 +213,7 @@ void CoincEff(std::vector < TTigFragment > &ev)
 
 }
 
-void InitCoincEff()
+int InitCoincEff()
 {
 
    char Colours[] = "BGRW";
@@ -259,6 +259,8 @@ void InitCoincEff()
       sprintf(title, "TIG%02d Gated Clover Add-Back Energy (keV)", Clover);
       hCloverABEnGated[Clover-1] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
    }
+   
+   return 0;   
 }
 
 

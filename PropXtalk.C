@@ -90,7 +90,7 @@ static int XtalkCount[CLOVERS][(SEGS + 2) * CRYSTALS];  // Count corsstalk event
 static float XTalkFrac[CLOVERS][(SEGS + 2) * CRYSTALS][(SEGS + 2) * CRYSTALS];  // Record crosstalk events for 
 
 // Functions
-void InitPropXtalk();
+int InitPropXtalk();
 void FinalPropXtalk();
 //void SetGains();
 float CalibrateEnergy(int Charge, std::vector < float >Coefficients);
@@ -446,7 +446,7 @@ void PropXtalk(std::vector < TTigFragment > &ev)
 }
 
 
-void InitPropXtalk()
+int InitPropXtalk()
 {
    char Colours[] = "BGRW";
    char name[512], title[512];
@@ -615,10 +615,8 @@ void InitPropXtalk()
       //hXTalkLow[Clover] =
       //  new TH2F(name, title, (CRYSTALS * (SEGS + 2)), 0, (CRYSTALS * (SEGS + 2)), (CRYSTALS * (SEGS + 2)), 0,
       //         (CRYSTALS * (SEGS + 2)));
-
    }
-
-
+   return 0;
 }
 
 
