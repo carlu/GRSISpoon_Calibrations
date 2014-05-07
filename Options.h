@@ -5,13 +5,6 @@
 // Definitions:
 // --------------------------------------------------------
 
-// Which parts of code to run:
-#define SORT_CALIB 1
-#define SORT_SPECCAL 0
-#define SORT_EFF   0
-#define SORT_WAVES 0
-#define SORT_PROP  0
-#define SORT_DIFF  0
 // Printing info
 #define PRINT_OUTPUT 1
 #define PRINT_VERBOSE 0
@@ -121,10 +114,10 @@ struct RunConfig {              // this struct will hold all information
    int WaveInitialSamples;
    int WaveFinalSamples;
    // source Information
-    std::vector < std::vector < float >>Sources;
-   int SourceNumCore;
-   int SourceNumFront;
-   int SourceNumBack;
+   std::vector < std::vector < float >>Sources;
+   std::vector <int> SourceNumCore;
+   std::vector <int> SourceNumFront;
+   std::vector <int> SourceNumBack;
    // Energy thresholds
    float EnergyThresh;
    int ChargeThresh;

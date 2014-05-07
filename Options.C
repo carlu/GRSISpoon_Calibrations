@@ -22,13 +22,13 @@ RunConfig Config;
 int LoadDefaultSettings()
 {
 
-   Config.RunCalibration = SORT_CALIB;
-   Config.RunSpecCal = SORT_SPECCAL;
-   Config.RunEfficiency = SORT_EFF;
+   Config.RunCalibration = 0;
+   Config.RunSpecCal = 0;
+   Config.RunEfficiency = 0;
    Config.RunSpecEff = 0;
-   Config.RunPropCrosstalk = SORT_PROP;
-   Config.RunWaveform = SORT_WAVES;
-   Config.RunDiffCrosstalk = SORT_DIFF;
+   Config.RunPropCrosstalk = 0;
+   Config.RunWaveform = 0;
+   Config.RunDiffCrosstalk = 0;
 
    Config.OutPath = "./";
    Config.CalOut = "CalibOut.root";
@@ -50,16 +50,17 @@ int LoadDefaultSettings()
    Config.WaveCalibrationFile = "./WCal.txt";
    Config.HaveWaveCalibration = 0;
 
+   // Global physics settings
+   // ------------------------------------------
+   
+   // Source information
    float Sources[4][10] = {
       {1173.237, 1332.501},     // 60Co
       {121.7817, 1408.006, 244.6975, 344.2785, 411.116, 778.9040, 964.079, 1112.074},   // 152Eu
       {344.2785, 1408.006, 244.6975, 411.116, 778.9040, 964.079, 1112.074},      // 152Eu (no 121)
       {276.398,  356.017,  80.9971, 302.853, 383.851} // 133Ba
    };
-
-   // Global physics settings
-   // ------------------------------------------
-   // Source information
+   // Push source lines to vector of vectors.
    vector < float >SourceTemp;
    for (int i = 0; i < 2; i++) {
       SourceTemp.push_back(Sources[0][i]);
@@ -81,9 +82,6 @@ int LoadDefaultSettings()
    }
    Config.Sources.push_back(SourceTemp);
    
-   Config.SourceNumCore = SOURCE_NUM_CORE;
-   Config.SourceNumFront = SOURCE_NUM_FRONT;
-   Config.SourceNumBack = SOURCE_NUM_BACK;
    // Properties of waveforms stored in the data
    Config.WaveformSamples = 200;
    Config.WaveInitialSamples = 65;
@@ -220,30 +218,39 @@ int ReadCommandLineSettings(int argc, char **argv)
             cout << "No source specified after \"-s\" option." << endl;
             return -1;
          }
-         test = 0;
-         if (strncmp(argv[i + 1], "60Co", 4) == 0 || strncmp(argv[i + 1], "Co60", 4) == 0 || strncmp(argv[i + 1], "60co", 4) == 0 || strncmp(argv[i + 1], "co60", 4) == 0) {    // is it 60Co
-            Config.SourceNumCore = 0;
-            Config.SourceNumFront = 0;
-            Config.SourceNumBack = 0;
-            test = 1;
+         while (strncmp(argv[i + 1], "-", 1) > 0) {     // loop files 
+            test = 0;
+            if (strncmp(argv[i + 1], "60Co", 4) == 0 || strncmp(argv[i + 1], "Co60", 4) == 0 || strncmp(argv[i + 1], "60co", 4) == 0 || strncmp(argv[i + 1], "co60", 4) == 0) {    // is it 60Co
+               Config.SourceNumCore.push_back(0);
+               Config.SourceNumFront.push_back(0);
+               Config.SourceNumBack.push_back(0);
+               test = 1;
+            }
+            if (strncmp(argv[i + 1], "152Eu", 5) == 0 || strncmp(argv[i + 1], "Eu152", 5) == 0 || strncmp(argv[i + 1], "152eu", 5) == 0 || strncmp(argv[i + 1], "eu152", 5) == 0) {        // or is it 152Eu
+               Config.SourceNumCore.push_back(1);
+               Config.SourceNumFront.push_back(1);
+               Config.SourceNumBack.push_back(2);
+               test = 1;
+            }
+            if (strncmp(argv[i + 1], "133Ba", 5) == 0 || strncmp(argv[i + 1], "Ba133", 5) == 0 || strncmp(argv[i + 1], "133ba", 5) == 0 || strncmp(argv[i + 1], "ba133", 5) == 0) {        // or is it 133Ba
+               Config.SourceNumCore.push_back(3);
+               Config.SourceNumFront.push_back(3);
+               Config.SourceNumBack.push_back(3);
+               test = 1;
+            }
+            if (test == 0) {       // or is it somethimng else
+               cout << "Source not recognised: " << argv[i+1] << endl;
+               return -1;
+            }
+            i += 1;
+            if (i >= argc - 1) {
+               break;           // break if at last item in arg list
+            }
          }
-         if (strncmp(argv[i + 1], "152Eu", 5) == 0 || strncmp(argv[i + 1], "Eu152", 5) == 0 || strncmp(argv[i + 1], "152eu", 5) == 0 || strncmp(argv[i + 1], "eu152", 5) == 0) {        // or is it 152Eu
-            Config.SourceNumCore = 1;
-            Config.SourceNumFront = 1;
-            Config.SourceNumBack = 2;
-            test = 1;
-         }
-         if (strncmp(argv[i + 1], "133Ba", 5) == 0 || strncmp(argv[i + 1], "Ba133", 5) == 0 || strncmp(argv[i + 1], "133ba", 5) == 0 || strncmp(argv[i + 1], "ba133", 5) == 0) {        // or is it 133Ba
-            Config.SourceNumCore = 3;
-            Config.SourceNumFront = 3;
-            Config.SourceNumBack = 3;
-            test = 1;
-         }
-         if (test == 0) {       // or is it somethimng else
-            cout << "Source not recognised!" << endl;
-            return -1;
-         }
-         i += 1;
+         
+         
+         
+         
       }
       // Maximum number of events to process
       // -------------------------------------------

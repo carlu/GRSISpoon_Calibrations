@@ -89,7 +89,10 @@ int main(int argc, char **argv)
    
    // Check what we are supposed to be doing call function
    if (Config.RunSpecCal == 1) {
-      CalibrateFiles();
+      if(CalibrateFiles() > 0) {
+         cout << "CalibrateFiles() failed." << endl;
+         return 1;
+      }
       //filename = Config.files.at(i);
    }
    
@@ -140,11 +143,23 @@ int CalibrateFiles() {
    bool FileTypeFound = 0;
    
    string filename;
+   
+   int SourceNumCore, SourceNumFront, SourceNumBack;
+   
+   // Check we have sources for all runs
+   if(Config.files.size() != Config.SourceNumCore.size()) {
+      cout << "Number of files (" << Config.files.size() << ") must equal number of sources (" << Config.SourceNumCore.size()  << ")" << endl;
+      return -1;
+   }
+   
    for (i = 0; i < Config.files.size(); i++) {
          if (Config.PrintBasic) {
             cout << "Attempting offline calibration on histograms in file: " << Config.files.at(i) << endl;
          }
          filename = Config.files.at(i);
+         SourceNumCore = Config.SourceNumCore.at(i);
+         SourceNumFront= Config.SourceNumFront.at(i);
+         SourceNumBack = Config.SourceNumBack.at(i);
          //if (CalibSpectra(Config.files.at(i)) >= 0) {   // return after one succesful file so outputs are not overwritten.
            // return 0;
          //}
@@ -263,22 +278,22 @@ int CalibrateFiles() {
                      snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da Chg", Clover, Num2Col(Crystal), Seg);
                      HistName = CharBuf;
                      OutputName = CharBuf;
-                     Source = Config.SourceNumCore;
+                     Source = SourceNumCore;
                      break;
                   case 9:
                      snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db Chg", Clover, Num2Col(Crystal), 0);
                      HistName = CharBuf;
                      OutputName = CharBuf;
-                     Source = Config.SourceNumCore;
+                     Source = SourceNumCore;
                      break;
                   default:
                      snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx Chg", Clover, Num2Col(Crystal), Seg);
                      HistName = CharBuf;
                      OutputName = CharBuf;
                      if (Seg < 5) {
-                        Source = Config.SourceNumFront;
+                        Source = SourceNumFront;
                      } else {
-                        Source = Config.SourceNumBack;
+                        Source = SourceNumBack;
                      }
                      break;
                   }
@@ -306,7 +321,7 @@ int CalibrateFiles() {
                      OutputName += "\t";
                      snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da Chg", Clover, Num2Col(Crystal), Seg);
                      OutputName += CharBuf;
-                     Source = Config.SourceNumCore;
+                     Source = SourceNumCore;
                      break;
                   case 9:
                      snprintf(CharBuf, CHAR_BUFFER_SIZE, "Chrg0%03d", ((Clover - 1) * 60) + x + 9);
@@ -315,7 +330,7 @@ int CalibrateFiles() {
                      OutputName += "\t";
                      snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db Chg", Clover, Num2Col(Crystal), 0);
                      OutputName += CharBuf;
-                     Source = Config.SourceNumCore;
+                     Source = SourceNumCore;
                      break;
                   default:
                      snprintf(CharBuf, CHAR_BUFFER_SIZE, "Chrg0%03d", ((Clover - 1) * 60) + x + Seg);
@@ -325,9 +340,9 @@ int CalibrateFiles() {
                      snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx Chg", Clover, Num2Col(Crystal), Seg);
                      OutputName += CharBuf;
                      if (Seg < 5) {
-                        Source = Config.SourceNumFront;
+                        Source = SourceNumFront;
                      } else {
-                        Source = Config.SourceNumBack;
+                        Source = SourceNumBack;
                      }
                      break;
                   }
@@ -472,7 +487,7 @@ int CalibrateFiles() {
                   cout << "--------------------------------------" << endl;
                }
                if (Seg == 0 || Seg == 9) {
-                  Source = SOURCE_NUM_CORE;
+                  Source = SourceNumCore;
                   if (Seg == 0) {
                      snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da WaveChg", Clover, Colours[Crystal], Seg);
                      HistName = CharBuf;
@@ -484,9 +499,9 @@ int CalibrateFiles() {
                   snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx WaveChg", Clover, Colours[Crystal], Seg);
                   HistName = CharBuf;
                   if (Seg < 5) {
-                     Source = SOURCE_NUM_FRONT;
+                     Source = SourceNumFront;
                   } else {
-                     Source = SOURCE_NUM_BACK;
+                     Source = SourceNumBack;
                   }
                }
 
