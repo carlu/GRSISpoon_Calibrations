@@ -119,6 +119,7 @@ int CalibrateFiles() {
    int Seg = 0;
    int Source = 0;
    int FitSuccess = 0;
+   int CalibSuccess = 0;
    bool PlotOn = 0;
    bool PeakSelect=0;
    int FileType = 0;
@@ -184,7 +185,8 @@ int CalibrateFiles() {
       cout << "Histogram file type not determined!" << endl;
       return -1;
    }
-   // File
+   
+   // Input File
    TFile *file = TFile::Open(filename.c_str(),"READ");
    if (file->IsOpen()) {
       if (Config.PrintBasic) {
@@ -399,9 +401,11 @@ int CalibrateFiles() {
                   Settings.BackupPeakSelect = 0;
                   
                   FitSuccess = FitGammaSpectrum(Histo, &Fit, Settings);
+                  
+                  CalibSuccess = CalibrateGammaSpectrum(&Fit, Settings);
 
                   // If fit succesful, generate output....
-                  if (FitSuccess > 0) {
+                  if (FitSuccess == 0) {
                      switch (Crystal) { // Calculate channel number (old TIGRESS DAQ numbering)
                      case 0:
                         ItemNum = ((Clover - 1) * 60) + Seg;
@@ -427,9 +431,10 @@ int CalibrateFiles() {
                      OffsetHist->Fill(Fit.QuadGainFit[0]);
                      QuadHist->Fill(Fit.QuadGainFit[2]);
                   }
+                  
                   // Now print reports on results of fits and calibration.
-                  if (FitSuccess > 0) {
-                     if (FitSuccess < 3 || FORCE_LINEAR) {
+                  if (Fit.LinesUsed > 1) {
+                     if (Fit.LinesUsed < 3 || FORCE_LINEAR) {
                         GainOut << OutputName << ":\t" << Fit.LinGainFit[0];
                         GainOut << "\t" << Fit.LinGainFit[1] << endl;
                      } else {
@@ -440,7 +445,7 @@ int CalibrateFiles() {
                      //GainOut << HistName << " Fail!!!" << endl;
                   }
                   // Write full calibration report
-                  if (FitSuccess > 0) {
+                  if (Fit.LinesUsed > 0) {
                      CalibrationReport(&Fit, ReportOut, OutputName, Settings);
                   } else {
                      ReportOut << endl << "------------------------------------------" << endl << OutputName << endl <<
@@ -538,9 +543,11 @@ int CalibrateFiles() {
                Settings.BackupPeakSelect = 0;
                
                FitSuccess = FitGammaSpectrum(Histo, &WaveFit, Settings);
+               
+               CalibSuccess = CalibrateGammaSpectrum(&WaveFit, Settings);
 
-               if (FitSuccess > 0) {
-                  if (FitSuccess < 3 || FORCE_LINEAR) {
+               if (FitSuccess == 0) {
+                  if (WaveFit.LinesUsed < 3 || FORCE_LINEAR) {
                      WaveOut << HistName << "\t" << WaveFit.LinGainFit[0];
                      WaveOut << "\t" << WaveFit.LinGainFit[1] << endl;
                   } else {
@@ -551,7 +558,7 @@ int CalibrateFiles() {
                   //WaveOut << HistName << " Fail!!!" << endl;
                }
                if (Config.CalReport) {
-                  if (FitSuccess > 0) {
+                  if (WaveFit.LinesUsed > 1) {
                      CalibrationReport(&WaveFit, WaveReportOut, HistName, Settings);
                   } else {
                      WaveReportOut << endl << "------------------------------------------" << endl << HistName << endl

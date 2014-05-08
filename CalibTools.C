@@ -57,9 +57,8 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
    float Ratio, Diff, BestDiff; // test quality of peak match
    float Centre;
    Float_t *PeakPositions;      // for output of root peak search
-   int Line, LinesUsed;
-   float FitCentre, G, O, dG, dO;       // Fits and values for fast 2 point calibration.
-   float Energies[MAX_LINES + 1], dEnergies[MAX_LINES + 1], Centroids[MAX_LINES + 1], dCentroids[MAX_LINES + 1];        // Data for full calibration
+   int Line; //, LinesUsed;
+   float G, O, dG, dO, FitCentre;       // values for fast 2 point calibration.
    float En1, En2;              // line energies for two point calib
    int CustomPeak1;
    int CustomPeak2;
@@ -69,7 +68,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
    En2 = Config.Sources[Settings.Source][1];
    float IdealRatio = En1 / En2;
    float Chg1, Chg2, dChg1, dChg2;      // charge and erros for 2 point
-   FitResult FitRes[MAX_LINES]; // store full fit results
+   FitResult FitRes[MAX_LINES+1]; // store full fit results
    int Integral;                // counts in spectrum
    TSpectrum *Spec = new TSpectrum();
    TF1 *FitRange[MAX_LINES];    // pointers to functions for fitting each line
@@ -77,7 +76,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
    // Fitting stuff
    std::string FitOptions = ("RQEM");
    // R=restrict to function range, Q=quiet, L=log likelihood method, E=improved err estimation, + add fit instead of replace
-   std::string Opts;
+   
 
 
 
@@ -119,7 +118,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
             for (Peak2 = 0; Peak2 < NumPeaks; Peak2++) {
                if (Peak1 != Peak2) {
                   Ratio = PeakPositions[Peak1] / PeakPositions[Peak2];
-                  Diff = fabs(Ratio - IdealRatio);
+                  Diff = fabs(Ratio - IdealRatio) / IdealRatio;
                   //cout << "Calc Gain: " << En2 /
                   //  PeakPositions[Peak2] << " Ratio: " << Ratio << " Diff: " << Diff << " Best: " << BestDiff << endl;
                   if (Diff < BestDiff) {        // best match so far
@@ -237,30 +236,20 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
                cout << "-------------------------------------------------------------" << endl << endl;
             }
             FitSinglePeak(Histo, Line, Centre, FitRange[Line], &FitRes[Line], Settings);
-
+            
+            // Store fit result for use in calibration                      
+            memcpy(&Fit->PeakFits[Line], &FitRes[Line], sizeof(FitResult));
+            Fit->FitSuccess[Line] = 1;
          }
-
-         //cin >> temp;
 
          //-------------------------------------------------------------//
          // Calculate a rough calibration                               //
          //-------------------------------------------------------------//
 
-         /*cout << "Here! " << endl;
-            cout << "Set.Int " << Settings.Integration << endl;
-            cout << "FitRes[0].Mean " << FitRes[0].Mean << endl;
-            cout << "FitRes[1].Mean " << FitRes[1].Mean << endl; */
-
          Chg1 = FitRes[0].Mean / Settings.Integration;
          Chg2 = FitRes[1].Mean / Settings.Integration;
          dChg1 = FitRes[0].dMean / Settings.Integration;
          dChg2 = FitRes[1].dMean / Settings.Integration;
-
-         /*cout << "Chg1 " << Chg1 << endl;
-            cout << "Chg2 " << Chg2 << endl;
-
-            cout << "Source1 " << Sources[Settings.Source][0] << endl;
-            cout << "Source2 " << Sources[Settings.Source][1] << endl; */
 
          // Gain = (E2 - E1) / (CHG2 - CHG1)       
          G = (Config.Sources[Settings.Source][1] - Config.Sources[Settings.Source][0]) / (Chg2 - Chg1);
@@ -288,6 +277,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
             App->Run(1);
             //App->Run();
          }
+         
          //-------------------------------------------------------------//
          // Loop the remaining lines and fit them                       //
          //-------------------------------------------------------------//
@@ -300,147 +290,12 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
                }
                Centre = ((Config.Sources[Settings.Source][Line] - O) / G) * Settings.Integration;       // Get centre from energy and initial calibration
                FitSinglePeak(Histo, Line, Centre, FitRange[Line], &FitRes[Line], Settings);
+               
+               // Store fit result for use in calibration                      
+               memcpy(&Fit->PeakFits[Line], &FitRes[Line], sizeof(FitResult));
+               Fit->FitSuccess[Line] = 1;
+               
             }
-         }
-         //cin >> temp;
-
-         //-------------------------------------------------------------//
-         // Finally fit energy vs peak centroid for final calibration   //
-         //-------------------------------------------------------------//
-         if (Config.PrintVerbose) {
-            cout << endl << "Calibrating..." << endl;
-         }
-         if (PLOT_FITS || PLOT_CALIB || PLOT_CALIB_SUMMARY || PLOT_RESIDUAL) {
-            cCalib1a->cd(1);
-         }
-
-         memset(&Energies, 0.0, sizeof(float) * (MAX_LINES + 1));
-         memset(&dEnergies, 0.0, sizeof(float) * (MAX_LINES + 1));
-         memset(&Centroids, 0.0, sizeof(float) * (MAX_LINES + 1));
-         memset(&dCentroids, 0.0, sizeof(float) * (MAX_LINES + 1));
-
-         LinesUsed = 0;
-         for (Line = 0; Line < Config.Sources[Settings.Source].size(); Line++) {
-
-            //  Check on these conditions:
-
-            //cout << "Here!" << endl;
-
-            if (FitRes[Line].Const > GAUS_HEIGHT_MIN) {
-               //cout << "Here!!" << endl;
-               if ((FitRes[Line].ChiSq / FitRes[Line].NDF) < GAUS_CSPD_MAX) {
-                  //cout << "Here!!!" << endl;
-                  Energies[LinesUsed] = Config.Sources[Settings.Source][Line];
-                  Centroids[LinesUsed] = FitRes[Line].Mean / Settings.Integration;
-                  dCentroids[LinesUsed] = FitRes[Line].dMean / Settings.Integration;
-                  if (Config.PrintVerbose) {
-                     cout << Energies[LinesUsed] << " keV\t" << Centroids[LinesUsed] << " +/- " <<
-                         dCentroids[LinesUsed] << " ch" << endl;
-                  }
-                  // Pass fit results back out to main                     
-                  memcpy(&Fit->PeakFits[Line], &FitRes[Line], sizeof(FitResult));
-                  Fit->FitSuccess[Line] = 1;
-
-                  /*cout << "Mean: " << Fit->PeakFits[Line].Mean << " " << FitRes[Line].Mean << endl;
-                     cout << "Sigma: " << Fit->PeakFits[Line].Sigma << " " << FitRes[Line].Sigma << endl;
-                     cout << "NDF: " << Fit->PeakFits[Line].NDF << " " << FitRes[Line].NDF << endl; */
-
-                  LinesUsed += 1;
-               }
-               //}
-            }
-         }
-         if (Settings.FitZero) {
-            Energies[LinesUsed] = 0.0;
-            Centroids[LinesUsed] = 0.0;
-            dCentroids[LinesUsed] = ZERO_ERR;
-            if (Config.PrintVerbose) {
-               cout << Energies[LinesUsed] << " keV\t" << Centroids[LinesUsed] << " +/- " << dCentroids[LinesUsed] <<
-                   " ch" << endl;
-            }
-            Fit->PeakFits[Config.Sources[Settings.Source].size()].Energy = 0.0;
-            Fit->PeakFits[Config.Sources[Settings.Source].size()].Const = 0.0;
-            Fit->PeakFits[Config.Sources[Settings.Source].size()].dConst = 0.0;
-            Fit->PeakFits[Config.Sources[Settings.Source].size()].Mean = 0.0;
-            Fit->PeakFits[Config.Sources[Settings.Source].size()].dMean = 1.0;
-            Fit->PeakFits[Config.Sources[Settings.Source].size()].Sigma = 0.0;
-            Fit->PeakFits[Config.Sources[Settings.Source].size()].dSigma = 0.0;
-            Fit->PeakFits[Config.Sources[Settings.Source].size()].ChiSq = 0.0;
-            Fit->PeakFits[Config.Sources[Settings.Source].size()].NDF = 1;
-            Fit->FitSuccess[Line + 1] = 1;
-            LinesUsed += 1;
-         }
-         Fit->LinesUsed = LinesUsed;
-         TGraphErrors CalibPlot(LinesUsed, Centroids, Energies, dCentroids, dEnergies);
-         if (Config.PrintVerbose) {
-            cout << LinesUsed << " lines used for calibration ";
-            for (i = 0; i < LinesUsed; i++) {
-               cout << Energies[i] << " ";
-            }
-            cout << endl;
-         }
-
-         TF1 *CalibFitLin = new TF1("CalibFitLin", "[0] + ([1]*x)", 0.0, CHARGE_MAX);
-         CalibFitLin->SetParName(0, "Offset");
-         CalibFitLin->SetParName(1, "Gain");
-         CalibFitLin->SetParameter(0, 0.0);
-         CalibFitLin->SetParameter(1, INITIAL_GAIN);
-         CalibFitLin->SetLineColor(4);  // Blue?
-         TF1 *CalibFitQuad = new TF1("CalibFitQuad", "[0] + ([1]*x) + ([2]*x*x)", 0.0, CHARGE_MAX);
-         CalibFitQuad->SetParName(0, "Offset");
-         CalibFitQuad->SetParName(1, "Gain");
-         CalibFitQuad->SetParName(2, "Quad");
-         CalibFitQuad->SetParameter(0, 0.0);
-         CalibFitQuad->SetParameter(1, INITIAL_GAIN);
-         CalibFitQuad->SetParameter(2, 0.0);
-         CalibFitQuad->SetLineColor(2); //Red?
-
-         Opts = FitOptions;
-         if (LinesUsed > 1) {
-            CalibPlot.Fit(CalibFitLin, Opts.c_str());
-            Fit->LinGainFit[0] = CalibFitLin->GetParameter(0);
-            Fit->dLinGainFit[0] = CalibFitLin->GetParError(0);
-            Fit->LinGainFit[1] = CalibFitLin->GetParameter(1);
-            Fit->dLinGainFit[1] = CalibFitLin->GetParError(1);
-            Fit->LinGainFit[2] = CalibFitLin->GetChisquare() / CalibFitLin->GetNDF();
-         }
-         Opts += "+";
-         if (LinesUsed > 2) {
-            CalibPlot.Fit(CalibFitQuad, Opts.c_str());
-            Fit->QuadGainFit[0] = CalibFitQuad->GetParameter(0);
-            Fit->dQuadGainFit[0] = CalibFitQuad->GetParError(0);
-            Fit->QuadGainFit[1] = CalibFitQuad->GetParameter(1);
-            Fit->dQuadGainFit[1] = CalibFitQuad->GetParError(1);
-            Fit->QuadGainFit[2] = CalibFitQuad->GetParameter(2);
-            Fit->dQuadGainFit[2] = CalibFitQuad->GetParError(2);
-            Fit->QuadGainFit[3] = CalibFitQuad->GetChisquare() / CalibFitQuad->GetNDF();
-         }
-
-         if (Config.PrintVerbose) {
-            cout << endl << "Two point solution:" << endl;
-            cout << "Offset = " << O << " +/- " << dO << "\tGain = " << G << " +/- " << dG << endl << endl;
-            cout << "Linear fit: " << endl;
-            cout << "Offset = " << CalibFitLin->GetParameter(0) << " +/- " << CalibFitLin->GetParError(0) << "\t";
-            cout << "Gain = " << CalibFitLin->GetParameter(1) << " +/- " << CalibFitLin->GetParError(1) << endl;
-            cout << "CSPD = " << CalibFitLin->GetChisquare() / CalibFitLin->GetNDF() << endl << endl;
-            cout << "Quadratic fit: " << endl;
-            cout << "Offset = " << CalibFitQuad->GetParameter(0) << " +/- " << CalibFitQuad->GetParError(0) << "\t";
-            cout << "Gain = " << CalibFitQuad->GetParameter(1) << " +/- " << CalibFitQuad->GetParError(1) << "\t";
-            cout << "Quad = " << CalibFitQuad->GetParameter(2) << " +/- " << CalibFitQuad->GetParError(2) << endl;
-            cout << "CSPD = " << CalibFitQuad->GetChisquare() / CalibFitQuad->GetNDF() << endl << endl;
-         }
-
-
-
-         if (PLOT_CALIB && Settings.PlotOn) {
-            cCalib1a->cd(1);
-            CalibPlot.SetMarkerColor(2);
-            CalibPlot.SetMarkerStyle(20);
-            CalibPlot.SetMarkerSize(1.0);
-            CalibPlot.SetTitle("Calibration");
-            CalibPlot.Draw("AP");
-            App->Run(1);
-            //App->Run();
          }
 
       } else {
@@ -459,7 +314,7 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
       return -1;
    }
 
-   return LinesUsed;
+   return 0;
 
 }
 
@@ -505,13 +360,6 @@ int FitSinglePeak(TH1F * Histo, int Line, float Centre, TF1 * FitRange, FitResul
    Sigma1MeV = (Settings.SigmaEst1MeV * (Centre / Config.Sources[Settings.Source][Line]));
    InitialSigma = SigmaZero + ((Config.Sources[Settings.Source][Line] / 1000.0) * Sigma1MeV);
 
-   /*cout << "MinkeV: " << MinkeV << " Min: " << Min << " MinBin: " << MinBin << endl;
-      cout << "MaxkeV: " << MaxkeV << " Max: " << Max << " MaxBin: " << MaxBin << endl;
-      cout << "BackBins: " << BackBins << endl;
-      cout << "InitialSigma: " << InitialSigma << endl;
-      cout << "Initial Const: " << ConstEst << endl;
-      cout << "Dispersion: " << Settings.Dispersion << endl;
-    */
 
    if (Config.PrintVerbose) {
       cout << "Fitting line " << Line << " Min: " << Min << " Max: " << Max << endl;
@@ -589,6 +437,159 @@ int FitSinglePeak(TH1F * Histo, int Line, float Centre, TF1 * FitRange, FitResul
 
    return 1;
 }
+
+
+int CalibrateGammaSpectrum(SpectrumFit *Fit, FitSettings Settings) {
+
+   float Energies[MAX_LINES + 1], dEnergies[MAX_LINES + 1];
+   float Centroids[MAX_LINES + 1], dCentroids[MAX_LINES + 1];        // Data for calibration
+   int LinesUsed = 0;
+   int Line, i;
+   // Fitting stuff
+   std::string FitOptions = ("RQEM");
+   std::string Opts;
+   float G, O, dG, dO;       // values for fast 2 point calibration.
+   
+   //-------------------------------------------------------------//
+   // Finally fit energy vs peak centroid for final calibration   //
+   //-------------------------------------------------------------//
+   if (Config.PrintVerbose) {
+      cout << endl << "Calibrating..." << endl;
+   }
+   if (Config.PlotFits || Config.PlotCalib || Config.PlotCalibSummary || Config.PlotResidual ) {
+      cCalib1a->cd(1);
+   }
+
+   memset(&Energies, 0.0, sizeof(float) * (MAX_LINES + 1));
+   memset(&dEnergies, 0.0, sizeof(float) * (MAX_LINES + 1));
+   memset(&Centroids, 0.0, sizeof(float) * (MAX_LINES + 1));
+   memset(&dCentroids, 0.0, sizeof(float) * (MAX_LINES + 1));
+
+   LinesUsed = 0;
+   for (Line = 0; Line < Config.Sources[Settings.Source].size(); Line++) {
+
+      //  Check on these conditions:
+
+      //cout << "Here!" << endl;
+
+      if (Fit->PeakFits[Line].Const > GAUS_HEIGHT_MIN) {
+         //cout << "Here!!" << endl;
+         if ((Fit->PeakFits[Line].ChiSq / Fit->PeakFits[Line].NDF) < GAUS_CSPD_MAX) {
+            //cout << "Here!!!" << endl;
+            Energies[LinesUsed] = Config.Sources[Settings.Source][Line];
+            Centroids[LinesUsed] = Fit->PeakFits[Line].Mean / Settings.Integration;
+            dCentroids[LinesUsed] = Fit->PeakFits[Line].dMean / Settings.Integration;
+            if (Config.PrintVerbose) {
+               cout << Energies[LinesUsed] << " keV\t" << Centroids[LinesUsed] << " +/- " <<
+                   dCentroids[LinesUsed] << " ch" << endl;
+            }
+            
+
+            /*cout << "Mean: " << Fit->PeakFits[Line].Mean << " " << Fit->PeakFits[Line].Mean << endl;
+               cout << "Sigma: " << Fit->PeakFits[Line].Sigma << " " << Fit->PeakFits[Line].Sigma << endl;
+               cout << "NDF: " << Fit->PeakFits[Line].NDF << " " << Fit->PeakFits[Line].NDF << endl; */
+
+            LinesUsed += 1;
+         }
+         //}
+      }
+   }
+   if (Settings.FitZero) {
+      Energies[LinesUsed] = 0.0;
+      Centroids[LinesUsed] = 0.0;
+      dCentroids[LinesUsed] = ZERO_ERR;
+      if (Config.PrintVerbose) {
+         cout << Energies[LinesUsed] << " keV\t" << Centroids[LinesUsed] << " +/- " << dCentroids[LinesUsed] <<
+             " ch" << endl;
+      }
+      Fit->PeakFits[Config.Sources[Settings.Source].size()].Energy = 0.0;
+      Fit->PeakFits[Config.Sources[Settings.Source].size()].Const = 0.0;
+      Fit->PeakFits[Config.Sources[Settings.Source].size()].dConst = 0.0;
+      Fit->PeakFits[Config.Sources[Settings.Source].size()].Mean = 0.0;
+      Fit->PeakFits[Config.Sources[Settings.Source].size()].dMean = 1.0;
+      Fit->PeakFits[Config.Sources[Settings.Source].size()].Sigma = 0.0;
+      Fit->PeakFits[Config.Sources[Settings.Source].size()].dSigma = 0.0;
+      Fit->PeakFits[Config.Sources[Settings.Source].size()].ChiSq = 0.0;
+      Fit->PeakFits[Config.Sources[Settings.Source].size()].NDF = 1;
+      Fit->FitSuccess[Line + 1] = 1;
+      LinesUsed += 1;
+   }
+   Fit->LinesUsed = LinesUsed;
+   TGraphErrors CalibPlot(LinesUsed, Centroids, Energies, dCentroids, dEnergies);
+   if (Config.PrintVerbose) {
+      cout << LinesUsed << " lines used for calibration ";
+      for (i = 0; i < LinesUsed; i++) {
+         cout << Energies[i] << " ";
+      }
+      cout << endl;
+   }
+
+   TF1 *CalibFitLin = new TF1("CalibFitLin", "[0] + ([1]*x)", 0.0, CHARGE_MAX);
+   CalibFitLin->SetParName(0, "Offset");
+   CalibFitLin->SetParName(1, "Gain");
+   CalibFitLin->SetParameter(0, 0.0);
+   CalibFitLin->SetParameter(1, INITIAL_GAIN);
+   CalibFitLin->SetLineColor(4);  // Blue?
+   TF1 *CalibFitQuad = new TF1("CalibFitQuad", "[0] + ([1]*x) + ([2]*x*x)", 0.0, CHARGE_MAX);
+   CalibFitQuad->SetParName(0, "Offset");
+   CalibFitQuad->SetParName(1, "Gain");
+   CalibFitQuad->SetParName(2, "Quad");
+   CalibFitQuad->SetParameter(0, 0.0);
+   CalibFitQuad->SetParameter(1, INITIAL_GAIN);
+   CalibFitQuad->SetParameter(2, 0.0);
+   CalibFitQuad->SetLineColor(2); //Red?
+
+   Opts = FitOptions;
+   if (LinesUsed > 1) {
+      CalibPlot.Fit(CalibFitLin, Opts.c_str());
+      Fit->LinGainFit[0] = CalibFitLin->GetParameter(0);
+      Fit->dLinGainFit[0] = CalibFitLin->GetParError(0);
+      Fit->LinGainFit[1] = CalibFitLin->GetParameter(1);
+      Fit->dLinGainFit[1] = CalibFitLin->GetParError(1);
+      Fit->LinGainFit[2] = CalibFitLin->GetChisquare() / CalibFitLin->GetNDF();
+   }
+   Opts += "+";
+   if (LinesUsed > 2) {
+      CalibPlot.Fit(CalibFitQuad, Opts.c_str());
+      Fit->QuadGainFit[0] = CalibFitQuad->GetParameter(0);
+      Fit->dQuadGainFit[0] = CalibFitQuad->GetParError(0);
+      Fit->QuadGainFit[1] = CalibFitQuad->GetParameter(1);
+      Fit->dQuadGainFit[1] = CalibFitQuad->GetParError(1);
+      Fit->QuadGainFit[2] = CalibFitQuad->GetParameter(2);
+      Fit->dQuadGainFit[2] = CalibFitQuad->GetParError(2);
+      Fit->QuadGainFit[3] = CalibFitQuad->GetChisquare() / CalibFitQuad->GetNDF();
+   }
+
+   if (Config.PrintVerbose) {
+      cout << endl << "Two point solution:" << endl;
+      cout << "Offset = " << O << " +/- " << dO << "\tGain = " << G << " +/- " << dG << endl << endl;
+      cout << "Linear fit: " << endl;
+      cout << "Offset = " << CalibFitLin->GetParameter(0) << " +/- " << CalibFitLin->GetParError(0) << "\t";
+      cout << "Gain = " << CalibFitLin->GetParameter(1) << " +/- " << CalibFitLin->GetParError(1) << endl;
+      cout << "CSPD = " << CalibFitLin->GetChisquare() / CalibFitLin->GetNDF() << endl << endl;
+      cout << "Quadratic fit: " << endl;
+      cout << "Offset = " << CalibFitQuad->GetParameter(0) << " +/- " << CalibFitQuad->GetParError(0) << "\t";
+      cout << "Gain = " << CalibFitQuad->GetParameter(1) << " +/- " << CalibFitQuad->GetParError(1) << "\t";
+      cout << "Quad = " << CalibFitQuad->GetParameter(2) << " +/- " << CalibFitQuad->GetParError(2) << endl;
+      cout << "CSPD = " << CalibFitQuad->GetChisquare() / CalibFitQuad->GetNDF() << endl << endl;
+   }
+
+
+
+   if (PLOT_CALIB && Settings.PlotOn) {
+      cCalib1a->cd(1);
+      CalibPlot.SetMarkerColor(2);
+      CalibPlot.SetMarkerStyle(20);
+      CalibPlot.SetMarkerSize(1.0);
+      CalibPlot.SetTitle("Calibration");
+      CalibPlot.Draw("AP");
+      App->Run(1);
+      //App->Run();
+   }
+
+   return 0;
+}
+
 
 
 int CalibrationReport(SpectrumFit * Fit, ofstream & ReportOut, std::string HistName, FitSettings Settings)

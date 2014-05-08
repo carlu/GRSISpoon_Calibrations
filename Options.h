@@ -142,6 +142,7 @@ struct RunConfig {              // this struct will hold all information
    bool PlotFits;
    bool CalibPlots[CLOVERS][CRYSTALS][SEGS + 2];  // records if fits should be plotted for each channel
    bool PlotCalib;
+   bool PlotResidual;
    bool PlotCalibSummary;
    // Calibration options
    bool FitZero;                // Add extra calibration point at 0ch = 0keV

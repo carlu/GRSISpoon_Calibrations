@@ -16,7 +16,6 @@ using namespace std;
 #include <TTreeIndex.h>
 #include <TTreePlayer.h>
 #include <TChain.h>
-//#include <TVector3.h>
 #include <TH1F.h>
 #include <TH2F.h>
 #include <TF1.h>
@@ -188,7 +187,7 @@ void Calib(std::vector < TTigFragment > &ev)
    int Samp, Length;
    int Slave, Port, Chan;
    int Crystal, Clover, SpecNum;
-   int FitSuccess = 0;
+   int FitSuccess, CalibSuccess;
    std::string name;
 
    time_t MidasTime;
@@ -374,26 +373,15 @@ void Calib(std::vector < TTigFragment > &ev)
                   Settings.BackupPeakSelect = 0;
                   
                   FitSuccess = FitGammaSpectrum(hCharge[Clover - 1][Crystal][0], &Fit, Settings);
+                  
+                  CalibSuccess = CalibrateGammaSpectrum(&Fit, Settings);
 
-                  if (FitSuccess > -1) {
+                  if (FitSuccess == 0) {
                      hCrystalGain[j - 1][k]->SetBinContent(TimeBin, Fit.LinGainFit[1]);
                      hCrystalOffset[j - 1][k]->SetBinContent(TimeBin, Fit.LinGainFit[0]);
+
                   } else {
-                     if (VERBOSE) {
-                        switch (FitSuccess) {
-                        case -1:
-                           continue;
-                        case -2:
-                           continue;
-                        case -3:
-                           continue;
-                        case -4:
-                           continue;
-                        default:
-                           continue;
-                           break;
-                        }
-                     }
+                     continue;
                   }
                }
             }
@@ -417,6 +405,7 @@ void FinalCalib()
    int Crystal = 0;
    int Seg = 0;
    int FitSuccess = 0;
+   int CalibSuccess = 0;
    bool PlotOn = 0;
    bool PeakSelect=0;
    int Source = 0;
@@ -572,8 +561,10 @@ void FinalCalib()
                   
                   FitSuccess = FitGammaSpectrum(Histo, &Fit, Settings);
 
+                  CalibSuccess = CalibrateGammaSpectrum(&Fit, Settings);
+
                   // If fit succesful, generate output....
-                  if (FitSuccess > 0) {
+                  if (FitSuccess == 0) {
                      switch (Crystal) { // Calculate channel number (old TIGRESS DAQ numbering)
                      case 0:
                         ItemNum = ((Clover - 1) * 60) + Seg;
@@ -601,8 +592,8 @@ void FinalCalib()
                   }
                   // Now print reports on results of fits and calibration.
                   if (OUTPUT_GAIN) {
-                     if (FitSuccess > 0) {
-                        if (FitSuccess < 3 || FORCE_LINEAR) {
+                     if (Fit.LinesUsed > 1) {
+                        if (Fit.LinesUsed < 3 || FORCE_LINEAR) {
                            GainOut << HistName << ":\t" << Fit.LinGainFit[0];
                            GainOut << "\t" << Fit.LinGainFit[1] << endl;
                         } else {
@@ -615,7 +606,7 @@ void FinalCalib()
                   }
                   // Write full calibration report
                   if (Config.CalReport) {
-                     if (FitSuccess > 0) {
+                     if (Fit.LinesUsed > 0) {
                         CalibrationReport(&Fit, ReportOut, HistName, Settings);
                      } else {
                         ReportOut << endl << "------------------------------------------" << endl << HistName << endl <<
@@ -712,11 +703,13 @@ void FinalCalib()
                   Settings.BackupPeakSelect = 0;
                   
                   FitSuccess = FitGammaSpectrum(Histo, &WaveFit, Settings);
+                  
+                  CalibSuccess = CalibrateGammaSpectrum(&WaveFit, Settings);
 
                   // Now print reports on results of fits and calibration.
                   if (OUTPUT_GAIN) {
-                     if (FitSuccess > 0) {
-                        if (FitSuccess < 3 || FORCE_LINEAR) {
+                     if (FitSuccess == 0) {
+                        if (WaveFit.LinesUsed < 3 || FORCE_LINEAR) {
                            WaveOut << HistName << ":\t" << WaveFit.LinGainFit[0];
                            WaveOut << "\t" << WaveFit.LinGainFit[1] << endl;
                         } else {
@@ -728,7 +721,7 @@ void FinalCalib()
                      }
                   }
                   if (Config.CalReport) {
-                     if (FitSuccess > 0) {
+                     if (FitSuccess == 0) {
                         WaveReportOut << "test" << endl;
                         CalibrationReport(&WaveFit, WaveReportOut, HistName, Settings);
                      } else {

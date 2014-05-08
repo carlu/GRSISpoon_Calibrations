@@ -105,6 +105,7 @@ int LoadDefaultSettings()
    // Plots
    Config.PlotFits = 0;
    Config.PlotCalib = 0;
+   Config.PlotResidual = 0;
    Config.PlotCalibSummary = 0;
    memset(&Config.CalibPlots, 0, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
    // Calibrating options
@@ -365,6 +366,7 @@ int ReadCommandLineSettings(int argc, char **argv)
             }
             cout << "Manually selecting peaks for Cl: " << Plot[0] << " Cr: " << Plot[1] << " Seg: " << Plot[2] << endl;
             Config.ManualPeakSelect[Plot[0] - 1][Plot[1]][Plot[2]] = 1;
+            Config.CalibPlots[Plot[0] - 1][Plot[1]][Plot[2]] = 1;  // Also set this channel to plot so we can see it!
          }
       }
       // add 0ch = 0keV to calibration
