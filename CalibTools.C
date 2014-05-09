@@ -40,11 +40,11 @@ using namespace std;
 
 extern TApplication *App;
 
-int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
+int FitGammaSpectrum(TH1F * Histo, HistoFit * Fit, FitSettings Settings)
 {
 
    // Histo:         pointer to histo to be fitted
-   // Fit:           SpectrumFit structure into which the fit results will be written
+   // Fit:           HistoFit structure into which the fit results will be written
    // Settings:
    //    Source:        Number of source to be fitted
    //    Integration:   Integration used in charge evaluation (set to 1 if no integration or if this is the waveform derived charge)
@@ -238,8 +238,9 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
             FitSinglePeak(Histo, Line, Centre, FitRange[Line], &FitRes[Line], Settings);
             
             // Store fit result for use in calibration                      
-            memcpy(&Fit->PeakFits[Line], &FitRes[Line], sizeof(FitResult));
-            Fit->FitSuccess[Line] = 1;
+            //memcpy(&Fit->PeakFits[Line], &FitRes[Line], sizeof(FitResult));
+            Fit->PeakFits.push_back(FitRes[Line]);
+            Fit->FitSuccess.push_back(1);
          }
 
          //-------------------------------------------------------------//
@@ -292,9 +293,10 @@ int FitGammaSpectrum(TH1F * Histo, SpectrumFit * Fit, FitSettings Settings)
                FitSinglePeak(Histo, Line, Centre, FitRange[Line], &FitRes[Line], Settings);
                
                // Store fit result for use in calibration                      
-               memcpy(&Fit->PeakFits[Line], &FitRes[Line], sizeof(FitResult));
-               Fit->FitSuccess[Line] = 1;
-               
+               //memcpy(&Fit->PeakFits[Line], &FitRes[Line], sizeof(FitResult));
+               //Fit->FitSuccess[Line] = 1;
+               Fit->PeakFits.push_back(FitRes[Line]);
+               Fit->FitSuccess.push_back(1);
             }
          }
 
@@ -439,12 +441,13 @@ int FitSinglePeak(TH1F * Histo, int Line, float Centre, TF1 * FitRange, FitResul
 }
 
 
-int CalibrateGammaSpectrum(SpectrumFit *Fit, FitSettings Settings) {
+int CalibrateGammaSpectrum(HistoFit *Fit, FitSettings Settings) {
 
    float Energies[MAX_LINES + 1], dEnergies[MAX_LINES + 1];
    float Centroids[MAX_LINES + 1], dCentroids[MAX_LINES + 1];        // Data for calibration
    int LinesUsed = 0;
    int Line, i;
+   bool TestsPassed = 0;
    // Fitting stuff
    std::string FitOptions = ("RQEM");
    std::string Opts;
@@ -466,32 +469,24 @@ int CalibrateGammaSpectrum(SpectrumFit *Fit, FitSettings Settings) {
    memset(&dCentroids, 0.0, sizeof(float) * (MAX_LINES + 1));
 
    LinesUsed = 0;
-   for (Line = 0; Line < Config.Sources[Settings.Source].size(); Line++) {
-
+   for (Line = 0; Line < Fit->PeakFits.size(); Line++) {
       //  Check on these conditions:
-
-      //cout << "Here!" << endl;
-
-      if (Fit->PeakFits[Line].Const > GAUS_HEIGHT_MIN) {
-         //cout << "Here!!" << endl;
-         if ((Fit->PeakFits[Line].ChiSq / Fit->PeakFits[Line].NDF) < GAUS_CSPD_MAX) {
-            //cout << "Here!!!" << endl;
+      TestsPassed = 0;
+      if (Fit->PeakFits.at(Line).Const > GAUS_HEIGHT_MIN) {
+         if ((Fit->PeakFits.at(Line).ChiSq / Fit->PeakFits[Line].NDF) < GAUS_CSPD_MAX) {
             Energies[LinesUsed] = Config.Sources[Settings.Source][Line];
-            Centroids[LinesUsed] = Fit->PeakFits[Line].Mean / Settings.Integration;
-            dCentroids[LinesUsed] = Fit->PeakFits[Line].dMean / Settings.Integration;
+            Centroids[LinesUsed] = Fit->PeakFits.at(Line).Mean / Settings.Integration;
+            dCentroids[LinesUsed] = Fit->PeakFits.at(Line).dMean / Settings.Integration;
             if (Config.PrintVerbose) {
                cout << Energies[LinesUsed] << " keV\t" << Centroids[LinesUsed] << " +/- " <<
                    dCentroids[LinesUsed] << " ch" << endl;
             }
-            
-
-            /*cout << "Mean: " << Fit->PeakFits[Line].Mean << " " << Fit->PeakFits[Line].Mean << endl;
-               cout << "Sigma: " << Fit->PeakFits[Line].Sigma << " " << Fit->PeakFits[Line].Sigma << endl;
-               cout << "NDF: " << Fit->PeakFits[Line].NDF << " " << Fit->PeakFits[Line].NDF << endl; */
-
             LinesUsed += 1;
+            TestsPassed = 1;
          }
-         //}
+      }
+      if(TestsPassed==0) {
+         Fit->FitSuccess.at(Line) = 0;
       }
    }
    if (Settings.FitZero) {
@@ -502,16 +497,18 @@ int CalibrateGammaSpectrum(SpectrumFit *Fit, FitSettings Settings) {
          cout << Energies[LinesUsed] << " keV\t" << Centroids[LinesUsed] << " +/- " << dCentroids[LinesUsed] <<
              " ch" << endl;
       }
-      Fit->PeakFits[Config.Sources[Settings.Source].size()].Energy = 0.0;
-      Fit->PeakFits[Config.Sources[Settings.Source].size()].Const = 0.0;
-      Fit->PeakFits[Config.Sources[Settings.Source].size()].dConst = 0.0;
-      Fit->PeakFits[Config.Sources[Settings.Source].size()].Mean = 0.0;
-      Fit->PeakFits[Config.Sources[Settings.Source].size()].dMean = 1.0;
-      Fit->PeakFits[Config.Sources[Settings.Source].size()].Sigma = 0.0;
-      Fit->PeakFits[Config.Sources[Settings.Source].size()].dSigma = 0.0;
-      Fit->PeakFits[Config.Sources[Settings.Source].size()].ChiSq = 0.0;
-      Fit->PeakFits[Config.Sources[Settings.Source].size()].NDF = 1;
-      Fit->FitSuccess[Line + 1] = 1;
+      FitResult ZeroFit;
+      ZeroFit.Energy = 0.0;
+      ZeroFit.Const = 0.0;
+      ZeroFit.dConst = 0.0;
+      ZeroFit.Mean = 0.0;
+      ZeroFit.dMean = 1.0;
+      ZeroFit.Sigma = 0.0;
+      ZeroFit.dSigma = 0.0;
+      ZeroFit.ChiSq = 0.0;
+      ZeroFit. NDF = 1;
+      Fit->PeakFits.push_back(ZeroFit);
+      Fit->FitSuccess.push_back(1);
       LinesUsed += 1;
    }
    Fit->LinesUsed = LinesUsed;
@@ -592,34 +589,34 @@ int CalibrateGammaSpectrum(SpectrumFit *Fit, FitSettings Settings) {
 
 
 
-int CalibrationReport(SpectrumFit * Fit, ofstream & ReportOut, std::string HistName, FitSettings Settings)
+int CalibrationReport(HistoFit * Fit, ofstream & ReportOut, std::string HistName, FitSettings Settings)
 {
 
    int i, NumFits;
    float Energies[MAX_LINES], Residuals[MAX_LINES];
    float CalibEn;
 
-   //char HistName[1024];
-   //sprintf(HistName,"TempHist");
-   
    if(Config.CalReport) {
       // Heading for this channel
       ReportOut << endl << "------------------------------------------" << endl << HistName << endl <<
           "------------------------------------------" << endl << endl;
       // Peak fit info
-      ReportOut << Fit->LinesUsed << " lines used in calibration." << endl;
+      ReportOut << Fit->LinesUsed << " lines used in calibration (*)" << endl;
       ReportOut << "Individual fit results:" << endl;
       ReportOut << "(Const +/- err\tMean +/- err\tSigma +/- err\nChiSq\tNDF\tCSPD)" << endl << endl;
-      for (i = 0; i <= Config.Sources[Settings.Source].size(); i++) {
-         if (Fit->FitSuccess[i] == 1) {
-            ReportOut << Fit->PeakFits[i].Energy << " keV" << endl;
-            ReportOut << Fit->PeakFits[i].Const << " +/- " << Fit->PeakFits[i].dConst << "\t";
-            ReportOut << Fit->PeakFits[i].Mean << " +/- " << Fit->PeakFits[i].dMean << "\t";
-            ReportOut << Fit->PeakFits[i].Const << " +/- " << Fit->PeakFits[i].dConst << endl;
-            ReportOut << Fit->PeakFits[i].ChiSq << "\t" << Fit->PeakFits[i].NDF << "\t" << Fit->PeakFits[i].ChiSq /
-                Fit->PeakFits[i].NDF;
-            ReportOut << endl << endl;
+      //for (i = 0; i <= Config.Sources[Settings.Source].size(); i++) {
+      for (i = 0; i < Fit->PeakFits.size(); i++) {  
+         ReportOut << Fit->PeakFits.at(i).Energy << " keV ";
+         if (Fit->FitSuccess.at(i) == 1) {
+            ReportOut << "(*)";
          }
+         ReportOut << endl;
+         ReportOut << Fit->PeakFits.at(i).Const << " +/- " << Fit->PeakFits.at(i).dConst << "\t";
+         ReportOut << Fit->PeakFits.at(i).Mean << " +/- " << Fit->PeakFits.at(i).dMean << "\t";
+         ReportOut << Fit->PeakFits.at(i).Const << " +/- " << Fit->PeakFits.at(i).dConst << endl;
+         ReportOut << Fit->PeakFits.at(i).ChiSq << "\t" << Fit->PeakFits.at(i).NDF << "\t" << Fit->PeakFits.at(i).ChiSq /
+             Fit->PeakFits.at(i).NDF;
+         ReportOut << endl << endl;
       }
       // Calibration...
       ReportOut << "Linear Solution: Offset = " << Fit->LinGain[0] << " +/- " << Fit->dLinGain[0] << "\t";
@@ -635,13 +632,14 @@ int CalibrationReport(SpectrumFit * Fit, ofstream & ReportOut, std::string HistN
       ReportOut << endl << "Quadratic calibration residuals...." << endl;
       ReportOut << "Centroid (ch)\t\tList Energy (keV)\t\tCalibration Energy (keV)\t\tResidual (keV)" << endl;
       NumFits = 0;
-      for (i = 0; i <= Config.Sources[Settings.Source].size(); i++) {
-         if (Fit->FitSuccess[i] == 1) {
-            CalibEn = Fit->QuadGainFit[0] + (Fit->QuadGainFit[1] * (Fit->PeakFits[i].Mean / Settings.Integration)) +
-                (pow((Fit->PeakFits[i].Mean / Settings.Integration), 2) * Fit->QuadGainFit[2]);
-            ReportOut << Fit->PeakFits[i].Mean << "\t\t\t" << Fit->PeakFits[i].Energy << "\t\t\t";
-            ReportOut << CalibEn << "\t\t\t" << CalibEn - Fit->PeakFits[i].Energy << endl;
-            Residuals[NumFits] = CalibEn - Fit->PeakFits[i].Energy;
+      //for (i = 0; i <= Config.Sources[Settings.Source].size(); i++) {
+      for (i = 0; i < Fit->PeakFits.size(); i++) {
+         if (Fit->FitSuccess.at(i) == 1) {
+            CalibEn = Fit->QuadGainFit[0] + (Fit->QuadGainFit[1] * (Fit->PeakFits.at(i).Mean / Settings.Integration)) +
+                (pow((Fit->PeakFits.at(i).Mean / Settings.Integration), 2) * Fit->QuadGainFit[2]);
+            ReportOut << Fit->PeakFits.at(i).Mean << "\t\t\t" << Fit->PeakFits.at(i).Energy << "\t\t\t";
+            ReportOut << CalibEn << "\t\t\t" << CalibEn - Fit->PeakFits.at(i).Energy << endl;
+            Residuals[NumFits] = CalibEn - Fit->PeakFits.at(i).Energy;
             NumFits++;
          }
       }
@@ -649,12 +647,13 @@ int CalibrationReport(SpectrumFit * Fit, ofstream & ReportOut, std::string HistN
       NumFits = 0;
       ReportOut << endl << "Linear calibration residuals...." << endl;
       ReportOut << "Centroid (ch)\t\tList Energy (keV)\t\tCalibration Energy (keV)\t\tResidual (keV)" << endl;
-      for (i = 0; i <= Config.Sources[Settings.Source].size(); i++) {
-         if (Fit->FitSuccess[i] == 1) {
-            CalibEn = Fit->LinGainFit[0] + (Fit->LinGainFit[1] * (Fit->PeakFits[i].Mean / Settings.Integration));
-            ReportOut << Fit->PeakFits[i].Mean << "\t\t\t" << Fit->PeakFits[i].Energy << "\t\t\t";
-            ReportOut << CalibEn << "\t\t\t" << CalibEn - Fit->PeakFits[i].Energy << endl;
-            Energies[NumFits] = Fit->PeakFits[i].Energy;
+      for (i = 0; i < Fit->PeakFits.size(); i++) {
+      //for (i = 0; i <= Config.Sources[Settings.Source].size(); i++) {
+         if (Fit->FitSuccess.at(i) == 1) {
+            CalibEn = Fit->LinGainFit[0] + (Fit->LinGainFit[1] * (Fit->PeakFits.at(i).Mean / Settings.Integration));
+            ReportOut << Fit->PeakFits.at(i).Mean << "\t\t\t" << Fit->PeakFits.at(i).Energy << "\t\t\t";
+            ReportOut << CalibEn << "\t\t\t" << CalibEn - Fit->PeakFits.at(i).Energy << endl;
+            Energies[NumFits] = Fit->PeakFits.at(i).Energy;
          }
       }
       TGraphErrors CalibResidual(NumFits, Energies, Residuals);
@@ -678,7 +677,7 @@ int CalibrationReport(SpectrumFit * Fit, ofstream & ReportOut, std::string HistN
 
 }
 
-int WriteCalFile(SpectrumFit *Fit, ofstream &CalFileOut, std::string HistName, FitSettings Settings) {
+int WriteCalFile(HistoFit *Fit, ofstream &CalFileOut, std::string HistName, FitSettings Settings) {
 
 
 

@@ -81,14 +81,10 @@ struct RunConfig {              // this struct will hold all information
    bool RunPropCrosstalk;
    bool RunWaveform;
    bool RunDiffCrosstalk;
-   // Input file paths
+   // Input files
     std::vector < std::string > files;
    // root output files
     std::string OutPath;
-    std::string CalOut;         // First 8 letters of this should match any file loaded in to offline cal
-    std::string CalSpecOut;
-    std::string EffOut;
-    std::string PropOut;
    // text output files
     std::string EffTxtOut;
     std::string PropTxtOut;
@@ -137,6 +133,10 @@ struct RunConfig {              // this struct will hold all information
    bool CalList[CLOVERS][CRYSTALS][SEGS + 2];   // mask to determine which channels CalibSpectra() should run on
    bool CalListProvided;
    // Output
+   std::string CalOut;         // First 8 letters of this should match any file loaded in to offline cal
+    std::string CalSpecOut;
+   std::string CalName;
+   std::string AnaName;
    bool WriteFits;              // --cal: write histo after fits, --calof: write new file with histos and fits
    // What to plot
    bool PlotFits;
@@ -153,6 +153,12 @@ struct RunConfig {              // this struct will hold all information
    // What to plot
    bool PlotEff;
    bool OutputEff;
+   // Output
+   std::string EffOut;
+    
+   // PropXtalk()
+   // Output
+   std::string PropOut;
 
 };
 

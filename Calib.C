@@ -357,7 +357,7 @@ void Calib(std::vector < TTigFragment > &ev)
                      cout << "Clov: " << j << " Crys: " << k;
                   }
                   // Perform Fit                  
-                  SpectrumFit Fit = { 0 };
+                  HistoFit Fit;
                   FitSettings Settings = { 0 };
 
                   Settings.Source = Config.SourceNumCore[0];
@@ -544,7 +544,7 @@ void FinalCalib()
                      PeakSelect = 0;
                   }
                   // Perform Fit                  
-                  SpectrumFit Fit = { 0 };
+                  HistoFit Fit;
                   FitSettings Settings = { 0 };
 
                   Settings.Source = Source;
@@ -687,7 +687,7 @@ void FinalCalib()
                      PeakSelect = 0;
                   }
                   // Perform Fit                  
-                  SpectrumFit WaveFit  = { 0 };
+                  HistoFit WaveFit;
                   FitSettings Settings = { 0 };
 
                   Settings.Source = Source;

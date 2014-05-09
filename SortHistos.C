@@ -143,7 +143,7 @@ int CalibrateFiles() {
    string TestString = "his";
    bool FileTypeFound = 0;
    
-   string filename;
+   string filename, runname;
    
    int SourceNumCore, SourceNumFront, SourceNumBack;
    
@@ -153,6 +153,7 @@ int CalibrateFiles() {
       return -1;
    }
    
+   // loop input files
    for (i = 0; i < Config.files.size(); i++) {
          if (Config.PrintBasic) {
             cout << "Attempting offline calibration on histograms in file: " << Config.files.at(i) << endl;
@@ -161,28 +162,26 @@ int CalibrateFiles() {
          SourceNumCore = Config.SourceNumCore.at(i);
          SourceNumFront= Config.SourceNumFront.at(i);
          SourceNumBack = Config.SourceNumBack.at(i);
-         //if (CalibSpectra(Config.files.at(i)) >= 0) {   // return after one succesful file so outputs are not overwritten.
-           // return 0;
-         //}
    }
    
    
    // Check file type
-   cout << "Filename: " << filename << endl;
-   if (strncmp(filename.c_str(), Config.CalOut.c_str(), 7) == 0) {
-      cout << "1: " << Config.CalOut.c_str() << endl;
+   if (strncmp(filename.c_str(), Config.CalName.c_str(), Config.CalName.size()) == 0) {
+      //cout << "1: " << Config.CalOut.c_str() << endl;
       FileType = 1;             // File is from output of Calib()
       FileTypeFound = 1;
    }
-   if (strncmp(filename.c_str(), TestString.c_str(), 3) == 0) {
-      cout << "2: " << TestString.c_str() << endl;
+   
+   if (strncmp(filename.c_str(), Config.AnaName.c_str(), Config.AnaName.size()) == 0) {
+      //cout << "2: " << TestString.c_str() << endl;
       FileType = 2;             // file is from TIGRESS DAQ analyser
       Config.CalWave = 0;
       FileTypeFound = 1;
    }
-
+   
    if (FileTypeFound == 0) {
       cout << "Histogram file type not determined!" << endl;
+      cout << "Note, using ./ at the begining of the filename screws this up.  Must fix :-)" << endl;
       return -1;
    }
    
@@ -379,7 +378,7 @@ int CalibrateFiles() {
                      PeakSelect = 0;
                   }
                   // Perform Fit                  
-                  SpectrumFit Fit = { 0 };
+                  HistoFit Fit;
                   FitSettings Settings = { 0 };
 
                   Settings.Source = Source;
@@ -452,6 +451,7 @@ int CalibrateFiles() {
                          "------------------------------------------" << endl << endl;
                      ReportOut << "Fail Fail Fail! The calibration has failed!" << endl;
                   }
+                  
                   // Write .cal file for GRSISpoon
                   if (Config.CalFile) {
                      WriteCalFile(&Fit, CalFileOut, HistName, Settings);
@@ -527,7 +527,7 @@ int CalibrateFiles() {
                }
                   
                // Perform Fit                  
-               SpectrumFit WaveFit = { 0 };
+               HistoFit WaveFit;
                FitSettings Settings = { 0 };
 
                Settings.Source = Source;

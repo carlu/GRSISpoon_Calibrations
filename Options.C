@@ -31,11 +31,6 @@ int LoadDefaultSettings()
    Config.RunDiffCrosstalk = 0;
 
    Config.OutPath = "./";
-   Config.CalOut = "CalibOut.root";
-   Config.CalSpecOut = "CalibSpecOut.root";
-   Config.EffOut = "CoincEffOut.root";
-   Config.EffTxtOut = "CoincEffOut.txt";
-   Config.PropOut = "PropXTalkOut.root";
 
    Config.PrintBasic = 1;
    Config.PrintFrequency = PRINT_FREQ;
@@ -101,6 +96,11 @@ int LoadDefaultSettings()
    memset(&Config.CalList, 1, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
    Config.CalListProvided = 0;
    // Output
+   Config.CalOut = "CalibOut.root";  // Name for Tree calibration output file
+   Config.CalName = Config.CalOut.substr(0,Config.CalOut.size()-5);  // name expected for hist calib input.  
+                                             // .root stripped because run number may exist 
+   Config.AnaName = "his";
+   Config.CalSpecOut = "CalibSpecOut.root";
    Config.WriteFits = 1;
    // Plots
    Config.PlotFits = 0;
@@ -114,11 +114,14 @@ int LoadDefaultSettings()
    Config.ManualPeakCorrection = 1;
 
    // Options for CoincEff()
+   Config.EffOut = "CoincEffOut.root";
+   Config.EffTxtOut = "CoincEffOut.txt";
    Config.OutputEff = 1;
    // Plots
    Config.PlotEff = 1;
 
-   // Options for 
+   // Options for PropXtakl()
+   Config.PropOut = "PropXTalkOut.root";
 
    return 0;
 }

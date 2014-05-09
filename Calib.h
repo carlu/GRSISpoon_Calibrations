@@ -79,9 +79,9 @@ struct FitResult {
 };
 
 // Structure for fits and gain for one spectrum
-struct SpectrumFit {
-   FitResult PeakFits[MAX_LINES + 1];
-   int FitSuccess[MAX_LINES + 1];
+struct HistoFit {
+   std::vector<FitResult> PeakFits;
+   std::vector<bool> FitSuccess;
    int LinesUsed;
    float LinGain[2];            // [O,G]
    float dLinGain[2];
