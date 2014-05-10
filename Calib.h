@@ -62,7 +62,7 @@ struct FitSettings {
    bool BackupPeakSelect;       // Fallback to manual peak select if auto fails.
 };
 
-struct FitResult {
+struct FitResult {  // Stores result of fit of single peak
    float Energy;
    float Const;
    float dConst;
@@ -90,6 +90,11 @@ struct HistoFit {
    float QuadGainFit[4];        // [O,G,Q,CSPD]
    float dQuadGainFit[4];       // [dO,dG,dQ]
 };
+
+
+// Somewhere to store all the fits.
+typedef std::map <float, FitResult> ChannelFitMap; // Map of FitResults for a particular channel using energy of line as key
+typedef std::map < std::vector < int > , ChannelFitMap > MasterFitMap; // Map of all FitMaps using vector as key.  vector = [Clover,Crystal,Channel] 
 
 
 // Sources

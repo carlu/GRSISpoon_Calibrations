@@ -40,6 +40,7 @@ using namespace std;
 
 //Functions
 int CalibrateFiles(); 
+int FitHistoFile(TFile *file, int FileType, MasterFitMap *FitMap);
 
 // Fitting stuff
 std::string FitOptions = ("RQE");
@@ -98,13 +99,8 @@ int main(int argc, char **argv)
    
    if(Config.RunSpecEff == 1)  {
       
-   }
-   
-   
+   }  
    return 0;
-   
-   
-
 }
 
 
@@ -114,20 +110,10 @@ int CalibrateFiles() {
    // Variables, Constants, etc
    int i, j, x;
    unsigned int ChainEvent, TreeEvent;
-   int Clover = 0;
-   int Crystal = 0;
-   int Seg = 0;
-   int Source = 0;
-   int FitSuccess = 0;
-   int CalibSuccess = 0;
-   bool PlotOn = 0;
-   bool PeakSelect=0;
-   int FileType = 0;
-   int Integration = 0;
-   float Dispersion = 0.0;
-   char CharBuf[CHAR_BUFFER_SIZE];
-   string HistName;
-   string OutputName;
+   
+   int FileType;
+
+   
    char Charge[10];
    char Colours[] = "BGRW";
    TH1F *GainPlot, *OffsetPlot, *QuadPlot;
@@ -140,84 +126,17 @@ int CalibrateFiles() {
    ofstream CalFileOut;
    int NumFits;
    float CalibEn = 0.0;
-   string TestString = "his";
    bool FileTypeFound = 0;
    
    string filename, runname;
    
-   int SourceNumCore, SourceNumFront, SourceNumBack;
-   
-   // Check we have sources for all runs
-   if(Config.files.size() != Config.SourceNumCore.size()) {
-      cout << "For histogram calibration the number of files (" << Config.files.size() << ") must equal number of sources (" << Config.SourceNumCore.size()  << ")" << endl;
-      return -1;
-   }
-   
-   // loop input files
-   for (i = 0; i < Config.files.size(); i++) {
-         if (Config.PrintBasic) {
-            cout << "Attempting offline calibration on histograms in file: " << Config.files.at(i) << endl;
-         }
-         filename = Config.files.at(i);
-         SourceNumCore = Config.SourceNumCore.at(i);
-         SourceNumFront= Config.SourceNumFront.at(i);
-         SourceNumBack = Config.SourceNumBack.at(i);
-   }
-   
-   
-   // Check file type
-   if (strncmp(filename.c_str(), Config.CalName.c_str(), Config.CalName.size()) == 0) {
-      //cout << "1: " << Config.CalOut.c_str() << endl;
-      FileType = 1;             // File is from output of Calib()
-      FileTypeFound = 1;
-   }
-   
-   if (strncmp(filename.c_str(), Config.AnaName.c_str(), Config.AnaName.size()) == 0) {
-      //cout << "2: " << TestString.c_str() << endl;
-      FileType = 2;             // file is from TIGRESS DAQ analyser
-      Config.CalWave = 0;
-      FileTypeFound = 1;
-   }
-   
-   if (FileTypeFound == 0) {
-      cout << "Histogram file type not determined!" << endl;
-      cout << "Note, using ./ at the begining of the filename screws this up.  Must fix :-)" << endl;
-      return -1;
-   }
-   
-   // Input File
-   TFile *file = TFile::Open(filename.c_str(),"READ");
-   if (file->IsOpen()) {
-      if (Config.PrintBasic) {
-         cout << filename << " opened!" << endl;
-      }
-   } else {
-      if (Config.PrintBasic) {
-         cout << "Failed to open " << filename << "!" << endl;
-      }
-      return -1;
-   }
-
-   // Open TFolder if required
-   TFolder *Folder;
-   if (FileType == 2) {
-      Folder = (TFolder *) file->FindObjectAny("histos");
-   }
-   if (!Folder && FileType == 2) {
-      cout << "Folder not loaded" << endl;
-      return -1;
-   }
-   // Prepare output root file.
    std::string tempstring;
-   TFile *outfile;
-   TDirectory *dCharge, *dWaveCharge, *dCalibration = { 0 };
-   if (Config.WriteFits) {
-      tempstring = Config.OutPath + Config.CalSpecOut;
-      outfile = TFile::Open(tempstring.c_str(), "RECREATE");
-      dCharge = outfile->mkdir("Charge");
-      dWaveCharge = outfile->mkdir("WaveCharge");
-      dCalibration = outfile->mkdir("Calibration");
-   }
+   TFile *file;
+
+   
+   // Map to store all the fits in.
+   MasterFitMap FitMap;
+   
    // Prepare energy calibration output files
    if (Config.CalEnergy) {
       tempstring = Config.OutPath + "GainsOut.txt";
@@ -260,7 +179,113 @@ int CalibrateFiles() {
        new TH1F("Quadratic Histogram", "Histogram of Quadratic component of all fitted channels", 512, -0.000001,
                 0.000001);
    QuadHist->GetXaxis()->SetTitle("keV/ch^2");
+   
+   // Check we have sources for all runs
+   if(Config.files.size() != Config.SourceNumCore.size()) {
+      cout << "For histogram calibration the number of files (" << Config.files.size() << ") must equal number of sources (" << Config.SourceNumCore.size()  << ")" << endl;
+      return -1;
+   }
+   
+   // loop input files
+   for (i = 0; i < Config.files.size(); i++) {
+   
+      if (Config.PrintBasic) {
+         cout << "Attempting offline calibration on histograms in file: " << Config.files.at(i) << endl;
+      }
+      
+      filename = Config.files.at(i);
+   
+      // Check file type
+      if (strncmp(filename.c_str(), Config.CalName.c_str(), Config.CalName.size()) == 0) {
+         FileType = 1;             // File is from output of Calib()
+         FileTypeFound = 1;
+      }
+      
+      if (strncmp(filename.c_str(), Config.AnaName.c_str(), Config.AnaName.size()) == 0) {
+         FileType = 2;             // file is from TIGRESS DAQ analyser
+         Config.CalWave = 0;
+         FileTypeFound = 1;
+      }
+      
+      if (FileTypeFound == 0) {
+         if (Config.PrintBasic) {
+            cout << filename << ": Histogram file type not determined, skipping." << endl;
+            cout << "(Note, using ./ at the begining of the filename screws this up.  Must fix.)" << endl;
+         }
+         continue;
+      }
+   
+      // Input File
+      file = TFile::Open(filename.c_str(),"READ");
+      if (file->IsOpen()) {
+         if (Config.PrintBasic) {
+            cout << filename << " opened!" << endl;
+         }
+      } else {
+         if (Config.PrintBasic) {
+            cout << "Failed to open " << filename << "!" << endl;
+         }
+         continue;
+      }
+      
+      // Now fit the histos in file
+      FitHistoFile(file, FileType, &FitMap);
+   
+   }
+   
+   
+   
+}
+
+int FitHistoFile(TFile *file, int FileType, MasterFitMap *FitMap) {
+
+   int i, j, x;
+   int Clover = 0;
+   int Crystal = 0;
+   int Seg = 0;
+   int Source = 0;
+   
+   int SourceNumCore, SourceNumFront, SourceNumBack;
+   int FitSuccess = 0;
+   int CalibSuccess = 0;
+   bool PlotOn = 0;
+   bool PeakSelect=0;
+   int Integration = 0;
+   float Dispersion = 0.0;
+   
+   std::string tempstring;
+   char CharBuf[CHAR_BUFFER_SIZE];
+   string HistName;
+   string OutputName;
+   
+   // ROOT objects
+   TFile *outfile;
+   TDirectory *dCharge, *dWaveCharge, *dCalibration = { 0 };
    TH1F *Histo;
+   TFolder *Folder;
+   
+   // Open TFolder if required
+   if (FileType == 2) {
+      Folder = (TFolder *) file->FindObjectAny("histos");
+   }
+   if (!Folder && FileType == 2) {
+      cout << "Folder not loaded" << endl;
+      return -1;
+   }
+   // Prepare output root file.
+   if (Config.WriteFits) {
+      tempstring = Config.OutPath + Config.CalSpecOut;
+      outfile = TFile::Open(tempstring.c_str(), "RECREATE");
+      dCharge = outfile->mkdir("Charge");
+      dWaveCharge = outfile->mkdir("WaveCharge");
+      dCalibration = outfile->mkdir("Calibration");
+   }
+   
+   // Get source definition
+   SourceNumCore = Config.SourceNumCore.at(i);
+   SourceNumFront= Config.SourceNumFront.at(i);
+   SourceNumBack = Config.SourceNumBack.at(i);
+   
    // If we're calibrating the FPGA energy...
    if (Config.CalEnergy) {
       // Loop all gamma detectors 
@@ -494,14 +519,14 @@ int CalibrateFiles() {
                if (Seg == 0 || Seg == 9) {
                   Source = SourceNumCore;
                   if (Seg == 0) {
-                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da WaveChg", Clover, Colours[Crystal], Seg);
+                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da WaveChg", Clover, Num2Col(Crystal), Seg);
                      HistName = CharBuf;
                   } else {
-                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db WaveChg", Clover, Colours[Crystal], 0);
+                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db WaveChg", Clover, Num2Col(Crystal), 0);
                      HistName = CharBuf;
                   }
                } else {
-                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx WaveChg", Clover, Colours[Crystal], Seg);
+                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx WaveChg", Clover, Num2Col(Crystal), Seg);
                   HistName = CharBuf;
                   if (Seg < 5) {
                      Source = SourceNumFront;
