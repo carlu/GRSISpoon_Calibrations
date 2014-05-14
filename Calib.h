@@ -93,9 +93,13 @@ struct HistoFit {
 
 
 // Somewhere to store all the fits.
-typedef std::map <float, FitResult> ChannelFitMap; // Map of FitResults for a particular channel using energy of line as key
-typedef std::map < std::vector < int > , ChannelFitMap > MasterFitMap; // Map of all FitMaps using vector as key.  vector = [Clover,Crystal,Channel] 
 
+typedef std::map <float, FitResult> ChannelFitMap; // Map of FitResults for a particular channel using energy of line as key
+typedef std::pair <float, FitResult> ChannelFitPair;  // PAirs with which to fill above
+typedef std::map <float, FitResult>::iterator ChannelFitMapIt;  // Iterator for ChannelFitMap
+typedef std::map < std::vector < int > , ChannelFitMap > MasterFitMap;  // Map to store all fits, key is vector of (Clover,Crystal,Seg)
+typedef std::pair< std::vector < int > , ChannelFitMap >MasterFitPair; 
+typedef std::map < std::vector < int > , ChannelFitMap >::iterator MasterFitMapIt;
 
 // Sources
 //extern float Sources[3][10];
