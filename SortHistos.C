@@ -40,7 +40,7 @@ using namespace std;
 
 //Functions
 int CalibrateFiles(); 
-int FitHistoFile(TFile *file, int FileType, int FileNum, MasterFitMap FitMap, MasterFitMap WaveFitMap);
+int FitHistoFile(TFile *file, int FileType, int FileNum, MasterFitMap *FitMap, MasterFitMap *WaveFitMap);
 int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings);
 int ConfigureEnergyFit(int Clover, int Crystal, int Seg, int FileType, int FileNum, FitSettings *Settings) ;
 int ConfigureWaveEnFit(int Clover, int Crystal, int Seg,  int FileType, int FileNum, FitSettings *Settings) ;
@@ -243,8 +243,7 @@ int CalibrateFiles() {
       }
       
       // Now fit the histos in file
-      FitHistoFile(file, FileType, FileNum, FitMap, WaveFitMap);
-   
+      FitHistoFile(file, FileType, FileNum, &FitMap, &WaveFitMap);
    }
    
    // Now iterate over FitMap/WaveFitMap and perform calibrations
@@ -258,23 +257,26 @@ int CalibrateFiles() {
       for (Clover = 1; Clover <= CLOVERS; Clover++) {
          for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
             for (Seg = 0; Seg <= SEGS + 1; Seg++) {
-            
                if (Config.CalList[Clover - 1][Crystal][Seg] == 0) {     // check if this channel is to be fitted.
                   continue;
                }
-               
                // Set Cl,Cr,Seg vector for use as key in Master fit map
                ChanVector.at(0) = Clover;
                ChanVector.at(1) = Crystal;
                ChanVector.at(2) = Seg;
                
                ConfigureEnergyFit(Clover,Crystal, Seg, FileType, FileNum, &Settings);
-               
                CalibSuccess = CalibrateChannel(FitMap[ChanVector], Settings);
-            
             }
          }   
       }
+   }
+   
+   if (Config.CalEnergy) {
+      GainOut.close();
+   }
+   if (Config.CalReport) {
+      ReportOut.close();
    }
    
    if(Config.CalWave) {
@@ -301,9 +303,18 @@ int CalibrateFiles() {
          }   
       }
    }
+   
+   if (Config.CalEnergy) {
+      WaveOut.close();
+   }
+   if (Config.CalReport) {
+      WaveReportOut.close();
+   }
+   
+   return 0;
 }
 
-int FitHistoFile(TFile *file, int FileType, int FileNum, MasterFitMap FitMap, MasterFitMap WaveFitMap) {
+int FitHistoFile(TFile *file, int FileType, int FileNum, MasterFitMap *FitMap, MasterFitMap *WaveFitMap) {
 
    int i, j, x;
    int Clover = 0;
@@ -400,14 +411,13 @@ int FitHistoFile(TFile *file, int FileType, int FileNum, MasterFitMap FitMap, Ma
                   ChanVector.at(1) = Crystal;
                   ChanVector.at(2) = Seg;
                   // Check if map entry exists for this channel and insert if not.
-                  if(!FitMap.count(ChanVector)) {  // If entry for this channel does not exist...
-                     FitMap.insert(MasterFitPair(ChanVector,ChanFits));  // create it....
+                  if(!FitMap->count(ChanVector)) {  // If entry for this channel does not exist...
+                     FitMap->insert(MasterFitPair(ChanVector,ChanFits));  // create it....
                   }
                   else {                                                   // else....
                      
-                     FitMap[ChanVector].insert(ChanFits.begin(),ChanFits.end());      // add to it.
+                     FitMap->at(ChanVector).insert(ChanFits.begin(),ChanFits.end());      // add to it.
                   }
-                  
                   // Write histo with fits
                   if (Config.WriteFits) {
                      dCharge->cd();
@@ -452,7 +462,6 @@ int FitHistoFile(TFile *file, int FileType, int FileNum, MasterFitMap FitMap, Ma
                      cout << "Clover " << Clover << " Crystal " << Crystal << " Seg " << Seg << endl;
                      cout << "--------------------------------------" << endl;
                   }
-                  
                      
                   // Perform Fit                  
                   HistoFit WaveFit;
@@ -470,12 +479,12 @@ int FitHistoFile(TFile *file, int FileType, int FileNum, MasterFitMap FitMap, Ma
                   ChanVector.at(1) = Crystal;
                   ChanVector.at(2) = Seg;
                   // Check if map entry exists for this channel and insert if not.
-                  if(!FitMap.count(ChanVector)) {  // If entry for this channel does not exist...
-                     FitMap.insert(MasterFitPair(ChanVector,ChanFits));  // create it....
+                  if(!FitMap->count(ChanVector)) {  // If entry for this channel does not exist...
+                     FitMap->insert(MasterFitPair(ChanVector,ChanFits));  // create it....
                   }
                   else {                                                   // else....
                      
-                     FitMap[ChanVector].insert(ChanFits.begin(),ChanFits.end());      // add to it.
+                     FitMap->at(ChanVector).insert(ChanFits.begin(),ChanFits.end());      // add to it.
                   }
                   
                   if (Config.WriteFits) {
@@ -511,7 +520,7 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings) {
    int LinesUsed;
    int ItemNum;
    bool TestsPassed;
-   
+  
    float Energy = 0.0;
    float Energies[25], dEnergies[25];
    float Centroids[25], dCentroids[25];
@@ -520,6 +529,7 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings) {
    HistoFit HistoCal;
    
    LinesUsed = 0;
+   
    for (ChannelFitMapIt Line = Fits.begin(); Line != Fits.end(); Line++) {
       TestsPassed = 0;
       Energy = Line->first;
@@ -646,7 +656,6 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings) {
    }
 
 
-
    if (PLOT_CALIB && Settings.PlotOn) {
       cCalib1a->cd(1);
       CalibPlot.SetMarkerColor(2);
@@ -657,7 +666,6 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings) {
       App->Run(1);
       //App->Run();
    }
-   
    
    // If fit succesful, generate output....
    switch (Crystal) { // Calculate channel number (old TIGRESS DAQ numbering)
@@ -677,6 +685,8 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings) {
       ItemNum = 1000;
       break;
    }
+   
+   
    GainPlot->SetBinContent(ItemNum + 1, HistoCal.QuadGainFit[1]);  // ItemNum+1 to skip bin 0 which is underflow
    OffsetPlot->SetBinContent(ItemNum + 1, HistoCal.QuadGainFit[0]);
    QuadPlot->SetBinContent(ItemNum + 1, HistoCal.QuadGainFit[2]);
@@ -684,6 +694,7 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings) {
    GainHist->Fill(HistoCal.QuadGainFit[1]);
    OffsetHist->Fill(HistoCal.QuadGainFit[0]);
    QuadHist->Fill(HistoCal.QuadGainFit[2]);
+   
    
    // Now print reports on results of fits and calibration.
    if (HistoCal.LinesUsed > 1) {
@@ -710,7 +721,6 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings) {
    if (Config.CalFile) {
       WriteCalFile(&HistoCal, CalFileOut, Settings.HistName, Settings);
    }
-
 
    
 
@@ -746,12 +756,7 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings) {
    }
    
    
-   if (Config.CalEnergy) {
-      GainOut.close();
-   }
-   if (Config.CalReport) {
-      ReportOut.close();
-   }
+   return 0;
 
 }
 
