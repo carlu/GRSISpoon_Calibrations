@@ -369,15 +369,15 @@ int FitHistoFile(TFile *file, int FileType, int FileNum, MasterFitMap FitMap, Ma
                
                // Load histogram
                if (FileType == 1) {     // Files where the histogram can be found directly
-                  Histo = (TH1F *) file->FindObjectAny(HistName.c_str());
+                  Histo = (TH1F *) file->FindObjectAny(Settings.HistName.c_str());
                } else {         // Files where it needs to be puled from a TFolder i.e. TIGRESS DAQ files
-                  Histo = (TH1F *) Folder->FindObjectAny(HistName.c_str());
+                  Histo = (TH1F *) Folder->FindObjectAny(Settings.HistName.c_str());
                }
 
                if (Histo) {
                   if (Config.PrintVerbose) {
                      cout << endl << "------------------------------------" << endl;
-                     cout << "Hist " << HistName << " loaded" << endl;
+                     cout << "Hist " << Settings.HistName << " loaded" << endl;
                      cout << "------------------------------------" << endl << endl;
                   }
                   
