@@ -57,6 +57,9 @@ TApplication *App;       // Pointer to root environment for plotting etc
 
 // Canvas for plots
 TCanvas *cCalib1, *cCalib1a, *cCalib2, *cWave1, *ctemp;
+// Output file stuff
+TFile *outfile;
+TDirectory *dCharge, *dWaveCharge, *dCalibration = { 0 };
 
 // output streams 
 ofstream GainOut;
@@ -311,6 +314,10 @@ int CalibrateFiles() {
       WaveReportOut.close();
    }
    
+   if (Config.WriteFits) {
+      outfile->Close();
+   }
+   
    return 0;
 }
 
@@ -341,8 +348,6 @@ int FitHistoFile(TFile *file, int FileType, int FileNum, MasterFitMap *FitMap, M
    ChannelFitMap ChanFits;
    
    // ROOT objects
-   TFile *outfile;
-   TDirectory *dCharge, *dWaveCharge, *dCalibration = { 0 };
    TH1F *Histo;
    TFolder *Folder = 0;
    
@@ -500,9 +505,7 @@ int FitHistoFile(TFile *file, int FileType, int FileNum, MasterFitMap *FitMap, M
 
 
 
-   if (Config.WriteFits) {
-      outfile->Close();
-   }
+
 
    
 
@@ -636,6 +639,11 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings) {
       HistoCal.dQuadGainFit[2] = CalibFitQuad->GetParError(2);
       HistoCal.QuadGainFit[3] = CalibFitQuad->GetChisquare() / CalibFitQuad->GetNDF();
    }
+   
+   if(Config.WriteFits) {
+      dCalibration->cd();
+      CalibPlot.Write();
+   }
 
    if (Config.PrintVerbose) {
       
@@ -725,7 +733,7 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings) {
    
 
 
-   if (PLOT_CALIB_SUMMARY) {
+   if (Config.PlotCalibSummary) {
       //cCalib2->cd();
       cCalib2->cd(1);
       OffsetPlot->Draw();
