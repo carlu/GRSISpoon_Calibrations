@@ -40,8 +40,10 @@ using namespace std;
 
 //Functions
 int CalibrateFiles(); 
-int FitHistoFile(TFile *file, int FileType, MasterFitMap FitMap, MasterFitMap WaveFitMap);
-int CalibrateChannel(ChannelFitMap Fits);
+int FitHistoFile(TFile *file, int FileType, int FileNum, MasterFitMap FitMap, MasterFitMap WaveFitMap);
+int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings);
+int ConfigureEnergyFit(int Clover, int Crystal, int Seg, int FileType, int FileNum, FitSettings *Settings) ;
+int ConfigureWaveEnFit(int Clover, int Crystal, int Seg,  int FileType, int FileNum, FitSettings *Settings) ;
 
 // Fitting stuff
 std::string FitOptions = ("RQE");
@@ -55,6 +57,13 @@ TApplication *App;       // Pointer to root environment for plotting etc
 
 // Canvas for plots
 TCanvas *cCalib1, *cCalib1a, *cCalib2, *cWave1, *ctemp;
+
+// output streams 
+ofstream GainOut;
+ofstream ReportOut;
+ofstream WaveOut;
+ofstream WaveReportOut;
+ofstream CalFileOut;
 
 // Spectra for Calibration
 TH1F *GainPlot, *OffsetPlot, *QuadPlot;
@@ -120,16 +129,12 @@ int CalibrateFiles() {
    unsigned int ChainEvent, TreeEvent;
    
    int FileType;
+   int FileNum;
    int CalibSuccess;
    
    char Charge[10];
    char Colours[] = "BGRW";
    int ItemNum = 0;
-   ofstream GainOut;
-   ofstream ReportOut;
-   ofstream WaveOut;
-   ofstream WaveReportOut;
-   ofstream CalFileOut;
    int NumFits;
    float CalibEn = 0.0;
    bool FileTypeFound = 0;
@@ -196,13 +201,13 @@ int CalibrateFiles() {
    }
    
    // loop input files
-   for (i = 0; i < Config.files.size(); i++) {
+   for (FileNum = 0; FileNum < Config.files.size(); FileNum++) {
    
       if (Config.PrintBasic) {
-         cout << "Attempting offline calibration on histograms in file: " << Config.files.at(i) << endl;
+         cout << "Attempting offline calibration on histograms in file: " << Config.files.at(FileNum) << endl;
       }
       
-      filename = Config.files.at(i);
+      filename = Config.files.at(FileNum);
    
       // Check file type
       if (strncmp(filename.c_str(), Config.CalName.c_str(), Config.CalName.size()) == 0) {
@@ -238,7 +243,7 @@ int CalibrateFiles() {
       }
       
       // Now fit the histos in file
-      FitHistoFile(file, FileType, FitMap, WaveFitMap);
+      FitHistoFile(file, FileType, FileNum, FitMap, WaveFitMap);
    
    }
    
@@ -246,28 +251,59 @@ int CalibrateFiles() {
    // This should mayeb be a separte function to loop channels and another to actually calibrate.
    // Check fit was succesful before calling
    //CalibSuccess = CalibrateGammaSpectrum(&Fit, Settings);
-   for (Clover = 1; Clover <= CLOVERS; Clover++) {
-      for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
-         for (Seg = 0; Seg <= SEGS + 1; Seg++) {
-         
-            if (Config.CalList[Clover - 1][Crystal][Seg] == 0) {     // check if this channel is to be fitted.
-               continue;
+   
+   if (Config.CalEnergy) {
+      FitSettings Settings;
+      FileNum = 0; // Reset as this value not needed for calibration, only fit
+      for (Clover = 1; Clover <= CLOVERS; Clover++) {
+         for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
+            for (Seg = 0; Seg <= SEGS + 1; Seg++) {
+            
+               if (Config.CalList[Clover - 1][Crystal][Seg] == 0) {     // check if this channel is to be fitted.
+                  continue;
+               }
+               
+               // Set Cl,Cr,Seg vector for use as key in Master fit map
+               ChanVector.at(0) = Clover;
+               ChanVector.at(1) = Crystal;
+               ChanVector.at(2) = Seg;
+               
+               ConfigureEnergyFit(Clover,Crystal, Seg, FileType, FileNum, &Settings);
+               
+               CalibSuccess = CalibrateChannel(FitMap[ChanVector], Settings);
+            
             }
-            
-            // Set Cl,Cr,Seg vector for use as key in Master fit map
-            ChanVector.at(0) = Clover;
-            ChanVector.at(1) = Crystal;
-            ChanVector.at(2) = Seg;
-            
-            CalibSuccess = CalibrateChannel(FitMap[ChanVector]);
-         
-         }
-      }   
+         }   
+      }
    }
    
+   if(Config.CalWave) {
+      FitSettings Settings;
+      FileNum = 0; // Reset as this value not needed for calibration, only fit
+      for (Clover = 1; Clover <= CLOVERS; Clover++) {
+         for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
+            for (Seg = 0; Seg <= SEGS + 1; Seg++) {
+            
+               if (Config.CalList[Clover - 1][Crystal][Seg] == 0) {     // check if this channel is to be fitted.
+                  continue;
+               }
+               
+               // Set Cl,Cr,Seg vector for use as key in Master fit map
+               ChanVector.at(0) = Clover;
+               ChanVector.at(1) = Crystal;
+               ChanVector.at(2) = Seg;
+               
+               ConfigureWaveEnFit(Clover,Crystal, Seg, FileType, FileNum, &Settings);
+               
+               CalibSuccess = CalibrateChannel(WaveFitMap[ChanVector], Settings);
+            
+            }
+         }   
+      }
+   }
 }
 
-int FitHistoFile(TFile *file, int FileType, MasterFitMap FitMap, MasterFitMap WaveFitMap) {
+int FitHistoFile(TFile *file, int FileType, int FileNum, MasterFitMap FitMap, MasterFitMap WaveFitMap) {
 
    int i, j, x;
    int Clover = 0;
@@ -286,8 +322,8 @@ int FitHistoFile(TFile *file, int FileType, MasterFitMap FitMap, MasterFitMap Wa
    
    std::string tempstring;
    char CharBuf[CHAR_BUFFER_SIZE];
-   string HistName;
-   string OutputName;
+   std::string HistName;
+   std::string OutputName;
    
    std::vector <int> ChanVector;  // vector to store (Clover,Crystal,Seg) for use as map key
    ChanVector.push_back(0); ChanVector.push_back(0); ChanVector.push_back(0);  // populate chanvector with zeroes.
@@ -316,11 +352,6 @@ int FitHistoFile(TFile *file, int FileType, MasterFitMap FitMap, MasterFitMap Wa
       dCalibration = outfile->mkdir("Calibration");
    }
    
-   // Get source definition
-   SourceNumCore = Config.SourceNumCore.at(i);
-   SourceNumFront= Config.SourceNumFront.at(i);
-   SourceNumBack = Config.SourceNumBack.at(i);
-   
    // If we're calibrating the FPGA energy...
    if (Config.CalEnergy) {
       // Loop all gamma detectors 
@@ -332,85 +363,10 @@ int FitHistoFile(TFile *file, int FileType, MasterFitMap FitMap, MasterFitMap Wa
                   continue;
                }
                
-               // Set source and histogram name and output name based on seg number and file type
-               // This should be factored out to a separate function
-               if (FileType == 1) {
-                  switch (Seg) {
-                  case 0:
-                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da Chg", Clover, Num2Col(Crystal), Seg);
-                     HistName = CharBuf;
-                     OutputName = CharBuf;
-                     Source = SourceNumCore;
-                     break;
-                  case 9:
-                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db Chg", Clover, Num2Col(Crystal), 0);
-                     HistName = CharBuf;
-                     OutputName = CharBuf;
-                     Source = SourceNumCore;
-                     break;
-                  default:
-                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx Chg", Clover, Num2Col(Crystal), Seg);
-                     HistName = CharBuf;
-                     OutputName = CharBuf;
-                     if (Seg < 5) {
-                        Source = SourceNumFront;
-                     } else {
-                        Source = SourceNumBack;
-                     }
-                     break;
-                  }
-               }
-               if (FileType == 2) {
-                  switch (Crystal) {
-                  case 0:
-                     x = 0;
-                     break;
-                  case 1:
-                     x = 20;
-                     break;
-                  case 2:
-                     x = 30;
-                     break;
-                  case 3:
-                     x = 50;
-                     break;
-                  }
-                  switch (Seg) {
-                  case 0:
-                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "Chrg0%03d", ((Clover - 1) * 60) + x);
-                     HistName = CharBuf;
-                     OutputName = CharBuf;
-                     OutputName += "\t";
-                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da Chg", Clover, Num2Col(Crystal), Seg);
-                     OutputName += CharBuf;
-                     Source = SourceNumCore;
-                     break;
-                  case 9:
-                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "Chrg0%03d", ((Clover - 1) * 60) + x + 9);
-                     HistName = CharBuf;
-                     OutputName = CharBuf;
-                     OutputName += "\t";
-                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db Chg", Clover, Num2Col(Crystal), 0);
-                     OutputName += CharBuf;
-                     Source = SourceNumCore;
-                     break;
-                  default:
-                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "Chrg0%03d", ((Clover - 1) * 60) + x + Seg);
-                     HistName = CharBuf;
-                     OutputName = CharBuf;
-                     OutputName += "\t";
-                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx Chg", Clover, Num2Col(Crystal), Seg);
-                     OutputName += CharBuf;
-                     if (Seg < 5) {
-                        Source = SourceNumFront;
-                     } else {
-                        Source = SourceNumBack;
-                     }
-                     break;
-                  }
-
-
-               }
+               FitSettings Settings = { 0 };
+               
+               ConfigureEnergyFit(Clover,Crystal, Seg, FileType, FileNum, &Settings);
+               
                // Load histogram
                if (FileType == 1) {     // Files where the histogram can be found directly
                   Histo = (TH1F *) file->FindObjectAny(HistName.c_str());
@@ -425,41 +381,10 @@ int FitHistoFile(TFile *file, int FileType, MasterFitMap FitMap, MasterFitMap Wa
                      cout << "------------------------------------" << endl << endl;
                   }
                   
-                  // Check if plot should be active for this channel
-                  PlotOn = 0;
-                  if (Config.PlotFits) {
-                     if (Config.CalibPlots[Clover - 1][Crystal][Seg]) {
-                        PlotOn = 1;
-                     }
-                  }
-                  // Check if Manual peak select should be active
-                  if (Config.ManualPeakSelect[Clover - 1][Crystal][Seg]) {
-                     PeakSelect  = 1;
-                  }
-                  else {
-                     PeakSelect = 0;
-                  }
+                  
                   
                   // Initialise FitSettings and HistoFit               
                   HistoFit Fit;
-                  FitSettings Settings = { 0 };
-                  Settings.Source = Source;
-                  if (FileType == 1) {
-                     Settings.Integration = INTEGRATION;
-                     Settings.Dispersion = float (CHARGE_BINS) / float (CHARGE_MAX);
-                  }
-                  if (FileType == 2) {  // histogram file from analyser
-                     Settings.Integration = 1;
-                     Settings.Dispersion = 1;
-                  }
-                  Settings.SearchSigma = EN_SEARCH_SIGMA;
-                  Settings.SearchThresh = EN_SEARCH_THRESH;
-                  Settings.SigmaEstZero = ENERGY_SIGMA_ZERO;
-                  Settings.SigmaEst1MeV = ENERGY_SIGMA_1MEV;
-                  Settings.FitZero = Config.FitZero;
-                  Settings.PlotOn = PlotOn;
-                  Settings.PeakSelect = PeakSelect;
-                  Settings.BackupPeakSelect = 0;
                   
                   // Perform fit
                   FitSuccess = FitGammaSpectrum(Histo, &Fit, Settings);
@@ -514,24 +439,9 @@ int FitHistoFile(TFile *file, int FileType, MasterFitMap FitMap, MasterFitMap Wa
                   continue;
                }
 
-               if (Seg == 0 || Seg == 9) {
-                  Source = SourceNumCore;
-                  if (Seg == 0) {
-                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da WaveChg", Clover, Num2Col(Crystal), Seg);
-                     HistName = CharBuf;
-                  } else {
-                     snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db WaveChg", Clover, Num2Col(Crystal), 0);
-                     HistName = CharBuf;
-                  }
-               } else {
-                  snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx WaveChg", Clover, Num2Col(Crystal), Seg);
-                  HistName = CharBuf;
-                  if (Seg < 5) {
-                     Source = SourceNumFront;
-                  } else {
-                     Source = SourceNumBack;
-                  }
-               }
+               FitSettings Settings = { 0 };
+               
+               ConfigureWaveEnFit(Clover, Crystal, Seg, FileType, FileNum, &Settings);
 
                TH1F *Histo = (TH1F *) file->FindObjectAny(HistName.c_str());
                
@@ -542,36 +452,10 @@ int FitHistoFile(TFile *file, int FileType, MasterFitMap FitMap, MasterFitMap Wa
                      cout << "Clover " << Clover << " Crystal " << Crystal << " Seg " << Seg << endl;
                      cout << "--------------------------------------" << endl;
                   }
-                  // Check if plot should be active for this channel
-                  PlotOn = 0;
-                  if (Config.PlotFits) {
-                     if (Config.CalibPlots[Clover - 1][Crystal][Seg]) {
-                        PlotOn = 1;
-                     }
-                  }
-                  // Check if Manual peak select should be active
-                  if (Config.ManualPeakSelect[Clover - 1][Crystal][Seg]) {
-                     PeakSelect  = 1;
-                  }
-                  else {
-                     PeakSelect = 0;
-                  }
+                  
                      
                   // Perform Fit                  
                   HistoFit WaveFit;
-                  FitSettings Settings = { 0 };
-
-                  Settings.Source = Source;
-                  Settings.Integration = 1;
-                  Settings.Dispersion = float (CHARGE_BINS) / float (WAVE_CHARGE_MAX);
-                  Settings.SearchSigma = WAVE_SEARCH_SIGMA;
-                  Settings.SearchThresh = WAVE_SEARCH_THRESH;
-                  Settings.SigmaEstZero = WAVE_SIGMA_ZERO;
-                  Settings.SigmaEst1MeV = WAVE_SIGMA_1MEV;
-                  Settings.FitZero = Config.FitZero;
-                  Settings.PlotOn = PlotOn;
-                  Settings.PeakSelect = PeakSelect;
-                  Settings.BackupPeakSelect = 0;
                   
                   FitSuccess = FitGammaSpectrum(Histo, &WaveFit, Settings);
                   
@@ -619,11 +503,162 @@ int FitHistoFile(TFile *file, int FileType, MasterFitMap FitMap, MasterFitMap Wa
 
 
 
-int CalibrateChannel(ChannelFitMap Fits) {
-
-   int Clover, Crystal, Seg;
+int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings) {
+   
+   // This function should copy the operation of the old CalibrateGammaSpectrum() in CalibTools.C
+   // However it should be altered to use maps and vectors rather than arrays.
+   int Clover, Crystal, Seg, i;
+   int LinesUsed;
    int ItemNum;
+   bool TestsPassed;
+   
+   float Energy = 0.0;
+   float Energies[25], dEnergies[25];
+   float Centroids[25], dCentroids[25];
+   
+   FitResult LineFit;
+   HistoFit HistoCal;
+   
+   LinesUsed = 0;
+   for (ChannelFitMapIt Line = Fits.begin(); Line != Fits.end(); Line++) {
+      TestsPassed = 0;
+      Energy = Line->first;
+      LineFit = Line->second;
+      
+      HistoCal.PeakFits.push_back(LineFit); // Store fit for use in calibration and report 
+      
+      if (LineFit.Const > GAUS_HEIGHT_MIN) {  // Enough counts?
+         if ((LineFit.ChiSq / LineFit.NDF) < GAUS_CSPD_MAX) {  // Good enouhg fit?
+            // If passed, add this fit to calibration points
+            Energies[LinesUsed] = Energy;
+            dEnergies[LinesUsed] = 0.0; // ignore error here for now.
+            Centroids[LinesUsed] = LineFit.Mean / Settings.Integration;
+            dCentroids[LinesUsed] = LineFit.dMean / Settings.Integration;
+            if (Config.PrintVerbose) {
+               cout << Energies[LinesUsed] << " keV\t" << Centroids[LinesUsed] << " +/- " <<
+                   dCentroids[LinesUsed] << " ch" << endl;
+            }
+            LinesUsed += 1;
+            TestsPassed = 1;
+            HistoCal.FitSuccess.push_back(1);
+            if(LinesUsed > 23) {
+               break;
+            }
+            
+         }
+      }
+      if(TestsPassed==0) {
+         HistoCal.FitSuccess.push_back(0);
+      }
+   }
+   
+   // If required, add point at 0ch=0keV
+   if (Settings.FitZero) {
+      Energies[LinesUsed] = 0.0;
+      dEnergies[LinesUsed] = 0.0;
+      Centroids[LinesUsed] = 0.0;
+      dCentroids[LinesUsed] = ZERO_ERR;
+      if (Config.PrintVerbose) {
+         cout << Energies[LinesUsed] << " keV\t" << Centroids[LinesUsed] << " +/- " << dCentroids[LinesUsed] <<
+             " ch" << endl;
+      }
+      LinesUsed += 1;
+      FitResult ZeroFit;
+      ZeroFit.Energy = 0.0;
+      ZeroFit.Const = 0.0;
+      ZeroFit.dConst = 0.0;
+      ZeroFit.Mean = 0.0;
+      ZeroFit.dMean = 1.0;
+      ZeroFit.Sigma = 0.0;
+      ZeroFit.dSigma = 0.0;
+      ZeroFit.ChiSq = 0.0;
+      ZeroFit. NDF = 1;
+      HistoCal.PeakFits.push_back(ZeroFit);
+      HistoCal.FitSuccess.push_back(1);
+   }   
+   
+   HistoCal.LinesUsed = LinesUsed;
+   
+   // Now add points to a TGraph 
+   TGraphErrors CalibPlot(LinesUsed, Centroids, Energies, dCentroids, dEnergies);
+   if (Config.PrintVerbose) {
+      cout << LinesUsed << " lines used for calibration ";
+      for (i = 0; i < LinesUsed; i++) {
+         cout << Energies[i] << " ";
+      }
+      cout << endl;
+   }
+   
+   // Set up fit functions
+   TF1 *CalibFitLin = new TF1("CalibFitLin", "[0] + ([1]*x)", 0.0, CHARGE_MAX);
+   CalibFitLin->SetParName(0, "Offset");
+   CalibFitLin->SetParName(1, "Gain");
+   CalibFitLin->SetParameter(0, 0.0);
+   CalibFitLin->SetParameter(1, INITIAL_GAIN);
+   CalibFitLin->SetLineColor(4);  // Blue?
+   TF1 *CalibFitQuad = new TF1("CalibFitQuad", "[0] + ([1]*x) + ([2]*x*x)", 0.0, CHARGE_MAX);
+   CalibFitQuad->SetParName(0, "Offset");
+   CalibFitQuad->SetParName(1, "Gain");
+   CalibFitQuad->SetParName(2, "Quad");
+   CalibFitQuad->SetParameter(0, 0.0);
+   CalibFitQuad->SetParameter(1, INITIAL_GAIN);
+   CalibFitQuad->SetParameter(2, 0.0);
+   CalibFitQuad->SetLineColor(2); //Red?
 
+   // And fit.
+   Opts = FitOptions;
+   if (LinesUsed > 1) {
+      CalibPlot.Fit(CalibFitLin, Opts.c_str());
+      HistoCal.LinGainFit[0] = CalibFitLin->GetParameter(0);
+      HistoCal.dLinGainFit[0] = CalibFitLin->GetParError(0);
+      HistoCal.LinGainFit[1] = CalibFitLin->GetParameter(1);
+      HistoCal.dLinGainFit[1] = CalibFitLin->GetParError(1);
+      HistoCal.LinGainFit[2] = CalibFitLin->GetChisquare() / CalibFitLin->GetNDF();
+   }
+   Opts += "+";
+   if (LinesUsed > 2) {
+      CalibPlot.Fit(CalibFitQuad, Opts.c_str());
+      HistoCal.QuadGainFit[0] = CalibFitQuad->GetParameter(0);
+      HistoCal.dQuadGainFit[0] = CalibFitQuad->GetParError(0);
+      HistoCal.QuadGainFit[1] = CalibFitQuad->GetParameter(1);
+      HistoCal.dQuadGainFit[1] = CalibFitQuad->GetParError(1);
+      HistoCal.QuadGainFit[2] = CalibFitQuad->GetParameter(2);
+      HistoCal.dQuadGainFit[2] = CalibFitQuad->GetParError(2);
+      HistoCal.QuadGainFit[3] = CalibFitQuad->GetChisquare() / CalibFitQuad->GetNDF();
+   }
+
+   if (Config.PrintVerbose) {
+      
+      // Removed solution part from here because it is done at peak search stage.
+      // Maybe pass the values in to here from fitting stage if this is actually needed.
+      
+      //cout << endl << "Two point solution:" << endl;
+      //cout << "Offset = " << O << " +/- " << dO << "\tGain = " << G << " +/- " << dG << endl << endl;
+      cout << "Linear fit: " << endl;
+      cout << "Offset = " << CalibFitLin->GetParameter(0) << " +/- " << CalibFitLin->GetParError(0) << "\t";
+      cout << "Gain = " << CalibFitLin->GetParameter(1) << " +/- " << CalibFitLin->GetParError(1) << endl;
+      cout << "CSPD = " << CalibFitLin->GetChisquare() / CalibFitLin->GetNDF() << endl << endl;
+      cout << "Quadratic fit: " << endl;
+      cout << "Offset = " << CalibFitQuad->GetParameter(0) << " +/- " << CalibFitQuad->GetParError(0) << "\t";
+      cout << "Gain = " << CalibFitQuad->GetParameter(1) << " +/- " << CalibFitQuad->GetParError(1) << "\t";
+      cout << "Quad = " << CalibFitQuad->GetParameter(2) << " +/- " << CalibFitQuad->GetParError(2) << endl;
+      cout << "CSPD = " << CalibFitQuad->GetChisquare() / CalibFitQuad->GetNDF() << endl << endl;
+   }
+
+
+
+   if (PLOT_CALIB && Settings.PlotOn) {
+      cCalib1a->cd(1);
+      CalibPlot.SetMarkerColor(2);
+      CalibPlot.SetMarkerStyle(20);
+      CalibPlot.SetMarkerSize(1.0);
+      CalibPlot.SetTitle("Calibration");
+      CalibPlot.Draw("AP");
+      App->Run(1);
+      //App->Run();
+   }
+   
+   
    // If fit succesful, generate output....
    switch (Crystal) { // Calculate channel number (old TIGRESS DAQ numbering)
    case 0:
@@ -642,38 +677,38 @@ int CalibrateChannel(ChannelFitMap Fits) {
       ItemNum = 1000;
       break;
    }
-   GainPlot->SetBinContent(ItemNum + 1, Fit.QuadGainFit[1]);  // ItemNum+1 to skip bin 0 which is underflow
-   OffsetPlot->SetBinContent(ItemNum + 1, Fit.QuadGainFit[0]);
-   QuadPlot->SetBinContent(ItemNum + 1, Fit.QuadGainFit[2]);
+   GainPlot->SetBinContent(ItemNum + 1, HistoCal.QuadGainFit[1]);  // ItemNum+1 to skip bin 0 which is underflow
+   OffsetPlot->SetBinContent(ItemNum + 1, HistoCal.QuadGainFit[0]);
+   QuadPlot->SetBinContent(ItemNum + 1, HistoCal.QuadGainFit[2]);
 
-   GainHist->Fill(Fit.QuadGainFit[1]);
-   OffsetHist->Fill(Fit.QuadGainFit[0]);
-   QuadHist->Fill(Fit.QuadGainFit[2]);
+   GainHist->Fill(HistoCal.QuadGainFit[1]);
+   OffsetHist->Fill(HistoCal.QuadGainFit[0]);
+   QuadHist->Fill(HistoCal.QuadGainFit[2]);
    
    // Now print reports on results of fits and calibration.
-   if (Fit.LinesUsed > 1) {
-      if (Fit.LinesUsed < 3 || FORCE_LINEAR) {
-         GainOut << OutputName << ":\t" << Fit.LinGainFit[0];
-         GainOut << "\t" << Fit.LinGainFit[1] << endl;
+   if (HistoCal.LinesUsed > 1) {
+      if (HistoCal.LinesUsed < 3 || FORCE_LINEAR) {
+         GainOut << Settings.OutputName << ":\t" << HistoCal.LinGainFit[0];
+         GainOut << "\t" << HistoCal.LinGainFit[1] << endl;
       } else {
-         GainOut << OutputName << ":\t" << Fit.QuadGainFit[0] << "\t";
-         GainOut << Fit.QuadGainFit[1] << "\t" << Fit.QuadGainFit[2] << endl;
+         GainOut << Settings.OutputName << ":\t" << HistoCal.QuadGainFit[0] << "\t";
+         GainOut << HistoCal.QuadGainFit[1] << "\t" << HistoCal.QuadGainFit[2] << endl;
       }
    } else {
       //GainOut << HistName << " Fail!!!" << endl;
    }
    // Write full calibration report
-   if (Fit.LinesUsed > 0) {
-      CalibrationReport(&Fit, ReportOut, OutputName, Settings);
+   if (HistoCal.LinesUsed > 0) {
+      CalibrationReport(&HistoCal, ReportOut, Settings.OutputName, Settings);
    } else {
-      ReportOut << endl << "------------------------------------------" << endl << OutputName << endl <<
+      ReportOut << endl << "------------------------------------------" << endl << Settings.OutputName << endl <<
           "------------------------------------------" << endl << endl;
       ReportOut << "Fail Fail Fail! The calibration has failed!" << endl;
    }
    
    // Write .cal file for GRSISpoon
    if (Config.CalFile) {
-      WriteCalFile(&Fit, CalFileOut, HistName, Settings);
+      WriteCalFile(&HistoCal, CalFileOut, Settings.HistName, Settings);
    }
 
 
@@ -718,5 +753,178 @@ int CalibrateChannel(ChannelFitMap Fits) {
       ReportOut.close();
    }
 
+}
+
+
+int ConfigureEnergyFit(int Clover, int Crystal, int Seg,  int FileType, int FileNum, FitSettings *Settings) {
+   
+   char CharBuf[CHAR_BUFFER_SIZE];
+   int x;
+   
+   // Set source and histogram name and output name based on seg number and file type
+   // This should be factored out to a separate function
+   if (FileType == 1) {
+      switch (Seg) {
+      case 0:
+         snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da Chg", Clover, Num2Col(Crystal), Seg);
+         Settings->HistName = CharBuf;
+         Settings->OutputName = CharBuf;
+         Settings->Source = Config.SourceNumCore.at(FileNum);
+         break;
+      case 9:
+         snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db Chg", Clover, Num2Col(Crystal), 0);
+         Settings->HistName = CharBuf;
+         Settings->OutputName = CharBuf;
+         Settings->Source = Config.SourceNumCore.at(FileNum);
+         break;
+      default:
+         snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx Chg", Clover, Num2Col(Crystal), Seg);
+         Settings->HistName = CharBuf;
+         Settings->OutputName = CharBuf;
+         if (Seg < 5) {
+            Settings->Source = Config.SourceNumFront.at(FileNum);
+         } else {
+            Settings->Source = Config.SourceNumBack.at(FileNum);
+         }
+         break;
+      }
+   }
+   if (FileType == 2) {
+      switch (Crystal) {
+      case 0:
+         x = 0;
+         break;
+      case 1:
+         x = 20;
+         break;
+      case 2:
+         x = 30;
+         break;
+      case 3:
+         x = 50;
+         break;
+      }
+      switch (Seg) {
+      case 0:
+         snprintf(CharBuf, CHAR_BUFFER_SIZE, "Chrg0%03d", ((Clover - 1) * 60) + x);
+         Settings->HistName = CharBuf;
+         Settings->OutputName = CharBuf;
+         Settings->OutputName += "\t";
+         snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da Chg", Clover, Num2Col(Crystal), Seg);
+         Settings->OutputName += CharBuf;
+         Settings->Source = Config.SourceNumCore.at(FileNum);
+         break;
+      case 9:
+         snprintf(CharBuf, CHAR_BUFFER_SIZE, "Chrg0%03d", ((Clover - 1) * 60) + x + 9);
+         Settings->HistName = CharBuf;
+         Settings->OutputName = CharBuf;
+         Settings->OutputName += "\t";
+         snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db Chg", Clover, Num2Col(Crystal), 0);
+         Settings->OutputName += CharBuf;
+         Settings->Source = Config.SourceNumCore.at(FileNum);
+         break;
+      default:
+         snprintf(CharBuf, CHAR_BUFFER_SIZE, "Chrg0%03d", ((Clover - 1) * 60) + x + Seg);
+         Settings->HistName = CharBuf;
+         Settings->OutputName = CharBuf;
+         Settings->OutputName += "\t";
+         snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx Chg", Clover, Num2Col(Crystal), Seg);
+         Settings->OutputName += CharBuf;
+         if (Seg < 5) {
+            Settings->Source = Config.SourceNumFront.at(FileNum);
+         } else {
+            Settings->Source = Config.SourceNumBack.at(FileNum);
+         }
+         break;
+      }
+
+
+   }
+   
+   // Check if plot should be active for this channel
+   Settings->PlotOn = 0;
+   if (Config.PlotFits) {
+      if (Config.CalibPlots[Clover - 1][Crystal][Seg]) {
+         Settings->PlotOn = 1;
+      }
+   }
+   // Check if Manual peak select should be active
+   if (Config.ManualPeakSelect[Clover - 1][Crystal][Seg]) {
+      Settings->PeakSelect  = 1;
+   }
+   else {
+      Settings->PeakSelect = 0;
+   }
+   
+   if (FileType == 1) {
+      Settings->Integration = INTEGRATION;
+      Settings->Dispersion = float (CHARGE_BINS) / float (CHARGE_MAX);
+   }
+   if (FileType == 2) {  // histogram file from analyser
+      Settings->Integration = 1;
+      Settings->Dispersion = 1;
+   }
+   
+   Settings->SearchSigma = EN_SEARCH_SIGMA;
+   Settings->SearchThresh = EN_SEARCH_THRESH;
+   Settings->SigmaEstZero = ENERGY_SIGMA_ZERO;
+   Settings->SigmaEst1MeV = ENERGY_SIGMA_1MEV;
+   Settings->FitZero = Config.FitZero;
+   Settings->BackupPeakSelect = 0;
+   
+   return 0;
+}
+
+int ConfigureWaveEnFit(int Clover, int Crystal, int Seg,  int FileType, int FileNum, FitSettings *Settings) {
+   
+   char CharBuf[CHAR_BUFFER_SIZE];
+   
+   if (Seg == 0 || Seg == 9) {
+      Settings->Source = Config.SourceNumCore.at(FileNum);
+      if (Seg == 0) {
+         snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02da WaveChg", Clover, Num2Col(Crystal), Seg);
+         Settings->HistName = CharBuf;
+         Settings->OutputName = CharBuf;
+      } else {
+         snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cN%02db WaveChg", Clover, Num2Col(Crystal), 0);
+         Settings->HistName = CharBuf;
+         Settings->OutputName = CharBuf;
+      }
+   } else {
+      snprintf(CharBuf, CHAR_BUFFER_SIZE, "TIG%02d%cP%02dx WaveChg", Clover, Num2Col(Crystal), Seg);
+      Settings->HistName = CharBuf;
+      Settings->OutputName = CharBuf;
+      if (Seg < 5) {
+         Settings->Source = Config.SourceNumFront.at(FileNum);
+      } else {
+         Settings->Source = Config.SourceNumBack.at(FileNum);
+      }
+   }
+   
+   // Check if plot should be active for this channel
+   Settings->PlotOn = 0;
+   if (Config.PlotFits) {
+      if (Config.CalibPlots[Clover - 1][Crystal][Seg]) {
+         Settings->PlotOn = 1;
+      }
+   }
+   // Check if Manual peak select should be active
+   if (Config.ManualPeakSelect[Clover - 1][Crystal][Seg]) {
+      Settings->PeakSelect  = 1;
+   }
+   else {
+      Settings->PeakSelect = 0;
+   }
+   
+   Settings->Integration = 1;
+   Settings->Dispersion = float (CHARGE_BINS) / float (WAVE_CHARGE_MAX);
+   Settings->SearchSigma = WAVE_SEARCH_SIGMA;
+   Settings->SearchThresh = WAVE_SEARCH_THRESH;
+   Settings->SigmaEstZero = WAVE_SIGMA_ZERO;
+   Settings->SigmaEst1MeV = WAVE_SIGMA_1MEV;
+   Settings->FitZero = Config.FitZero;
+   Settings->BackupPeakSelect = 0;
+   
+   return 0;
 }
 

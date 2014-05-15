@@ -60,6 +60,9 @@ struct FitSettings {
    bool PlotOn;                 // Plot fits
    bool PeakSelect;             // Select primary peaks rather than find auto
    bool BackupPeakSelect;       // Fallback to manual peak select if auto fails.
+   
+   std::string HistName;
+   std::string OutputName;
 };
 
 struct FitResult {  // Stores result of fit of single peak
