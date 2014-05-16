@@ -21,18 +21,20 @@ To run
 ./SortTrees -f InFile1 [InFile2...] [-e (energy Calibration File)] [-w (Wave calibration file)] [-s (Source)]  --cal/--prop/--eff
 ./SortHitos -f his??????.root/CalibOut??????.root  [-s (Source)]  --calspec/--caleff
 
+note: Multiple files can be specified in for both types of sort.  For SortTrees all files will be summed into a signle set of spectra.  For SortHistos --calspec there should be a list of sources the same length as the list of files.  Separate fits will be done on each file assuming the sources are in the same order as the files.  A final calibration will include fits from all files.
+
 Files and their jobs
 --------------------
 
 SortTrees.C : Builds TChain of multiple input files.  Builds index of assembled events if one is not already present in the file. Calls initialisation functions for other parts of the code.  Loops all built events passing each to any other parts of the code which active.  Calls finalisation functions.  Also contains some helper functions used elsewhere.
 
-Calib.C : Builds charge spectra and hit patterns.  Finds and identifies peaks in spectra, fits the peaks and performs a calibration.  Also fits core spectra at regular intervals through the run and keeps a record of results to check for gain drift.  This is a slow way to build histograms from a ROOT TTree but need to loop the events to do crosstalk stuff so may as well build energy histograms while we do so.
+Calib.C : Builds charge spectra and hit patterns.  Fits core spectra at regular intervals through the run and keeps a record of results to check for gain drift.  This is a slow way to build histograms from a ROOT TTree but need to loop the events to do crosstalk stuff so may as well build energy histograms while we do so.
 
 CoincEff.C : Performs a TIGRESS efficiency calibration using the source independent 60Co coincidence method.
 
 PropXtalk.C : Builds calibrated energy and fold spectra.  Performs analysis of proportional crosstalk between channels in TIGRESS.
 
-CalibTools.C : Helper functions for Calib.C.
+CalibTools.C : Helper functions for Calib.C.  Main caibration control functions for SortHistos.
 
 SortHistos.C : Offline version of calib.C which carries out peak search and fits but uses the histograms output by Calib.C or the TIGRESS online analyser rather than building the spectra from scratch.  Uses the same functions from CalibTools.C so changes there should checked to work here too. 
 
