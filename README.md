@@ -8,6 +8,9 @@ The idea is to provide a simple means of performing all initial calibrations for
 To compile
 ----------
 
+Same system requirements as https://github.com/GRIFFINCollaboration/GRSISpoon.
+The SOURCEME script from that repo should also work to configure for compilation/running of this code.
+
 Fragment Tree Sort:
 g++ SortTrees.C CoincEff.C Calib.C PropXtalk.C CalibTools.C Options.C Utils.C -I$GRSISYS/include --std=c++0x -o SortTrees $GRSISYS/libraries/TigFormat/libFormat.so $GRSISYS/libraries/libCalManager.so $GRSISYS/libraries/libRootIOManager.so -O0 `root-config --cflags --libs` -lTreePlayer -lSpectrum -lgsl -lgslcblas -g
 
