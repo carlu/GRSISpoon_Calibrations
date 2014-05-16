@@ -1,8 +1,8 @@
 // Stuff for time based analysis
-#define MAX_TIME 360000.0       // in seconds, max time after start of run.
-#define TIME_BINS 500           // timed energy spectra to collect data for this many seconds
+#define MAX_TIME 36000.0       // in seconds, max time after start of run.
+#define TIME_BINS 200           // timed energy spectra to collect data for this many seconds
 #define TIME_BIN_SIZE MAX_TIME/TIME_BINS
-#define FIT_TEMP_SPECTRA 0      // 1= find and fit peaks when time bin changes.  0= do not.
+#define FIT_TEMP_SPECTRA 1      // 1= find and fit peaks when time bin changes.  0= do not.
 #define FIT_FINAL_SPECTRA 1     // 1 = fit final spectra
 
 // General options
@@ -60,9 +60,12 @@ struct FitSettings {
    bool PlotOn;                 // Plot fits
    bool PeakSelect;             // Select primary peaks rather than find auto
    bool BackupPeakSelect;       // Fallback to manual peak select if auto fails.
+   bool TempFit;                // Indicated this is fitting temp spectra so no plots, output, etc
    
    std::string HistName;
    std::string OutputName;
+   
+   
 };
 
 struct FitResult {  // Stores result of fit of single peak
