@@ -877,10 +877,11 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings) {
    int LinesUsed;
    int ItemNum;
    bool TestsPassed;
-  
+   std::string Name;
    float Energy = 0.0;
-   float Energies[25], dEnergies[25];
-   float Centroids[25], dCentroids[25];
+   // Would like the following to be vectors but can't get the TGraphErrors to work 
+   float Energies[MAX_TOTAL_LINES], dEnergies[MAX_TOTAL_LINES];
+   float Centroids[MAX_TOTAL_LINES], dCentroids[MAX_TOTAL_LINES];
    
    FitResult LineFit;
    HistoFit HistoCal;
@@ -908,8 +909,8 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings) {
             LinesUsed += 1;
             TestsPassed = 1;
             HistoCal.FitSuccess.push_back(1);
-            if(LinesUsed > 23) {
-               break;
+            if(LinesUsed > (MAX_TOTAL_LINES -2)) {  // Stop adding lines if we are going to overflow arrays
+               break;                                // -1 here, -2 because of poss of 0ch=0keV line
             }
             
          }
@@ -948,6 +949,10 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings) {
    
    // Now add points to a TGraph 
    TGraphErrors CalibPlot(LinesUsed, Centroids, Energies, dCentroids, dEnergies);
+   Name = Settings.HistName + " Calibration";
+   CalibPlot.SetTitle(Name.c_str());
+   Name = Settings.HistName + " Cal";
+   CalibPlot.SetName(Name.c_str());
    if (Config.PrintVerbose) {
       cout << LinesUsed << " lines used for calibration ";
       for (i = 0; i < LinesUsed; i++) {

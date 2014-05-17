@@ -32,7 +32,7 @@
 #define PLOT_WAVE 0
 #define WAVE_CHARGE_MAX 16384
 
-
+#define MAX_TOTAL_LINES 25 // maximum number of gamma lines to be fitted across all source
 
 // Extra calibration point at 0 ch = 0 keV
 #define INCLUDE_ZERO 0          // Add an extra calibration point at 0ch = 0 keV
