@@ -185,7 +185,7 @@ void Calib(std::vector < TTigFragment > &ev)
    static double FitTimeElapsed = 0.0;
    int FileType;
    int FileNum;
-
+   
    int TimeBin = 0;
    float TB = 0.0;
 
@@ -194,7 +194,7 @@ void Calib(std::vector < TTigFragment > &ev)
 
    float WaveCharge = 0.0;
    float WaveEnergy = 0.0;
-
+   ofstream NullOutput;
 
    if (DEBUG) {
       cout << "--------- New Event ---------" << endl;
@@ -286,6 +286,7 @@ void Calib(std::vector < TTigFragment > &ev)
                   }
                   hCharge[Clover - 1][Crystal][0]->Fill(ev[i].Charge);
                   hWaveCharge[Clover - 1][Crystal][0]->Fill(WaveCharge);
+                  hCrystalChargeTemp[Clover-1][Crystal]->Fill(ev[i].Charge);
                }
             } else {
                if (Chan == 9) {
@@ -357,7 +358,7 @@ void Calib(std::vector < TTigFragment > &ev)
                   Settings.TempFit = 1;  // Override normal config which thinks output and plots are needed
                   
                   // Perform Fit
-                  FitSuccess = FitGammaSpectrum(hCharge[Clover - 1][Crystal][0], &Fit, Settings);
+                  FitSuccess = FitGammaSpectrum(hCrystalChargeTemp[Clover - 1][Crystal], &Fit, Settings);
                   
                   // Build map of fit results
                   ChannelFitMap ChanFits;
@@ -366,7 +367,7 @@ void Calib(std::vector < TTigFragment > &ev)
                   }
                   
                   // Calibrate fit map
-                  CalibSuccess = CalibrateChannel(ChanFits, Settings);
+                  CalibSuccess = CalibrateChannel(ChanFits, Settings, NullOutput, NullOutput);
                   
                   // Calibration Record
                   if (FitSuccess == 0) {
