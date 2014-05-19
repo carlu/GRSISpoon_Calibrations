@@ -19,6 +19,7 @@ void PrintHelp();
 // Storing run settings
 RunConfig Config;
 
+// Load sensible defaults before reading any options
 int LoadDefaultSettings()
 {
 
@@ -126,7 +127,8 @@ int LoadDefaultSettings()
    return 0;
 }
 
-
+// Override defaults with options from commandd line. 
+// Also some options here are required i.e. file and function to perform
 int ReadCommandLineSettings(int argc, char **argv)
 {
 
@@ -446,7 +448,7 @@ int ReadCommandLineSettings(int argc, char **argv)
 }
 
 
-int ReadOptionsFile(std::string filename)       // this is a dummy function
+int ReadConfigFile(std::string filename)       // this is a dummy function
 {                               // One day it should read in a config text file
    cout << filename << endl;
    return 0;

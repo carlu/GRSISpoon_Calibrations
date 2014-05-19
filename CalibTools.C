@@ -63,8 +63,10 @@ std::string FitOptions = ("RQE");
    // R=restrict to function range, Q=quiet, L=log likelihood method, E=improved err estimation, + add fit instead of replace
 std::string Opts;
 
+// ------------------------------------------------
 // Functions for managing calibration in SortHistos
 // ------------------------------------------------
+
 // Loop all files/sources
 int CalibrateFiles() {
    
@@ -221,13 +223,22 @@ int CalibrateFiles() {
                if (Config.CalList[Clover - 1][Crystal][Seg] == 0) {     // check if this channel is to be fitted.
                   continue;
                }
+               
                // Set Cl,Cr,Seg vector for use as key in Master fit map
                ChanVector.at(0) = Clover;
                ChanVector.at(1) = Crystal;
                ChanVector.at(2) = Seg;
                
                ConfigureEnergyFit(Clover,Crystal, Seg, FileType, FileNum, &Settings);
-               CalibSuccess = CalibrateChannel(FitMap[ChanVector], Settings);
+               
+               if (Config.PrintVerbose) {
+                  cout << endl << "------------------------------------------------------------------------" << endl;
+                  cout << "Calibrating " << Settings.HistName << endl;
+                  cout << "Clover " << Clover << " Crystal " << Crystal << " Seg " << Seg << endl;
+                  cout << "------------------------------------------------------------------------" << endl << endl;
+               }
+               
+               CalibSuccess = CalibrateChannel(FitMap[ChanVector], Settings, GainOut, ReportOut);
             }
          }   
       }
@@ -258,7 +269,14 @@ int CalibrateFiles() {
                
                ConfigureWaveEnFit(Clover,Crystal, Seg, FileType, FileNum, &Settings);
                
-               CalibSuccess = CalibrateChannel(WaveFitMap[ChanVector], Settings);
+               if (Config.PrintVerbose) {
+                  cout << endl << "------------------------------------------------------------------------" << endl;
+                  cout << "Calibrating " << Settings.HistName << endl;
+                  cout << "Clover " << Clover << " Crystal " << Crystal << " Seg " << Seg << endl;
+                  cout << "------------------------------------------------------------------------" << endl << endl;
+               }
+               
+               CalibSuccess = CalibrateChannel(WaveFitMap[ChanVector], Settings, WaveOut, WaveReportOut);
             
             }
          }   
@@ -279,8 +297,7 @@ int CalibrateFiles() {
    return 0;
 }
 
-
-// Loop histos in one file
+// Loop histograms in one file
 int FitHistoFile(TFile *file, int FileType, int FileNum, MasterFitMap *FitMap, MasterFitMap *WaveFitMap) {
 
    int i, j, x;
@@ -352,9 +369,10 @@ int FitHistoFile(TFile *file, int FileType, int FileNum, MasterFitMap *FitMap, M
 
                if (Histo) {
                   if (Config.PrintVerbose) {
-                     cout << endl << "------------------------------------" << endl;
+                     cout << endl << "------------------------------------------------------------------------" << endl;
                      cout << "Hist " << Settings.HistName << " loaded" << endl;
-                     cout << "------------------------------------" << endl << endl;
+                     cout << "Clover " << Clover << " Crystal " << Crystal << " Seg " << Seg << endl;
+                     cout << "------------------------------------------------------------------------" << endl << endl;
                   }
                   
                   
@@ -397,6 +415,7 @@ int FitHistoFile(TFile *file, int FileType, int FileNum, MasterFitMap *FitMap, M
          }
       }
    }
+   
    // Now run the fit for the waveform spectrum if required
    if (Config.CalWave) {
       if (Config.PrintVerbose) {
@@ -413,19 +432,20 @@ int FitHistoFile(TFile *file, int FileType, int FileNum, MasterFitMap *FitMap, M
                if (Config.CalList[Clover - 1][Crystal][Seg] == 0) {     // check if this channel is to be fitted.
                   continue;
                }
-
+               
                FitSettings Settings = { 0 };
                
                ConfigureWaveEnFit(Clover, Crystal, Seg, FileType, FileNum, &Settings);
-
-               TH1F *Histo = (TH1F *) file->FindObjectAny(HistName.c_str());
+               
+               TH1F *Histo = (TH1F *) file->FindObjectAny(Settings.HistName.c_str());
                
                if(Histo) {
                
                   if (Config.PrintVerbose) {
-                     cout << endl << "--------------------------------------" << endl;
+                     cout << endl << "------------------------------------------------------------------------" << endl;
+                     cout << "Hist " << Settings.HistName << " loaded" << endl;
                      cout << "Clover " << Clover << " Crystal " << Crystal << " Seg " << Seg << endl;
-                     cout << "--------------------------------------" << endl;
+                     cout << "------------------------------------------------------------------------" << endl << endl;
                   }
                      
                   // Perform Fit                  
@@ -444,12 +464,12 @@ int FitHistoFile(TFile *file, int FileType, int FileNum, MasterFitMap *FitMap, M
                   ChanVector.at(1) = Crystal;
                   ChanVector.at(2) = Seg;
                   // Check if map entry exists for this channel and insert if not.
-                  if(!FitMap->count(ChanVector)) {  // If entry for this channel does not exist...
-                     FitMap->insert(MasterFitPair(ChanVector,ChanFits));  // create it....
+                  if(!WaveFitMap->count(ChanVector)) {  // If entry for this channel does not exist...
+                     WaveFitMap->insert(MasterFitPair(ChanVector,ChanFits));  // create it....
                   }
                   else {                                                   // else....
                      
-                     FitMap->at(ChanVector).insert(ChanFits.begin(),ChanFits.end());      // add to it.
+                     WaveFitMap->at(ChanVector).insert(ChanFits.begin(),ChanFits.end());      // add to it.
                   }
                   
                   if (Config.WriteFits) {
@@ -466,8 +486,10 @@ int FitHistoFile(TFile *file, int FileType, int FileNum, MasterFitMap *FitMap, M
    return 0;
 }
 
+// --------------------------------
 // Functions for fitting a spectrum 
 // --------------------------------
+
 // Find/id first two peaks, rough calibration, loop all peaks
 int FitGammaSpectrum(TH1F * Histo, HistoFit * Fit, FitSettings Settings)
 {
@@ -866,10 +888,12 @@ int FitSinglePeak(TH1F * Histo, int Line, float Centre, TF1 * FitRange, FitResul
    return 1;
 }
 
+// --------------------------
 // Functions for calibration
 // --------------------------
+
 // Calibrate a channel
-int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings) {
+int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings, ofstream &Out, ofstream &Report ) {
    
    // This function should copy the operation of the old CalibrateGammaSpectrum() in CalibTools.C
    // However it should be altered to use maps and vectors rather than arrays.
@@ -953,6 +977,9 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings) {
    CalibPlot.SetTitle(Name.c_str());
    Name = Settings.HistName + " Cal";
    CalibPlot.SetName(Name.c_str());
+   CalibPlot.GetXaxis()->SetTitle("Centroid (ch)");
+   CalibPlot.GetYaxis()->SetTitle("Energy (keV)");
+   CalibPlot.GetYaxis()->SetLimits(0.0,2000.0);
    if (Config.PrintVerbose) {
       cout << LinesUsed << " lines used for calibration ";
       for (i = 0; i < LinesUsed; i++) {
@@ -1068,22 +1095,22 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings) {
    // Now print reports on results of fits and calibration.
    if (HistoCal.LinesUsed > 1) {
       if (HistoCal.LinesUsed < 3 || FORCE_LINEAR) {
-         GainOut << Settings.OutputName << ":\t" << HistoCal.LinGainFit[0];
-         GainOut << "\t" << HistoCal.LinGainFit[1] << endl;
+         Out << Settings.OutputName << ":\t" << HistoCal.LinGainFit[0];
+         Out << "\t" << HistoCal.LinGainFit[1] << endl;
       } else {
-         GainOut << Settings.OutputName << ":\t" << HistoCal.QuadGainFit[0] << "\t";
-         GainOut << HistoCal.QuadGainFit[1] << "\t" << HistoCal.QuadGainFit[2] << endl;
+         Out << Settings.OutputName << ":\t" << HistoCal.QuadGainFit[0] << "\t";
+         Out << HistoCal.QuadGainFit[1] << "\t" << HistoCal.QuadGainFit[2] << endl;
       }
    } else {
       //GainOut << HistName << " Fail!!!" << endl;
    }
    // Write full calibration report
    if (HistoCal.LinesUsed > 0) {
-      CalibrationReport(&HistoCal, ReportOut, Settings.OutputName, Settings);
+      CalibrationReport(&HistoCal, Report, Settings.OutputName, Settings);
    } else {
-      ReportOut << endl << "------------------------------------------" << endl << Settings.OutputName << endl <<
+      Report << endl << "------------------------------------------" << endl << Settings.OutputName << endl <<
           "------------------------------------------" << endl << endl;
-      ReportOut << "Fail Fail Fail! The calibration has failed!" << endl;
+      Report << "Fail Fail Fail! The calibration has failed!" << endl;
    }
    
    // Write .cal file for GRSISpoon
@@ -1277,7 +1304,7 @@ int ConfigureWaveEnFit(int Clover, int Crystal, int Seg,  int FileType, int File
          Settings->Source = Config.SourceNumBack.at(FileNum);
       }
    }
-   
+
    // Check if plot should be active for this channel
    Settings->PlotOn = 0;
    if (Config.PlotFits) {

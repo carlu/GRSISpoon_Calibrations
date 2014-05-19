@@ -35,7 +35,7 @@ using namespace std;
 #include <TH2F.h>
 #include <TApplication.h>
 #include <TStyle.h>
-#include <TRandom3.h>           // TRandom3 is less correlated than TRandom and almost as fast.  ls
+#include <TRandom3.h>           // TRandom3 is less correlated than TRandom and almost as fast. 
 #include <TCanvas.h>
 
 // GRSISpoon libraries
@@ -105,6 +105,8 @@ int main(int argc, char **argv)
       cout << "Failed to configure the run - exiting!" << endl;
       return -1;
    }
+   
+   
    // Set options for histo stats
    gStyle->SetOptStat("iouRMen");
 
