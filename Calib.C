@@ -358,7 +358,7 @@ void Calib(std::vector < TTigFragment > &ev)
                   Settings.TempFit = 1;  // Override normal config which thinks output and plots are needed
                   
                   // Perform Fit
-                  FitSuccess = FitGammaSpectrum(hCrystalChargeTemp[Clover - 1][Crystal], &Fit, Settings);
+                  FitSuccess = FitGammaSpectrum(hCrystalChargeTemp[j-1][k], &Fit, Settings);
                   
                   // Build map of fit results
                   ChannelFitMap ChanFits;
