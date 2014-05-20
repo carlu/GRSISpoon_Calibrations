@@ -45,8 +45,10 @@
 #define FIT_BACKGROUND 1        // 1 = yes, 0 = no.  Should be best to use this all the time but left option there just in case.
 #define BACK_WIDTH_KEV 10
 
-// Energy/ch fitting
-#define INITIAL_GAIN 0.16
+// Energy/ch fitting 
+// Estimate of gain for input of fit
+#define EN_GAIN_EST 0.16   // will need modifting for any change of digitiser shaping paramas or different preamps
+#define WAVE_GAIN_EST 0.6  //  will need modifying for high/low gain TIG10 or dfferent preamps
 
 struct FitSettings {
    int Source;                  // Source number
@@ -55,7 +57,8 @@ struct FitSettings {
    float SearchSigma;           // Sigma used by root in peak search, in charge units
    float SearchThresh;          // Threshold used by root in peak search
    float SigmaEstZero;          // used to estimate sigma for fit, in keV
-   float SigmaEst1MeV;          // "                            "
+   float SigmaEst1MeV;          //           "          
+   float GainEst;               //           "
    bool FitZero;                // Included 0ch=0keV in calibration?
    bool PlotOn;                 // Plot fits
    bool PeakSelect;             // Select primary peaks rather than find auto

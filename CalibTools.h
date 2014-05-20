@@ -15,7 +15,7 @@ int FitSinglePeak(TH1F * Histo, int Line, float Energy, TF1 * FitRange, FitResul
 // Functions for calibration
 // --------------------------
 // Calibrate a channel
-int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings, HistoFit * Fit, HistoCal * Cal, ofstream & Out, ofstream & Report);
+int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings, HistoFit * Fit, HistoCal * Cal);
 
 // Other general helper functions
 // ------------------------------

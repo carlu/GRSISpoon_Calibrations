@@ -194,7 +194,6 @@ void Calib(std::vector < TTigFragment > &ev)
 
    float WaveCharge = 0.0;
    float WaveEnergy = 0.0;
-   ofstream NullOutput;
 
    if (DEBUG) {
       cout << "--------- New Event ---------" << endl;
@@ -356,8 +355,7 @@ void Calib(std::vector < TTigFragment > &ev)
                   FileNum = 0;  // Used to id source.  Should only be one source type if this function is running.  
                   Config.WriteFits = 0;  // Don't want to write fits for these temp spectra.
                   ConfigureEnergyFit(j,k, 0, FileType, FileNum, &Settings);
-                  Settings.TempFit = 1;  // Override normal config which thinks output and plots are needed
-                  
+                  Settings.TempFit = 1;                  
                   // Perform Fit
                   FitSuccess = FitGammaSpectrum(hCrystalChargeTemp[j-1][k], &Fit, &Cal, Settings);
                   
@@ -368,7 +366,7 @@ void Calib(std::vector < TTigFragment > &ev)
                   }
                   
                   // Calibrate fit map
-                  CalibSuccess = CalibrateChannel(ChanFits, Settings, &Fit, &Cal, NullOutput, NullOutput);
+                  CalibSuccess = CalibrateChannel(ChanFits, Settings, &Fit, &Cal);
                   
                   // Calibration Record
                   if (FitSuccess == 0) {
