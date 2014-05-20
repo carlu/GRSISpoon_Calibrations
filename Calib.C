@@ -350,6 +350,7 @@ void Calib(std::vector < TTigFragment > &ev)
                   
                   // Configure Fit                  
                   HistoFit Fit;
+                  HistoCal Cal;
                   FitSettings Settings = { 0 };
                   FileType = 1; // used to generate histogram name for histo calibration.  Doesn't matter here.  
                   FileNum = 0;  // Used to id source.  Should only be one source type if this function is running.  
@@ -358,7 +359,7 @@ void Calib(std::vector < TTigFragment > &ev)
                   Settings.TempFit = 1;  // Override normal config which thinks output and plots are needed
                   
                   // Perform Fit
-                  FitSuccess = FitGammaSpectrum(hCrystalChargeTemp[j-1][k], &Fit, Settings);
+                  FitSuccess = FitGammaSpectrum(hCrystalChargeTemp[j-1][k], &Fit, &Cal, Settings);
                   
                   // Build map of fit results
                   ChannelFitMap ChanFits;
@@ -367,12 +368,12 @@ void Calib(std::vector < TTigFragment > &ev)
                   }
                   
                   // Calibrate fit map
-                  CalibSuccess = CalibrateChannel(ChanFits, Settings, NullOutput, NullOutput);
+                  CalibSuccess = CalibrateChannel(ChanFits, Settings, &Fit, &Cal, NullOutput, NullOutput);
                   
                   // Calibration Record
                   if (FitSuccess == 0) {
-                     hCrystalGain[j - 1][k]->SetBinContent(TimeBin, Fit.LinGainFit[1]);
-                     hCrystalOffset[j - 1][k]->SetBinContent(TimeBin, Fit.LinGainFit[0]);
+                     hCrystalGain[j - 1][k]->SetBinContent(TimeBin, Cal.LinGainFit[1]);
+                     hCrystalOffset[j - 1][k]->SetBinContent(TimeBin, Cal.LinGainFit[0]);
 
                   } else {
                      continue;

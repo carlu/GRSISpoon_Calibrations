@@ -229,6 +229,9 @@ int CalibrateFiles() {
                ChanVector.at(1) = Crystal;
                ChanVector.at(2) = Seg;
                
+               HistoFit Fit;
+               HistoCal Cal;
+               
                ConfigureEnergyFit(Clover,Crystal, Seg, FileType, FileNum, &Settings);
                
                if (Config.PrintVerbose) {
@@ -238,7 +241,7 @@ int CalibrateFiles() {
                   cout << "------------------------------------------------------------------------" << endl << endl;
                }
                
-               CalibSuccess = CalibrateChannel(FitMap[ChanVector], Settings, GainOut, ReportOut);
+               CalibSuccess = CalibrateChannel(FitMap[ChanVector], Settings, &Fit, &Cal, GainOut, ReportOut);
             }
          }   
       }
@@ -267,6 +270,9 @@ int CalibrateFiles() {
                ChanVector.at(1) = Crystal;
                ChanVector.at(2) = Seg;
                
+               HistoFit Fit;
+               HistoCal Cal;
+               
                ConfigureWaveEnFit(Clover,Crystal, Seg, FileType, FileNum, &Settings);
                
                if (Config.PrintVerbose) {
@@ -276,7 +282,7 @@ int CalibrateFiles() {
                   cout << "------------------------------------------------------------------------" << endl << endl;
                }
                
-               CalibSuccess = CalibrateChannel(WaveFitMap[ChanVector], Settings, WaveOut, WaveReportOut);
+               CalibSuccess = CalibrateChannel(WaveFitMap[ChanVector], Settings, &Fit, &Cal, WaveOut, WaveReportOut);
             
             }
          }   
@@ -379,9 +385,10 @@ int FitHistoFile(TFile *file, int FileType, int FileNum, MasterFitMap *FitMap, M
                   
                   // Initialise FitSettings and HistoFit               
                   HistoFit Fit;
+                  HistoCal Cal;
                   
                   // Perform fit
-                  FitSuccess = FitGammaSpectrum(Histo, &Fit, Settings);
+                  FitSuccess = FitGammaSpectrum(Histo, &Fit, &Cal, Settings);
                   
                   // Write fit results to map
                   // First add all fitted lines to ChannelFit map
@@ -450,8 +457,9 @@ int FitHistoFile(TFile *file, int FileType, int FileNum, MasterFitMap *FitMap, M
                      
                   // Perform Fit                  
                   HistoFit WaveFit;
+                  HistoCal WaveCal;
                   
-                  FitSuccess = FitGammaSpectrum(Histo, &WaveFit, Settings);
+                  FitSuccess = FitGammaSpectrum(Histo, &WaveFit, &WaveCal, Settings);
                   
                   // Write fit results to map
                   // First add all fitted lines to ChannelFit map
@@ -491,7 +499,7 @@ int FitHistoFile(TFile *file, int FileType, int FileNum, MasterFitMap *FitMap, M
 // --------------------------------
 
 // Find/id first two peaks, rough calibration, loop all peaks
-int FitGammaSpectrum(TH1F * Histo, HistoFit * Fit, FitSettings Settings)
+int FitGammaSpectrum(TH1F * Histo, HistoFit * Fit, HistoCal * Cal, FitSettings Settings)
 {
 
    // Histo:         pointer to histo to be fitted
@@ -711,10 +719,10 @@ int FitGammaSpectrum(TH1F * Histo, HistoFit * Fit, FitSettings Settings)
          dO = sqrt(pow(dG / G, 2) + pow(dChg2 / Chg2, 2)) * O;
          //*dOffset = dO;
 
-         Fit->LinGain[0] = O;
-         Fit->dLinGain[0] = dO;
-         Fit->LinGain[1] = G;
-         Fit->dLinGain[1] = dG;
+         Cal->LinGain[0] = O;
+         Cal->dLinGain[0] = dO;
+         Cal->LinGain[1] = G;
+         Cal->dLinGain[1] = dG;
 
          if (Config.PrintVerbose) {
             cout << "Gain: " << G << " +/- " << dG << ", Offset: " << O << " +/- " << dO << endl;
@@ -893,7 +901,7 @@ int FitSinglePeak(TH1F * Histo, int Line, float Centre, TF1 * FitRange, FitResul
 // --------------------------
 
 // Calibrate a channel
-int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings, ofstream &Out, ofstream &Report ) {
+int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings, HistoFit *Fit, HistoCal * Cal, ofstream &Out, ofstream &Report ) {
    
    // This function should copy the operation of the old CalibrateGammaSpectrum() in CalibTools.C
    // However it should be altered to use maps and vectors rather than arrays.
@@ -908,7 +916,6 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings, ofstream &Out, of
    float Centroids[MAX_TOTAL_LINES], dCentroids[MAX_TOTAL_LINES];
    
    FitResult LineFit;
-   HistoFit HistoCal;
    
    LinesUsed = 0;
    
@@ -917,7 +924,7 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings, ofstream &Out, of
       Energy = Line->first;
       LineFit = Line->second;
       
-      HistoCal.PeakFits.push_back(LineFit); // Store fit for use in calibration and report 
+      Fit->PeakFits.push_back(LineFit); // Store fit for use in calibration and report 
       
       if (LineFit.Const > GAUS_HEIGHT_MIN) {  // Enough counts?
          if ((LineFit.ChiSq / LineFit.NDF) < GAUS_CSPD_MAX) {  // Good enouhg fit?
@@ -932,7 +939,7 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings, ofstream &Out, of
             }
             LinesUsed += 1;
             TestsPassed = 1;
-            HistoCal.FitSuccess.push_back(1);
+            Fit->FitSuccess.push_back(1);
             if(LinesUsed > (MAX_TOTAL_LINES -2)) {  // Stop adding lines if we are going to overflow arrays
                break;                                // -1 here, -2 because of poss of 0ch=0keV line
             }
@@ -940,7 +947,7 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings, ofstream &Out, of
          }
       }
       if(TestsPassed==0) {
-         HistoCal.FitSuccess.push_back(0);
+         Fit->FitSuccess.push_back(0);
       }
    }
    
@@ -965,11 +972,11 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings, ofstream &Out, of
       ZeroFit.dSigma = 0.0;
       ZeroFit.ChiSq = 0.0;
       ZeroFit. NDF = 1;
-      HistoCal.PeakFits.push_back(ZeroFit);
-      HistoCal.FitSuccess.push_back(1);
+      Fit->PeakFits.push_back(ZeroFit);
+      Fit->FitSuccess.push_back(1);
    }   
    
-   HistoCal.LinesUsed = LinesUsed;
+   Cal->LinesUsed = LinesUsed;
    
    // Now add points to a TGraph 
    TGraphErrors CalibPlot(LinesUsed, Centroids, Energies, dCentroids, dEnergies);
@@ -1008,22 +1015,22 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings, ofstream &Out, of
    Opts = FitOptions;
    if (LinesUsed > 1) {
       CalibPlot.Fit(CalibFitLin, Opts.c_str());
-      HistoCal.LinGainFit[0] = CalibFitLin->GetParameter(0);
-      HistoCal.dLinGainFit[0] = CalibFitLin->GetParError(0);
-      HistoCal.LinGainFit[1] = CalibFitLin->GetParameter(1);
-      HistoCal.dLinGainFit[1] = CalibFitLin->GetParError(1);
-      HistoCal.LinGainFit[2] = CalibFitLin->GetChisquare() / CalibFitLin->GetNDF();
+      Cal->LinGainFit[0] = CalibFitLin->GetParameter(0);
+      Cal->dLinGainFit[0] = CalibFitLin->GetParError(0);
+      Cal->LinGainFit[1] = CalibFitLin->GetParameter(1);
+      Cal->dLinGainFit[1] = CalibFitLin->GetParError(1);
+      Cal->LinGainFit[2] = CalibFitLin->GetChisquare() / CalibFitLin->GetNDF();
    }
    Opts += "+";
    if (LinesUsed > 2) {
       CalibPlot.Fit(CalibFitQuad, Opts.c_str());
-      HistoCal.QuadGainFit[0] = CalibFitQuad->GetParameter(0);
-      HistoCal.dQuadGainFit[0] = CalibFitQuad->GetParError(0);
-      HistoCal.QuadGainFit[1] = CalibFitQuad->GetParameter(1);
-      HistoCal.dQuadGainFit[1] = CalibFitQuad->GetParError(1);
-      HistoCal.QuadGainFit[2] = CalibFitQuad->GetParameter(2);
-      HistoCal.dQuadGainFit[2] = CalibFitQuad->GetParError(2);
-      HistoCal.QuadGainFit[3] = CalibFitQuad->GetChisquare() / CalibFitQuad->GetNDF();
+      Cal->QuadGainFit[0] = CalibFitQuad->GetParameter(0);
+      Cal->dQuadGainFit[0] = CalibFitQuad->GetParError(0);
+      Cal->QuadGainFit[1] = CalibFitQuad->GetParameter(1);
+      Cal->dQuadGainFit[1] = CalibFitQuad->GetParError(1);
+      Cal->QuadGainFit[2] = CalibFitQuad->GetParameter(2);
+      Cal->dQuadGainFit[2] = CalibFitQuad->GetParError(2);
+      Cal->QuadGainFit[3] = CalibFitQuad->GetChisquare() / CalibFitQuad->GetNDF();
    }
    
    if(Config.WriteFits && !Settings.TempFit) {
@@ -1061,7 +1068,7 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings, ofstream &Out, of
       //App->Run();
    }
    
-   // If fit succesful, generate output....
+   // generate output....
    
    if(!Settings.TempFit) {
       switch (Crystal) { // Calculate channel number (old TIGRESS DAQ numbering)
@@ -1083,30 +1090,30 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings, ofstream &Out, of
       }
       
       
-      GainPlot->SetBinContent(ItemNum + 1, HistoCal.QuadGainFit[1]);  // ItemNum+1 to skip bin 0 which is underflow
-      OffsetPlot->SetBinContent(ItemNum + 1, HistoCal.QuadGainFit[0]);
-      QuadPlot->SetBinContent(ItemNum + 1, HistoCal.QuadGainFit[2]);
+      GainPlot->SetBinContent(ItemNum + 1, Cal->QuadGainFit[1]);  // ItemNum+1 to skip bin 0 which is underflow
+      OffsetPlot->SetBinContent(ItemNum + 1, Cal->QuadGainFit[0]);
+      QuadPlot->SetBinContent(ItemNum + 1, Cal->QuadGainFit[2]);
 
-      GainHist->Fill(HistoCal.QuadGainFit[1]);
-      OffsetHist->Fill(HistoCal.QuadGainFit[0]);
-      QuadHist->Fill(HistoCal.QuadGainFit[2]);
+      GainHist->Fill(Cal->QuadGainFit[1]);
+      OffsetHist->Fill(Cal->QuadGainFit[0]);
+      QuadHist->Fill(Cal->QuadGainFit[2]);
    }
    
    // Now print reports on results of fits and calibration.
-   if (HistoCal.LinesUsed > 1) {
-      if (HistoCal.LinesUsed < 3 || FORCE_LINEAR) {
-         Out << Settings.OutputName << ":\t" << HistoCal.LinGainFit[0];
-         Out << "\t" << HistoCal.LinGainFit[1] << endl;
+   if (Cal->LinesUsed > 1) {
+      if (Cal->LinesUsed < 3 || FORCE_LINEAR) {
+         Out << Settings.OutputName << ":\t" << Cal->LinGainFit[0];
+         Out << "\t" << Cal->LinGainFit[1] << endl;
       } else {
-         Out << Settings.OutputName << ":\t" << HistoCal.QuadGainFit[0] << "\t";
-         Out << HistoCal.QuadGainFit[1] << "\t" << HistoCal.QuadGainFit[2] << endl;
+         Out << Settings.OutputName << ":\t" << Cal->QuadGainFit[0] << "\t";
+         Out << Cal->QuadGainFit[1] << "\t" << Cal->QuadGainFit[2] << endl;
       }
    } else {
       //GainOut << HistName << " Fail!!!" << endl;
    }
    // Write full calibration report
-   if (HistoCal.LinesUsed > 0) {
-      CalibrationReport(&HistoCal, Report, Settings.OutputName, Settings);
+   if (Cal->LinesUsed > 0) {
+      CalibrationReport(Fit, Cal, Report, Settings.OutputName, Settings);
    } else {
       Report << endl << "------------------------------------------" << endl << Settings.OutputName << endl <<
           "------------------------------------------" << endl << endl;
@@ -1115,7 +1122,7 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings, ofstream &Out, of
    
    // Write .cal file for GRSISpoon
    if (Config.CalFile) {
-      WriteCalFile(&HistoCal, CalFileOut, Settings.HistName, Settings);
+      WriteCalFile(Fit, CalFileOut, Settings.HistName, Settings);
    }
 
    
@@ -1334,7 +1341,7 @@ int ConfigureWaveEnFit(int Clover, int Crystal, int Seg,  int FileType, int File
 }
 
 // Generate text report of fits and calibrations
-int CalibrationReport(HistoFit * Fit, ofstream & ReportOut, std::string HistName, FitSettings Settings)
+int CalibrationReport(HistoFit * Fit, HistoCal * Cal, ofstream & ReportOut, std::string HistName, FitSettings Settings)
 {
 
    int i, NumFits;
@@ -1346,7 +1353,7 @@ int CalibrationReport(HistoFit * Fit, ofstream & ReportOut, std::string HistName
       ReportOut << endl << "------------------------------------------" << endl << HistName << endl <<
           "------------------------------------------" << endl << endl;
       // Peak fit info
-      ReportOut << Fit->LinesUsed << " lines used in calibration (*)" << endl;
+      ReportOut << Cal->LinesUsed << " lines used in calibration (*)" << endl;
       ReportOut << "Individual fit results:" << endl;
       ReportOut << "(Const +/- err\tMean +/- err\tSigma +/- err\nChiSq\tNDF\tCSPD)" << endl << endl;
       //for (i = 0; i <= Config.Sources[Settings.Source].size(); i++) {
@@ -1364,15 +1371,15 @@ int CalibrationReport(HistoFit * Fit, ofstream & ReportOut, std::string HistName
          ReportOut << endl << endl;
       }
       // Calibration...
-      ReportOut << "Linear Solution: Offset = " << Fit->LinGain[0] << " +/- " << Fit->dLinGain[0] << "\t";
-      ReportOut << "Gain = " << Fit->LinGain[1] << " +/- " << Fit->dLinGain[1] << endl;
-      ReportOut << "Linear Fit: Offset = " << Fit->LinGainFit[0] << " +/- " << Fit->dLinGainFit[0] << "\t";
-      ReportOut << "Gain = " << Fit->LinGainFit[1] << " +/- " << Fit->dLinGainFit[1] << "\t";
-      ReportOut << "CSPD = " << Fit->LinGainFit[2] << endl;
-      ReportOut << "Quadratic Fit: Offset = " << Fit->QuadGainFit[0] << " +/- " << Fit->dQuadGainFit[0] << "\t";
-      ReportOut << "Gain = " << Fit->QuadGainFit[1] << " +/- " << Fit->dQuadGainFit[1] << "\t";
-      ReportOut << "Quad = " << Fit->QuadGainFit[2] << " +/- " << Fit->dQuadGainFit[2] << "\t";
-      ReportOut << "CSPD = " << Fit->LinGainFit[3] << endl;
+      ReportOut << "Linear Solution: Offset = " << Cal->LinGain[0] << " +/- " << Cal->dLinGain[0] << "\t";
+      ReportOut << "Gain = " << Cal->LinGain[1] << " +/- " << Cal->dLinGain[1] << endl;
+      ReportOut << "Linear Fit: Offset = " << Cal->LinGainFit[0] << " +/- " << Cal->dLinGainFit[0] << "\t";
+      ReportOut << "Gain = " << Cal->LinGainFit[1] << " +/- " << Cal->dLinGainFit[1] << "\t";
+      ReportOut << "CSPD = " << Cal->LinGainFit[2] << endl;
+      ReportOut << "Quadratic Fit: Offset = " << Cal->QuadGainFit[0] << " +/- " << Cal->dQuadGainFit[0] << "\t";
+      ReportOut << "Gain = " << Cal->QuadGainFit[1] << " +/- " << Cal->dQuadGainFit[1] << "\t";
+      ReportOut << "Quad = " << Cal->QuadGainFit[2] << " +/- " << Cal->dQuadGainFit[2] << "\t";
+      ReportOut << "CSPD = " << Cal->LinGainFit[3] << endl;
       // Residual from quadratic fit
       ReportOut << endl << "Quadratic calibration residuals...." << endl;
       ReportOut << "Centroid (ch)\t\tList Energy (keV)\t\tCalibration Energy (keV)\t\tResidual (keV)" << endl;
@@ -1380,8 +1387,8 @@ int CalibrationReport(HistoFit * Fit, ofstream & ReportOut, std::string HistName
       //for (i = 0; i <= Config.Sources[Settings.Source].size(); i++) {
       for (i = 0; i < Fit->PeakFits.size(); i++) {
          if (Fit->FitSuccess.at(i) == 1) {
-            CalibEn = Fit->QuadGainFit[0] + (Fit->QuadGainFit[1] * (Fit->PeakFits.at(i).Mean / Settings.Integration)) +
-                (pow((Fit->PeakFits.at(i).Mean / Settings.Integration), 2) * Fit->QuadGainFit[2]);
+            CalibEn = Cal->QuadGainFit[0] + (Cal->QuadGainFit[1] * (Fit->PeakFits.at(i).Mean / Settings.Integration)) +
+                (pow((Fit->PeakFits.at(i).Mean / Settings.Integration), 2) * Cal->QuadGainFit[2]);
             ReportOut << Fit->PeakFits.at(i).Mean << "\t\t\t" << Fit->PeakFits.at(i).Energy << "\t\t\t";
             ReportOut << CalibEn << "\t\t\t" << CalibEn - Fit->PeakFits.at(i).Energy << endl;
             Residuals[NumFits] = CalibEn - Fit->PeakFits.at(i).Energy;
@@ -1395,7 +1402,7 @@ int CalibrationReport(HistoFit * Fit, ofstream & ReportOut, std::string HistName
       for (i = 0; i < Fit->PeakFits.size(); i++) {
       //for (i = 0; i <= Config.Sources[Settings.Source].size(); i++) {
          if (Fit->FitSuccess.at(i) == 1) {
-            CalibEn = Fit->LinGainFit[0] + (Fit->LinGainFit[1] * (Fit->PeakFits.at(i).Mean / Settings.Integration));
+            CalibEn = Cal->LinGainFit[0] + (Cal->LinGainFit[1] * (Fit->PeakFits.at(i).Mean / Settings.Integration));
             ReportOut << Fit->PeakFits.at(i).Mean << "\t\t\t" << Fit->PeakFits.at(i).Energy << "\t\t\t";
             ReportOut << CalibEn << "\t\t\t" << CalibEn - Fit->PeakFits.at(i).Energy << endl;
             Energies[NumFits] = Fit->PeakFits.at(i).Energy;

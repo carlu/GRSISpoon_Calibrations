@@ -68,7 +68,7 @@ struct FitSettings {
    
 };
 
-struct FitResult {  // Stores result of fit of single peak
+struct FitResult {  // Stores result of gaus+bg fit of single peak
    float Energy;
    float Const;
    float dConst;
@@ -84,19 +84,22 @@ struct FitResult {  // Stores result of fit of single peak
    int NDF;
 };
 
-// Structure for fits and gain for one spectrum
+// Structure for fits for one spectrum
 struct HistoFit {
    std::vector<FitResult> PeakFits;
    std::vector<bool> FitSuccess;
-   int LinesUsed;
+};
+
+// Calibration for one spectrum
+struct HistoCal {
    float LinGain[2];            // [O,G]
    float dLinGain[2];
    float LinGainFit[3];         // [O,G,CSPD]
    float dLinGainFit[2];        // [dO,dG]
    float QuadGainFit[4];        // [O,G,Q,CSPD]
    float dQuadGainFit[4];       // [dO,dG,dQ]
+   int LinesUsed;
 };
-
 
 // Somewhere to store all the fits.
 
