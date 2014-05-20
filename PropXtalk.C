@@ -69,7 +69,7 @@ static TH1F *hSegSumCrystal[CLOVERS][CRYSTALS]; // sum of seg energies for each 
 static TH1F *hCoreAddBackTig;   // addback of all cores in array for each event
 static TH1F *hCoreAddBackClover[CLOVERS];       // addback of all cores in clover for each event
 static TH1F *hSegAddBackClover[CLOVERS];        // addback of all segs in clover for each event
-static TH1F *hSegAddBackCrystal[CLOVERS][CRYSTALS];     // addback of all segs in crystal for each event
+//static TH1F *hSegAddBackCrystal[CLOVERS][CRYSTALS];     // addback of all segs in crystal for each event
 // Derived
 static TH1F *hCloverFoldTig;    // Num clovers hit in array
 static TH1F *hCrystalFoldTig;   // Num crystals hit in array
@@ -97,34 +97,31 @@ float CalibrateEnergy(int Charge, std::vector < float >Coefficients);
 
 void PropXtalk(std::vector < TTigFragment > &ev)
 {
-
-   int temp = 0;
-
-   int i;
+   unsigned int Frag;
    int HitClover, HitCrystal, HitSeg;
-   int Clover, Crystal, Seg, Fold;
+   int Clover, Crystal, Seg;
    int CloverFoldTig, CrystalFoldTig, SegFoldTig, CrystalFoldClover, SegFoldClover, SegFoldCrystal;
    float CoreABTig, CoreABClover, SegABClover, SegABCrystal;
    float WaveCharge, WaveEnergy;
    char Colour;
-   int Slave, Port, Chan;
+   int Chan;
    float En;
    std::string Name;
 
    float XTalkTemp;
    int XTalkNum, Count;
 
-   int CalChan;
+   unsigned int CalChan;
 
-   int Hits[CLOVERS][CRYSTALS][SEGS + 2] = { 0 };
+   int Hits[CLOVERS][CRYSTALS][SEGS + 2] = {{{ 0 }}};
    int CloverCoreFold[CLOVERS] = { 0 }; // + 1 for each core hit in each clover
-   int CrystalSegFold[CLOVERS][CRYSTALS] = { 0 };       // +1 for each seg hit in each crystal
+   int CrystalSegFold[CLOVERS][CRYSTALS] = {{ 0 }};       // +1 for each seg hit in each crystal
 
-   float Energies[CLOVERS][CRYSTALS][SEGS + 2] = { 0.0 };
-   float WaveEnergies[CLOVERS][CRYSTALS][SEGS + 2] = { 0.0 };
-   float SegABEn[CLOVERS][CRYSTALS] = { 0.0 };
+   float Energies[CLOVERS][CRYSTALS][SEGS + 2] = {{{ 0.0 }}};
+   float WaveEnergies[CLOVERS][CRYSTALS][SEGS + 2] = {{{ 0.0 }}};
+   float SegABEn[CLOVERS][CRYSTALS] = {{ 0.0 }};
 
-   int Charges[CLOVERS][CRYSTALS][SEGS + 2] = { 0 };
+   int Charges[CLOVERS][CRYSTALS][SEGS + 2] = {{{ 0 }}};
 
    int CloverHitList[CLOVERS] = { 0 };
    int CloverHitListGood[CLOVERS] = { 0 };
@@ -143,11 +140,11 @@ void PropXtalk(std::vector < TTigFragment > &ev)
    // --- First section loops fragments and fills E and hit arrays -- //
    // --------------------------------------------------------------- //
 
-   for (i = 0; i < ev.size(); i++) {
-      Slave = ((ev[i].ChannelAddress & 0x00F00000) >> 20);
-      Port = ((ev[i].ChannelAddress & 0x00000F00) >> 8);
-      Chan = (ev[i].ChannelAddress & 0x000000FF);
-      Name = ev[i].ChannelName;
+   for (Frag = 0; Frag < ev.size(); Frag++) {
+      //Slave = ((ev[Frag].ChannelAddress & 0x00F00000) >> 20);
+      //Port = ((ev[Frag].ChannelAddress & 0x00000F00) >> 8);
+      Chan = (ev[Frag].ChannelAddress & 0x000000FF);
+      Name = ev[Frag].ChannelName;
       WaveCharge = 0.0;
       WaveEnergy = 0.0;
       // Parse name
@@ -160,12 +157,12 @@ void PropXtalk(std::vector < TTigFragment > &ev)
       }
 
       // Fill "Port Hit Pattern"
-      hHitPattern->Fill(ev[i].ChannelNumber);
+      hHitPattern->Fill(ev[Frag].ChannelNumber);
 
       // Get calibrated charge
       if (!Config.HaveAltEnergyCalibration) {
          //cout << "Using standard calibration..." << endl;
-         En = ev[i].ChargeCal;
+         En = ev[Frag].ChargeCal;
       } else {
          int NewCoeffFound = 0;
          std::vector < float >Coefficients;
@@ -178,18 +175,18 @@ void PropXtalk(std::vector < TTigFragment > &ev)
             }
          }
          if (NewCoeffFound == 1) {      // If a new set of coeffs was found, then calibrate
-            En = CalibrateEnergy(ev[i].Charge, EnCalibValues.at(CalChan));
+            En = CalibrateEnergy(ev[Frag].Charge, EnCalibValues.at(CalChan));
          } else {               // else use the existing calibration
-            En = ev[i].ChargeCal;
+            En = ev[Frag].ChargeCal;
          }
       }
 
       // Fill "energy hit pattern"
       if (En > Config.EnergyThresh) {
-         hEHitPattern->Fill(ev[i].ChannelNumber);
+         hEHitPattern->Fill(ev[Frag].ChannelNumber);
       }
       // Get Calibrated "WaveCharge"
-      if (ev[i].wavebuffer.size() > Config.WaveInitialSamples + Config.WaveFinalSamples) {
+      if (ev[Frag].wavebuffer.size() > Config.WaveInitialSamples + Config.WaveFinalSamples) {
          int NewCoeffFound = 0;
          std::vector < float >Coefficients;
          for (CalChan = 0; CalChan < WaveCalibNames.size(); CalChan++) {
@@ -201,7 +198,7 @@ void PropXtalk(std::vector < TTigFragment > &ev)
             }
          }
          if (NewCoeffFound == 1) {      // If a new set of coeffs was found, then calibrate
-            WaveCharge = CalcWaveCharge(ev[i].wavebuffer);
+            WaveCharge = CalcWaveCharge(ev[Frag].wavebuffer);
             WaveEnergy = CalibrateWaveEnergy(WaveCharge, WaveCalibValues.at(CalChan));
          }
       } else {
@@ -227,14 +224,14 @@ void PropXtalk(std::vector < TTigFragment > &ev)
                Seg = 9;
             }
          }
-         //En  = ev[i].ChargeCal;
+         //En  = ev[Frag].ChargeCal;
 
          //cout << "Here " << temp++ << endl;
 
          // First record hit pattern, Count Fold, increment raw and sum spectra
          Energies[Clover - 1][Crystal][Seg] = En;
          WaveEnergies[Clover - 1][Crystal][Seg] = WaveEnergy;
-         Charges[Clover - 1][Crystal][Seg] = ev[i].Charge;
+         Charges[Clover - 1][Crystal][Seg] = ev[Frag].Charge;
          CloverHitList[Clover - 1] |= 1;
          if (En > Config.EnergyThresh) {
             CloverHitListGood[Clover - 1] |= 1;
@@ -249,7 +246,7 @@ void PropXtalk(std::vector < TTigFragment > &ev)
                hCoreSumTig->Fill(En);
                hCoreSumClover[Clover - 1]->Fill(En);
                hEn[Clover - 1][Crystal][Seg]->Fill(En);
-               hEnMatrix->Fill(ev[i].ChannelNumber, En);
+               hEnMatrix->Fill(ev[Frag].ChannelNumber, En);
             }
             if (WaveEnergy > Config.EnergyThresh) {
                hWaveEn[Clover - 1][Crystal][Seg]->Fill(WaveEnergy);
@@ -259,7 +256,7 @@ void PropXtalk(std::vector < TTigFragment > &ev)
             if (En > Config.EnergyThresh) {
                Hits[Clover - 1][Crystal][Seg] += 1;
                hEn[Clover - 1][Crystal][Seg]->Fill(En);
-               hEnMatrix->Fill(ev[i].ChannelNumber, En);
+               hEnMatrix->Fill(ev[Frag].ChannelNumber, En);
             }
             if (WaveEnergy > Config.EnergyThresh) {
                hWaveEn[Clover - 1][Crystal][Seg]->Fill(WaveEnergy);
@@ -274,7 +271,7 @@ void PropXtalk(std::vector < TTigFragment > &ev)
                SegABEn[Clover - 1][Crystal] += En;
                CrystalSegFold[Clover - 1][Crystal] += 1;
                hEn[Clover - 1][Crystal][Seg]->Fill(En);
-               hEnMatrix->Fill(ev[i].ChannelNumber, En);
+               hEnMatrix->Fill(ev[Frag].ChannelNumber, En);
                hSegSumClover[Clover - 1]->Fill(En);
                hSegSumCrystal[Clover - 1][Crystal]->Fill(En);
             }

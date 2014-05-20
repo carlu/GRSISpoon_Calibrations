@@ -71,21 +71,15 @@ std::string Opts;
 int CalibrateFiles() {
    
    // Variables, Constants, etc
-   int i, j, x;
    int Clover = 0;
    int Crystal = 0;
    int Seg = 0;
-   unsigned int ChainEvent, TreeEvent;
    
    int FileType;
-   int FileNum;
+   unsigned int FileNum;
    int CalibSuccess;
    
-   char Charge[10];
-   char Colours[] = "BGRW";
    int ItemNum = 0;
-   int NumFits;
-   float CalibEn = 0.0;
    bool FileTypeFound = 0;
    
    string filename, runname;
@@ -270,7 +264,7 @@ int CalibrateFiles() {
                QuadHist->Fill(Cal.QuadGainFit[2]);
    
                // Now print reports on results of fits and calibration.
-               if (Cal.LinesUsed > 1) {
+               if (Cal.LinesUsed > 1 && CalibSuccess) {
                   if (Cal.LinesUsed < 3 || FORCE_LINEAR) {
                      GainOut << Settings.OutputName << ":\t" << Cal.LinGainFit[0];
                      GainOut << "\t" << Cal.LinGainFit[1] << endl;
@@ -282,7 +276,7 @@ int CalibrateFiles() {
                   //GainOut << HistName << " Fail!!!" << endl;
                }
                // Write full calibration report
-               if (Cal.LinesUsed > 0) {
+               if (Cal.LinesUsed > 0 && CalibSuccess) {
                   CalibrationReport(&Fit, &Cal, ReportOut, Settings.OutputName, Settings);
                } else {
                   ReportOut << endl << "------------------------------------------" << endl << Settings.OutputName << endl <<
@@ -411,23 +405,14 @@ int CalibrateFiles() {
 // Loop histograms in one file
 int FitHistoFile(TFile *file, int FileType, int FileNum, MasterFitMap *FitMap, MasterFitMap *WaveFitMap) {
 
-   int i, j, x;
    int Clover = 0;
    int Crystal = 0;
    int Seg = 0;
-   int Source = 0;
-   int Line;
+   unsigned int Line;
    
-   int SourceNumCore, SourceNumFront, SourceNumBack;
    int FitSuccess = 0;
-   int CalibSuccess = 0;
-   bool PlotOn = 0;
-   bool PeakSelect=0;
-   int Integration = 0;
-   float Dispersion = 0.0;
    
    std::string tempstring;
-   char CharBuf[CHAR_BUFFER_SIZE];
    std::string HistName;
    std::string OutputName;
    
@@ -617,12 +602,12 @@ int FitGammaSpectrum(TH1F * Histo, HistoFit * Fit, HistoCal * Cal, FitSettings S
 
    // Variables needed:
    int Peak, Peak1, Peak2, NumPeaks, BestPeak1, BestPeak2, PeakFound;   // for looping peaks and finding correct ones
-   int i, temp;
+   int i;
    float Ratio, Diff, BestDiff; // test quality of peak match
    float Centre;
    Float_t *PeakPositions;      // for output of root peak search
-   int Line; //, LinesUsed;
-   float G, O, dG, dO, FitCentre;       // values for fast 2 point calibration.
+   unsigned int Line; //, LinesUsed;
+   float G, O, dG, dO;       // values for fast 2 point calibration.
    float En1, En2;              // line energies for two point calib
    int CustomPeak1;
    int CustomPeak2;
@@ -636,7 +621,6 @@ int FitGammaSpectrum(TH1F * Histo, HistoFit * Fit, HistoCal * Cal, FitSettings S
    int Integral;                // counts in spectrum
    TSpectrum *Spec = new TSpectrum();
    TF1 *FitRange[MAX_LINES];    // pointers to functions for fitting each line
-   float InitialGain = 0.16;
    // Fitting stuff
    std::string FitOptions = ("RQEM");
    // R=restrict to function range, Q=quiet, L=log likelihood method, E=improved err estimation, + add fit instead of replace
@@ -1010,9 +994,8 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings, HistoFit *Fit, Hi
    
    // This function should copy the operation of the old CalibrateGammaSpectrum() in CalibTools.C
    // However it should be altered to use maps and vectors rather than arrays.
-   int Clover, Crystal, Seg, i;
+   int i;
    int LinesUsed;
-   int ItemNum;
    bool TestsPassed;
    std::string Name;
    float Energy = 0.0;
@@ -1359,7 +1342,8 @@ int ConfigureWaveEnFit(int Clover, int Crystal, int Seg,  int FileType, int File
 int CalibrationReport(HistoFit * Fit, HistoCal * Cal, ofstream & ReportOut, std::string HistName, FitSettings Settings)
 {
 
-   int i, NumFits;
+   unsigned int FitNum;
+   int NumFits;
    float Energies[MAX_LINES], Residuals[MAX_LINES];
    float CalibEn;
 
@@ -1372,17 +1356,17 @@ int CalibrationReport(HistoFit * Fit, HistoCal * Cal, ofstream & ReportOut, std:
       ReportOut << "Individual fit results:" << endl;
       ReportOut << "(Const +/- err\tMean +/- err\tSigma +/- err\nChiSq\tNDF\tCSPD)" << endl << endl;
       //for (i = 0; i <= Config.Sources[Settings.Source].size(); i++) {
-      for (i = 0; i < Fit->PeakFits.size(); i++) {  
-         ReportOut << Fit->PeakFits.at(i).Energy << " keV ";
-         if (Fit->FitSuccess.at(i) == 1) {
+      for (FitNum = 0; FitNum < Fit->PeakFits.size(); FitNum++) {  
+         ReportOut << Fit->PeakFits.at(FitNum).Energy << " keV ";
+         if (Fit->FitSuccess.at(FitNum) == 1) {
             ReportOut << "(*)";
          }
          ReportOut << endl;
-         ReportOut << Fit->PeakFits.at(i).Const << " +/- " << Fit->PeakFits.at(i).dConst << "\t";
-         ReportOut << Fit->PeakFits.at(i).Mean << " +/- " << Fit->PeakFits.at(i).dMean << "\t";
-         ReportOut << Fit->PeakFits.at(i).Sigma << " +/- " << Fit->PeakFits.at(i).dSigma << endl;
-         ReportOut << Fit->PeakFits.at(i).ChiSq << "\t" << Fit->PeakFits.at(i).NDF << "\t" << Fit->PeakFits.at(i).ChiSq /
-             Fit->PeakFits.at(i).NDF;
+         ReportOut << Fit->PeakFits.at(FitNum).Const << " +/- " << Fit->PeakFits.at(FitNum).dConst << "\t";
+         ReportOut << Fit->PeakFits.at(FitNum).Mean << " +/- " << Fit->PeakFits.at(FitNum).dMean << "\t";
+         ReportOut << Fit->PeakFits.at(FitNum).Sigma << " +/- " << Fit->PeakFits.at(FitNum).dSigma << endl;
+         ReportOut << Fit->PeakFits.at(FitNum).ChiSq << "\t" << Fit->PeakFits.at(FitNum).NDF << "\t" << Fit->PeakFits.at(FitNum).ChiSq /
+             Fit->PeakFits.at(FitNum).NDF;
          ReportOut << endl << endl;
       }
       // Calibration...
@@ -1400,13 +1384,13 @@ int CalibrationReport(HistoFit * Fit, HistoCal * Cal, ofstream & ReportOut, std:
       ReportOut << "Centroid (ch)\t\tList Energy (keV)\t\tCalibration Energy (keV)\t\tResidual (keV)" << endl;
       NumFits = 0;
       //for (i = 0; i <= Config.Sources[Settings.Source].size(); i++) {
-      for (i = 0; i < Fit->PeakFits.size(); i++) {
-         if (Fit->FitSuccess.at(i) == 1) {
-            CalibEn = Cal->QuadGainFit[0] + (Cal->QuadGainFit[1] * (Fit->PeakFits.at(i).Mean / Settings.Integration)) +
-                (pow((Fit->PeakFits.at(i).Mean / Settings.Integration), 2) * Cal->QuadGainFit[2]);
-            ReportOut << Fit->PeakFits.at(i).Mean << "\t\t\t" << Fit->PeakFits.at(i).Energy << "\t\t\t";
-            ReportOut << CalibEn << "\t\t\t" << CalibEn - Fit->PeakFits.at(i).Energy << endl;
-            Residuals[NumFits] = CalibEn - Fit->PeakFits.at(i).Energy;
+      for (FitNum = 0; FitNum < Fit->PeakFits.size(); FitNum++) {
+         if (Fit->FitSuccess.at(FitNum) == 1) {
+            CalibEn = Cal->QuadGainFit[0] + (Cal->QuadGainFit[1] * (Fit->PeakFits.at(FitNum).Mean / Settings.Integration)) +
+                (pow((Fit->PeakFits.at(FitNum).Mean / Settings.Integration), 2) * Cal->QuadGainFit[2]);
+            ReportOut << Fit->PeakFits.at(FitNum).Mean << "\t\t\t" << Fit->PeakFits.at(FitNum).Energy << "\t\t\t";
+            ReportOut << CalibEn << "\t\t\t" << CalibEn - Fit->PeakFits.at(FitNum).Energy << endl;
+            Residuals[NumFits] = CalibEn - Fit->PeakFits.at(FitNum).Energy;
             NumFits++;
          }
       }
@@ -1414,13 +1398,13 @@ int CalibrationReport(HistoFit * Fit, HistoCal * Cal, ofstream & ReportOut, std:
       NumFits = 0;
       ReportOut << endl << "Linear calibration residuals...." << endl;
       ReportOut << "Centroid (ch)\t\tList Energy (keV)\t\tCalibration Energy (keV)\t\tResidual (keV)" << endl;
-      for (i = 0; i < Fit->PeakFits.size(); i++) {
+      for (FitNum = 0; FitNum < Fit->PeakFits.size(); FitNum++) {
       //for (i = 0; i <= Config.Sources[Settings.Source].size(); i++) {
-         if (Fit->FitSuccess.at(i) == 1) {
-            CalibEn = Cal->LinGainFit[0] + (Cal->LinGainFit[1] * (Fit->PeakFits.at(i).Mean / Settings.Integration));
-            ReportOut << Fit->PeakFits.at(i).Mean << "\t\t\t" << Fit->PeakFits.at(i).Energy << "\t\t\t";
-            ReportOut << CalibEn << "\t\t\t" << CalibEn - Fit->PeakFits.at(i).Energy << endl;
-            Energies[NumFits] = Fit->PeakFits.at(i).Energy;
+         if (Fit->FitSuccess.at(FitNum) == 1) {
+            CalibEn = Cal->LinGainFit[0] + (Cal->LinGainFit[1] * (Fit->PeakFits.at(FitNum).Mean / Settings.Integration));
+            ReportOut << Fit->PeakFits.at(FitNum).Mean << "\t\t\t" << Fit->PeakFits.at(FitNum).Energy << "\t\t\t";
+            ReportOut << CalibEn << "\t\t\t" << CalibEn - Fit->PeakFits.at(FitNum).Energy << endl;
+            Energies[NumFits] = Fit->PeakFits.at(FitNum).Energy;
          }
       }
       TGraphErrors CalibResidual(NumFits, Energies, Residuals);
@@ -1441,6 +1425,8 @@ int CalibrationReport(HistoFit * Fit, HistoCal * Cal, ofstream & ReportOut, std:
    if(Config.CalFile) {
       
    }
+
+   return 0;
 
 }
 

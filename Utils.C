@@ -123,7 +123,7 @@ float CalibrateEnergy(int Charge, std::vector < float >Coefficients)
    if (INTEGRATION != 0) {
       TempInt = INTEGRATION;
    }
-   for (int i = 0; i < Coefficients.size(); i++) {
+   for (unsigned int i = 0; i < Coefficients.size(); i++) {
       Energy += Coefficients[i] * pow((ChargeF / TempInt), i);
    }
    return Energy;
@@ -138,7 +138,7 @@ float CalibrateWaveEnergy(float Charge, std::vector < float >Coefficients)
    if (Coefficients.size() == 0) {
       return Charge;
    }
-   for (int i = 0; i < Coefficients.size(); i++) {
+   for (unsigned int i = 0; i < Coefficients.size(); i++) {
       Energy += Coefficients[i] * pow(Charge, i);
    }
    return Energy;
@@ -148,7 +148,7 @@ float CalibrateWaveEnergy(float Charge, std::vector < float >Coefficients)
 
 float CalcWaveCharge(std::vector < int >wavebuffer)
 {
-   int Samp, Length;
+   unsigned int Samp, Length;
    float Charge = 0.0;
    float Initial = 0.0;
    float Final = 0.0;

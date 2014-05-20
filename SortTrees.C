@@ -95,9 +95,9 @@ void FinalPropXtalk();
 int main(int argc, char **argv)
 {
    // Variables, Constants, etc
-   int i, j;
+   int i; 
    unsigned int ChainEvent, TreeEvent;
-
+   unsigned int FileNum;
 
    // Set default and read custom options
    LoadDefaultSettings();
@@ -178,8 +178,8 @@ int main(int argc, char **argv)
    TChain *Chain = new TChain("FragmentTree");
 
    // Setup input file list                                        
-   for (i = 0; i < Config.files.size(); i++) {
-      Chain->Add(Config.files.at(i).c_str());
+   for (FileNum = 0; FileNum < Config.files.size(); FileNum++) {
+      Chain->Add(Config.files.at(FileNum).c_str());
       FileCount++;
    }
 
@@ -191,20 +191,19 @@ int main(int argc, char **argv)
    std::vector < TTigFragment > evFrags;
 
    int nTrees = Chain->GetNtrees();
-   int NumChainEntries = Chain->GetEntries();
-   int NumChainEvents = (int) Chain->GetMaximum("TriggerId");   // This doesn't work, TrigID reset for each tree on chain.
+   unsigned int NumChainEntries = Chain->GetEntries();
+   unsigned int NumChainEvents = (int) Chain->GetMaximum("TriggerId");   // This doesn't work, TrigID reset for each tree on chain.
 
    if (Config.PrintBasic) {
-      cout << "Chain Entries (frags) : " << NumChainEntries << endl;
-      cout << "Chain Events          : " << NumChainEvents << endl;
+      cout << "Chain Entries (frags)               : " << NumChainEntries << endl;
+      cout << "Chain Events (Max \"TriggerId\"))   : " << NumChainEvents << endl;
    }
 
    int TreeNum = -1;
    int LastTreeNum = -1;
-   int NumTreeEntries = -1;
-   int NumTreeEvents = -1;
+   unsigned int NumTreeEntries = 0;
+   unsigned int NumTreeEvents = 0;
    int FirstTreeEvent = -1;
-   int ProcessedFragments = 0;
 
    for (ChainEvent = 0; ChainEvent < NumChainEntries; ChainEvent++) {
 
@@ -242,8 +241,6 @@ int main(int argc, char **argv)
 
       TBranch *Branch = Tree->GetBranch("TTigFragment");
 
-      //cout << "HERE!!!" << endl;
-
       Branch->SetAddress(&pFrag);
       Tree->SetMaxVirtualSize(Config.ROOT_MaxVirtSize);
       Branch->LoadBaskets();
@@ -252,11 +249,9 @@ int main(int argc, char **argv)
       FirstTreeEvent = (int) Tree->GetMinimum("TriggerId");
       NumTreeEvents = ((int) Tree->GetMaximum("TriggerId") ) - FirstTreeEvent;
       
-
-      // cout << "HERE!!!! " << NumChainEntries << " " << NumTreeEntries << " " << NumTreeEvents << endl;
       TreeFragCount = 0;
       TreeEventCount = 0;
-      for (int TreeEvent = 0; TreeEvent < (NumTreeEvents+FirstTreeEvent); TreeEvent++) {
+      for (TreeEvent = 0; TreeEvent < (NumTreeEvents+FirstTreeEvent); TreeEvent++) {
          //for (int TreeEvent = FirstTreeEvent; TreeEvent < NumTreeEvents; TreeEvent++) {   
          evFrags.clear();
          int FragNum = 1;
@@ -321,7 +316,7 @@ int main(int argc, char **argv)
 
       Branch->DropBaskets("all");       // Clear cache before next tree    
       //i += (nEntries - 10);
-      i += (NumTreeEntries - 10);       // This skips i to almost the end of the tree, any remaining entries
+      TreeNum += (NumTreeEntries - 10);       // This skips i to almost the end of the tree, any remaining entries
       // on this tree will be skipped by "if(TreeNum != LastTreeNum" condition above
    }
 

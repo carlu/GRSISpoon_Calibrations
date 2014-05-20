@@ -106,9 +106,9 @@ struct RunConfig {              // this struct will hold all information
    // Global physics settings
    // ------------------------------------------
    // Properties of waveforms stored in the data
-   int WaveformSamples;
-   int WaveInitialSamples;
-   int WaveFinalSamples;
+   unsigned int WaveformSamples;
+   unsigned int WaveInitialSamples;
+   unsigned int WaveFinalSamples;
    // source Information
    std::vector < std::vector < float >>Sources;
    std::vector <int> SourceNumCore;

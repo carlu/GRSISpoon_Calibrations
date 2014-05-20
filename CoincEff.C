@@ -53,11 +53,11 @@ static TDirectory *dEnergy, *dAddBack, *dOther = {0};
 
 // Spectra pointers here, thinking I will start all pointer names with h
 static TH1F *hTestSpectrum = 0;
-static TH1F *hCrystalEn[CLOVERS][CRYSTALS] = { 0 };
+static TH1F *hCrystalEn[CLOVERS][CRYSTALS] = {{ 0 }};
 static TH1F *hCloverEn[CLOVERS] = { 0 };
 static TH1F *hCloverABEn[CLOVERS] = { 0 };
 static TH1F *hCloverABEnGated[CLOVERS] = { 0 };
-static TH1F *hCrystalEnGated[CLOVERS][CRYSTALS] = { 0 };
+static TH1F *hCrystalEnGated[CLOVERS][CRYSTALS] = {{ 0 }};
 
 static TH1F *hArrayEn = 0;
 
@@ -72,16 +72,15 @@ void FitPeak(TH1F * Histo, float Min, float Max, FitResult * FitRes);
 void CoincEff(std::vector < TTigFragment > &ev)
 {
    //cout << "------New Event------- " << ev.size() << " fragments -------" << endl;
-   Double_t val = 0;
    Int_t Crystal;
    Int_t Clover;
-   Int_t CalChan;
+   UInt_t CalChan;
    Int_t GatePassed = 0;
    Int_t ABGatePassed = 0;
    Int_t GateCrystal = 0;
    Int_t GateClover = 0;
    Int_t ABGateClover = 0;
-   Int_t i;
+   UInt_t i;
    float Energy;
    float CrystalEnergies[CLOVERS][CRYSTALS];
    float CloverAddBack[CLOVERS];
@@ -90,9 +89,9 @@ void CoincEff(std::vector < TTigFragment > &ev)
    memset(CloverAddBack, 0.0, CLOVERS * sizeof(float));
 
    for (i = 0; i < ev.size(); i++) {
-      Int_t slave = ((ev[i].ChannelAddress & 0x00F00000) >> 20);
-      Int_t port = ((ev[i].ChannelAddress & 0x00000F00) >> 8);
-      Int_t chan = (ev[i].ChannelAddress & 0x000000FF);
+      //Int_t slave = ((ev[i].ChannelAddress & 0x00F00000) >> 20);
+      //Int_t port = ((ev[i].ChannelAddress & 0x00000F00) >> 8);
+      //Int_t chan = (ev[i].ChannelAddress & 0x000000FF);
       std::string name = ev[i].ChannelName;
 
       //cout << "Slave, Port, Chan = " << slave << ", " << port << ", " << chan << "\t" << name << endl;
@@ -268,7 +267,6 @@ void FinalCoincEff()
 {
 
    int Clover, Crystal;
-   float Const, dConst, Mean, dMean, Sigma, dSigma;
    float Counts, dCounts, dCountsFit, dCountsStat, Eff, dEff;
    FitResult FitRes;
    ofstream EffOut;

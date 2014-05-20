@@ -79,7 +79,7 @@ int InitCalib()
    dOther = outfile->mkdir("Other");
 
    char name[512], title[512];
-   int Clover, Crystal, Seg, NumBins;
+   int Clover, Crystal, Seg;
    
    if (PLOT_WAVE) {
       cWave1 = new TCanvas();
@@ -171,10 +171,11 @@ void Calib(std::vector < TTigFragment > &ev)
 {
 
    //Variables
-   int i, j, k;
-   int Samp, Length;
-   int Slave, Port, Chan;
-   int Crystal, Clover, SpecNum;
+   int j, k;
+   unsigned int Frag;
+   unsigned int Samp, Length;
+   int Chan;
+   int Crystal, Clover;
    int FitSuccess, CalibSuccess;
    std::string name;
 
@@ -189,38 +190,34 @@ void Calib(std::vector < TTigFragment > &ev)
    int TimeBin = 0;
    float TB = 0.0;
 
-   int PlotOn = 0;
-   int Source = 0;
-
    float WaveCharge = 0.0;
-   float WaveEnergy = 0.0;
 
    if (DEBUG) {
       cout << "--------- New Event ---------" << endl;
    }
 
-   for (i = 0; i < ev.size(); i++) {
+   for (Frag = 0; Frag < ev.size(); Frag++) {
 
       //Get time of first fragment
       if (FirstEvent == 1) {
-         StartTime = ev[i].MidasTimeStamp;      //ev[i].MidasTimeStamp;
+         StartTime = ev[Frag].MidasTimeStamp;      //ev[Frag].MidasTimeStamp;
          FirstEvent = 0;
          if (Config.PrintBasic) {
             cout << "MIDAS time of first fragment: " << ctime(&StartTime) << endl;
          }
       }
       // Insert test for time earlier than StartTime.....
-      if (ev[i].MidasTimeStamp < StartTime) {
-         StartTime = ev[i].MidasTimeStamp;      //ev[i].MidasTimeStamp;
+      if (ev[Frag].MidasTimeStamp < StartTime) {
+         StartTime = ev[Frag].MidasTimeStamp;      //ev[i].MidasTimeStamp;
          if (Config.PrintBasic) {
             cout << "Earlier event found! Updating time of first fragment to: " << ctime(&StartTime) << endl;
          }
       }
 
-      Slave = ((ev[i].ChannelAddress & 0x00F00000) >> 20);
-      Port = ((ev[i].ChannelAddress & 0x00000F00) >> 8);
-      Chan = (ev[i].ChannelAddress & 0x000000FF);
-      name = ev[i].ChannelName;
+      //Slave = ((ev[Frag].ChannelAddress & 0x00F00000) >> 20);
+      //Port = ((ev[Frag].ChannelAddress & 0x00000F00) >> 8);
+      Chan = (ev[Frag].ChannelAddress & 0x000000FF);
+      name = ev[Frag].ChannelName;
       //cout << "Slave, Port, Chan = " << Slave << ", " << Port << ", " << Chan << "\t" << name << endl;
 
       Mnemonic mnemonic;
@@ -248,16 +245,16 @@ void Calib(std::vector < TTigFragment > &ev)
          Clover = mnemonic.arrayposition;
 
          // Calcualte wave energy
-         Length = ev[i].wavebuffer.size();
+         Length = ev[Frag].wavebuffer.size();
          if (Length > Config.WaveInitialSamples + Config.WaveFinalSamples) {
             //cout << name;// << endl;
             //cout << " samples: " << Length << endl;  
-            WaveCharge = CalcWaveCharge(ev[i].wavebuffer);
+            WaveCharge = CalcWaveCharge(ev[Frag].wavebuffer);
             //cout << "Charge: " << WaveCharge << endl;
             if (PLOT_WAVE) {
                cWave1->cd();
                for (Samp = 0; Samp < Length; Samp++) {
-                  WaveHist->SetBinContent(Samp, ev[i].wavebuffer.at(Samp));
+                  WaveHist->SetBinContent(Samp, ev[Frag].wavebuffer.at(Samp));
                }
 
                WaveHist->Draw();
@@ -276,16 +273,16 @@ void Calib(std::vector < TTigFragment > &ev)
                      cout << "Core Channel/Label mismatch" << endl;
                   }
                }
-               if (ev[i].Charge > 0) {
+               if (ev[Frag].Charge > 0) {
                   // Increment raw charge spectra
                   if (DEBUG) {
                      cout << "A: Filling " << Clover
-                         << ", " << Crystal << ", 0, " << mnemonic.outputsensor << " with charge = " << ev[i].
+                         << ", " << Crystal << ", 0, " << mnemonic.outputsensor << " with charge = " << ev[Frag].
                          Charge << endl;
                   }
-                  hCharge[Clover - 1][Crystal][0]->Fill(ev[i].Charge);
+                  hCharge[Clover - 1][Crystal][0]->Fill(ev[Frag].Charge);
                   hWaveCharge[Clover - 1][Crystal][0]->Fill(WaveCharge);
-                  hCrystalChargeTemp[Clover-1][Crystal]->Fill(ev[i].Charge);
+                  hCrystalChargeTemp[Clover-1][Crystal]->Fill(ev[Frag].Charge);
                }
             } else {
                if (Chan == 9) {
@@ -294,27 +291,27 @@ void Calib(std::vector < TTigFragment > &ev)
                         cout << "Core Channel/Label mismatch" << endl;
                      }
                   }
-                  if (ev[i].Charge > 0) {
+                  if (ev[Frag].Charge > 0) {
                      // Increment raw charge spectra
                      if (DEBUG) {
                         cout << "B: Filling " << Clover << ", " << Crystal << ", 0, " << mnemonic.outputsensor <<
-                            " with charge = " << ev[i].Charge << endl;
+                            " with charge = " << ev[Frag].Charge << endl;
                      }
-                     hCharge[Clover - 1][Crystal][9]->Fill(ev[i].Charge);
+                     hCharge[Clover - 1][Crystal][9]->Fill(ev[Frag].Charge);
                      hWaveCharge[Clover - 1][Crystal][9]->Fill(WaveCharge);
                   }
                }
             }
          } else {
             if (mnemonic.segment < 9) {
-               if (ev[i].Charge > 0) {
-                  hCharge[Clover - 1][Crystal][mnemonic.segment]->Fill(ev[i].Charge);   // Fill segment spectra
+               if (ev[Frag].Charge > 0) {
+                  hCharge[Clover - 1][Crystal][mnemonic.segment]->Fill(ev[Frag].Charge);   // Fill segment spectra
                   hWaveCharge[Clover - 1][Crystal][mnemonic.segment]->Fill(WaveCharge);
                }
             }
          }
          // Now Get time elapsed in run
-         MidasTime = ev[i].MidasTimeStamp;
+         MidasTime = ev[Frag].MidasTimeStamp;
          //cout << "Time: " << ctime(&MidasTime) << endl;
          RunTimeElapsed = difftime(MidasTime, StartTime);
          hMidasTime->Fill(RunTimeElapsed);
@@ -361,7 +358,7 @@ void Calib(std::vector < TTigFragment > &ev)
                   
                   // Build map of fit results
                   ChannelFitMap ChanFits;
-                  for(int Line=0; Line<Fit.PeakFits.size(); Line ++) {
+                  for(unsigned int Line=0; Line<Fit.PeakFits.size(); Line ++) {
                      ChanFits.insert(ChannelFitPair(Fit.PeakFits.at(Line).Energy,Fit.PeakFits.at(Line)));
                   }
                   
@@ -369,7 +366,7 @@ void Calib(std::vector < TTigFragment > &ev)
                   CalibSuccess = CalibrateChannel(ChanFits, Settings, &Fit, &Cal);
                   
                   // Calibration Record
-                  if (FitSuccess == 0) {
+                  if (FitSuccess == 0 && CalibSuccess == 0) {
                      hCrystalGain[j - 1][k]->SetBinContent(TimeBin, Cal.LinGainFit[1]);
                      hCrystalOffset[j - 1][k]->SetBinContent(TimeBin, Cal.LinGainFit[0]);
 
@@ -397,20 +394,7 @@ void FinalCalib()
    int Clover = 0;
    int Crystal = 0;
    int Seg = 0;
-   int FitSuccess = 0;
-   int CalibSuccess = 0;
-   bool PlotOn = 0;
-   bool PeakSelect=0;
-   int Source = 0;
-   int i;
-   
    string HistName;
-   char CharBuf[CHAR_BUFFER_SIZE];
-
-   int ItemNum;
-
-   float CalibEn = 0.0;
-
 
    // Write spectra to file
    outfile->cd();

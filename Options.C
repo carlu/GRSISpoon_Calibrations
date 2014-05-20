@@ -156,7 +156,8 @@ int ReadCommandLineSettings(int argc, char **argv)
    // --eff : run efficiency
    // --prop: run propxtalk
 
-   int i, j, n;
+   int i, n;
+   unsigned int FileNum;
    int Plot[3];
    int FitList[3];
    int Limits[3] = { CLOVERS, CRYSTALS, SEGS + 2 };
@@ -190,8 +191,8 @@ int ReadCommandLineSettings(int argc, char **argv)
          }
          if (Config.PrintBasic) {
             cout << "Input files:  " << endl;
-            for (j = 0; j < Config.files.size(); j++) { // print list of files back to screen
-               cout << "\t" << Config.files.at(j) << endl;
+            for (FileNum = 0; FileNum < Config.files.size(); FileNum++) { // print list of files back to screen
+               cout << "\t" << Config.files.at(FileNum) << endl;
             }
          }
       }
