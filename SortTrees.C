@@ -35,7 +35,7 @@ using namespace std;
 #include <TH2F.h>
 #include <TApplication.h>
 #include <TStyle.h>
-#include <TRandom3.h>           // TRandom3 is less correlated than TRandom and almost as fast. 
+#include <TRandom3.h>           // TRandom3 is less correlated than TRandom and almost as fast.
 #include <TCanvas.h>
 
 // GRSISpoon libraries
@@ -95,7 +95,7 @@ void FinalPropXtalk();
 int main(int argc, char **argv)
 {
    // Variables, Constants, etc
-   int i; 
+   int i;
    unsigned int ChainEvent, TreeEvent;
    unsigned int FileNum;
 
@@ -105,8 +105,7 @@ int main(int argc, char **argv)
       cout << "Failed to configure the run - exiting!" << endl;
       return -1;
    }
-   
-   
+
    // Set options for histo stats
    gStyle->SetOptStat("iouRMen");
 
@@ -151,7 +150,7 @@ int main(int argc, char **argv)
       if (Config.PrintBasic) {
          cout << "Initialising Efficiency Spectra..." << endl;
       }
-      if(InitCoincEff() != 0) {
+      if (InitCoincEff() != 0) {
          cout << "InitCoincEff Failed!" << endl;
          return 1;
       }
@@ -160,7 +159,7 @@ int main(int argc, char **argv)
       if (Config.PrintBasic) {
          cout << "Initialising Calibration Spectra..." << endl;
       }
-      if(InitCalib() != 0) {
+      if (InitCalib() != 0) {
          cout << "InitCalib Failed!" << endl;
          return 1;
       }
@@ -169,7 +168,7 @@ int main(int argc, char **argv)
       if (Config.PrintBasic) {
          cout << "Initialising Cross-talk Spectra..." << endl;
       }
-      if(InitPropXtalk() != 0) {
+      if (InitPropXtalk() != 0) {
          cout << "InitPropXtalk Failed!" << endl;
          return 1;
       }
@@ -186,13 +185,13 @@ int main(int argc, char **argv)
    //TTigFragment *pFrag = 0;  
    // changed above line to one below trying to fix memory leak when looping chain.  
    // It didn't work but root website suggests doing it with"new" so I will stick with it for now.
-   TTigFragment *pFrag = new TTigFragment();  
-   
+   TTigFragment *pFrag = new TTigFragment();
+
    std::vector < TTigFragment > evFrags;
 
    int nTrees = Chain->GetNtrees();
    unsigned int NumChainEntries = Chain->GetEntries();
-   unsigned int NumChainEvents = (int) Chain->GetMaximum("TriggerId");   // This doesn't work, TrigID reset for each tree on chain.
+   unsigned int NumChainEvents = (int) Chain->GetMaximum("TriggerId");  // This doesn't work, TrigID reset for each tree on chain.
 
    if (Config.PrintBasic) {
       cout << "Chain Entries (frags)               : " << NumChainEntries << endl;
@@ -247,11 +246,11 @@ int main(int argc, char **argv)
 
       NumTreeEntries = Tree->GetEntries();
       FirstTreeEvent = (int) Tree->GetMinimum("TriggerId");
-      NumTreeEvents = ((int) Tree->GetMaximum("TriggerId") ) - FirstTreeEvent;
-      
+      NumTreeEvents = ((int) Tree->GetMaximum("TriggerId")) - FirstTreeEvent;
+
       TreeFragCount = 0;
       TreeEventCount = 0;
-      for (TreeEvent = 0; TreeEvent < (NumTreeEvents+FirstTreeEvent); TreeEvent++) {
+      for (TreeEvent = 0; TreeEvent < (NumTreeEvents + FirstTreeEvent); TreeEvent++) {
          //for (int TreeEvent = FirstTreeEvent; TreeEvent < NumTreeEvents; TreeEvent++) {   
          evFrags.clear();
          int FragNum = 1;
@@ -316,7 +315,7 @@ int main(int argc, char **argv)
 
       Branch->DropBaskets("all");       // Clear cache before next tree    
       //i += (nEntries - 10);
-      TreeNum += (NumTreeEntries - 10);       // This skips i to almost the end of the tree, any remaining entries
+      TreeNum += (NumTreeEntries - 10); // This skips i to almost the end of the tree, any remaining entries
       // on this tree will be skipped by "if(TreeNum != LastTreeNum" condition above
    }
 
@@ -340,12 +339,3 @@ void IncSpectra()
 {                               // For testing only
    //hTestSpectrum->SetBinContent(1,1000);
 }
-
-
-
-
-
-
-
-
-

@@ -113,15 +113,15 @@ void PropXtalk(std::vector < TTigFragment > &ev)
 
    unsigned int CalChan;
 
-   int Hits[CLOVERS][CRYSTALS][SEGS + 2] = {{{ 0 }}};
+   int Hits[CLOVERS][CRYSTALS][SEGS + 2] = { {{0}} };
    int CloverCoreFold[CLOVERS] = { 0 }; // + 1 for each core hit in each clover
-   int CrystalSegFold[CLOVERS][CRYSTALS] = {{ 0 }};       // +1 for each seg hit in each crystal
+   int CrystalSegFold[CLOVERS][CRYSTALS] = { {0} };     // +1 for each seg hit in each crystal
 
-   float Energies[CLOVERS][CRYSTALS][SEGS + 2] = {{{ 0.0 }}};
-   float WaveEnergies[CLOVERS][CRYSTALS][SEGS + 2] = {{{ 0.0 }}};
-   float SegABEn[CLOVERS][CRYSTALS] = {{ 0.0 }};
+   float Energies[CLOVERS][CRYSTALS][SEGS + 2] = { {{0.0}} };
+   float WaveEnergies[CLOVERS][CRYSTALS][SEGS + 2] = { {{0.0}} };
+   float SegABEn[CLOVERS][CRYSTALS] = { {0.0} };
 
-   int Charges[CLOVERS][CRYSTALS][SEGS + 2] = {{{ 0 }}};
+   int Charges[CLOVERS][CRYSTALS][SEGS + 2] = { {{0}} };
 
    int CloverHitList[CLOVERS] = { 0 };
    int CloverHitListGood[CLOVERS] = { 0 };

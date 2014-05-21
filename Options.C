@@ -13,7 +13,7 @@ using namespace std;
 // Functions
 int LoadDefaultSettings();
 int ReadCommandLineSettings(int argc, char **argv);
-int ReadOptionsFile(std::string filename);
+int ReadConfigFile(std::string filename);
 void PrintHelp();
 
 // Storing run settings
@@ -38,7 +38,7 @@ int LoadDefaultSettings()
    Config.PrintVerbose = 0;
 
    Config.EventLimit = MAX_EVENTS;
-   
+
    Config.ROOT_MaxVirtSize = ROOT_VIRT_SIZE;
 
    Config.EnergyCalibrationFile = "./ECal.txt";
@@ -48,13 +48,13 @@ int LoadDefaultSettings()
 
    // Global physics settings
    // ------------------------------------------
-   
+
    // Source information
    float Sources[4][10] = {
       {1173.237, 1332.501},     // 60Co
       {121.7817, 1408.006, 244.6975, 344.2785, 411.116, 778.9040, 964.079, 1112.074},   // 152Eu
-      {344.2785, 1408.006, 244.6975, 411.116, 778.9040, 964.079, 1112.074},      // 152Eu (no 121)
-      {276.398,  356.017,  80.9971, 302.853, 383.851} // 133Ba
+      {344.2785, 1408.006, 244.6975, 411.116, 778.9040, 964.079, 1112.074},     // 152Eu (no 121)
+      {276.398, 356.017, 80.9971, 302.853, 383.851}     // 133Ba
    };
    // Push source lines to vector of vectors.
    vector < float >SourceTemp;
@@ -77,7 +77,7 @@ int LoadDefaultSettings()
       SourceTemp.push_back(Sources[3][i]);
    }
    Config.Sources.push_back(SourceTemp);
-   
+
    // Properties of waveforms stored in the data
    Config.WaveformSamples = 200;
    Config.WaveInitialSamples = 65;
@@ -90,16 +90,16 @@ int LoadDefaultSettings()
 
    // Options for Calib() and CalibOffline()
    // What to do
-   Config.CalEnergy = 1;  // Calibrate charge spectra?
-   Config.CalWave = 1;    // Calibrate wave spectra?
-   Config.CalReport = 1;   // Generate report on fits etc
-   Config.CalFile = 0;     // Generate .cal file as used by GRSISpoon 
+   Config.CalEnergy = 1;        // Calibrate charge spectra?
+   Config.CalWave = 1;          // Calibrate wave spectra?
+   Config.CalReport = 1;        // Generate report on fits etc
+   Config.CalFile = 0;          // Generate .cal file as used by GRSISpoon 
    memset(&Config.CalList, 1, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
    Config.CalListProvided = 0;
    // Output
-   Config.CalOut = "CalibOut.root";  // Name for Tree calibration output file
-   Config.CalName = Config.CalOut.substr(0,Config.CalOut.size()-5);  // name expected for hist calib input.  
-                                             // .root stripped because run number may exist 
+   Config.CalOut = "CalibOut.root";     // Name for Tree calibration output file
+   Config.CalName = Config.CalOut.substr(0, Config.CalOut.size() - 5);  // name expected for hist calib input.  
+   // .root stripped because run number may exist 
    Config.AnaName = "his";
    Config.CalSpecOut = "CalibSpecOut.root";
    Config.WriteFits = 1;
@@ -117,6 +117,10 @@ int LoadDefaultSettings()
    // Options for CoincEff()
    Config.EffOut = "CoincEffOut.root";
    Config.EffTxtOut = "CoincEffOut.txt";
+
+   Config.EffSimRefFileName = "SimEffRef.txt";
+   Config.EffExpRefFileName = "ExpEffRef.txt";
+
    Config.OutputEff = 1;
    // Plots
    Config.PlotEff = 1;
@@ -143,14 +147,14 @@ int ReadCommandLineSettings(int argc, char **argv)
    // -v : (v)erbose
    // -q : (Q)uiet
    // -n : max (n)umber of events
-   
+
    // -p : (p)lot (Clover) (Crystal) (Seg)
    // -mp: (m)anual (p)eak  (Clover) (Crystal) (Seg)  : manually selcect peaks to be used on this seg
    //                                                    or all segs if none specified
-   
+
    // -z : add extra calibration point at (z)ero  i.e. 0ch = 0keV
    // -d : select (d)etector to be calibrated.  
-   
+
    // --cal : run calibration
    // --calspec : run calibration on spectrum file rather than fragment tree 
    // --eff : run efficiency
@@ -162,7 +166,8 @@ int ReadCommandLineSettings(int argc, char **argv)
    int FitList[3];
    int Limits[3] = { CLOVERS, CRYSTALS, SEGS + 2 };
    bool test;
-   bool RunConfGiven = 0;
+   bool RunConfGiven = 0;       // used to record if required operation has been specified.  
+   bool ConfigFileLoaded = 0;
 
    if (argc < 3) {
       cout << "No input file provided!" << endl << endl;
@@ -191,7 +196,7 @@ int ReadCommandLineSettings(int argc, char **argv)
          }
          if (Config.PrintBasic) {
             cout << "Input files:  " << endl;
-            for (FileNum = 0; FileNum < Config.files.size(); FileNum++) { // print list of files back to screen
+            for (FileNum = 0; FileNum < Config.files.size(); FileNum++) {       // print list of files back to screen
                cout << "\t" << Config.files.at(FileNum) << endl;
             }
          }
@@ -227,26 +232,26 @@ int ReadCommandLineSettings(int argc, char **argv)
          }
          while (strncmp(argv[i + 1], "-", 1) > 0) {     // loop files 
             test = 0;
-            if (strncmp(argv[i + 1], "60Co", 4) == 0 || strncmp(argv[i + 1], "Co60", 4) == 0 || strncmp(argv[i + 1], "60co", 4) == 0 || strncmp(argv[i + 1], "co60", 4) == 0) {    // is it 60Co
+            if (strncmp(argv[i + 1], "60Co", 4) == 0 || strncmp(argv[i + 1], "Co60", 4) == 0 || strncmp(argv[i + 1], "60co", 4) == 0 || strncmp(argv[i + 1], "co60", 4) == 0) { // is it 60Co
                Config.SourceNumCore.push_back(0);
                Config.SourceNumFront.push_back(0);
                Config.SourceNumBack.push_back(0);
                test = 1;
             }
-            if (strncmp(argv[i + 1], "152Eu", 5) == 0 || strncmp(argv[i + 1], "Eu152", 5) == 0 || strncmp(argv[i + 1], "152eu", 5) == 0 || strncmp(argv[i + 1], "eu152", 5) == 0) {        // or is it 152Eu
+            if (strncmp(argv[i + 1], "152Eu", 5) == 0 || strncmp(argv[i + 1], "Eu152", 5) == 0 || strncmp(argv[i + 1], "152eu", 5) == 0 || strncmp(argv[i + 1], "eu152", 5) == 0) {     // or is it 152Eu
                Config.SourceNumCore.push_back(1);
                Config.SourceNumFront.push_back(1);
                Config.SourceNumBack.push_back(2);
                test = 1;
             }
-            if (strncmp(argv[i + 1], "133Ba", 5) == 0 || strncmp(argv[i + 1], "Ba133", 5) == 0 || strncmp(argv[i + 1], "133ba", 5) == 0 || strncmp(argv[i + 1], "ba133", 5) == 0) {        // or is it 133Ba
+            if (strncmp(argv[i + 1], "133Ba", 5) == 0 || strncmp(argv[i + 1], "Ba133", 5) == 0 || strncmp(argv[i + 1], "133ba", 5) == 0 || strncmp(argv[i + 1], "ba133", 5) == 0) {     // or is it 133Ba
                Config.SourceNumCore.push_back(3);
                Config.SourceNumFront.push_back(3);
                Config.SourceNumBack.push_back(3);
                test = 1;
             }
-            if (test == 0) {       // or is it somethimng else
-               cout << "Source not recognised: " << argv[i+1] << endl;
+            if (test == 0) {    // or is it somethimng else
+               cout << "Source not recognised: " << argv[i + 1] << endl;
                return -1;
             }
             i += 1;
@@ -254,10 +259,10 @@ int ReadCommandLineSettings(int argc, char **argv)
                break;           // break if at last item in arg list
             }
          }
-         
-         
-         
-         
+
+
+
+
       }
       // Maximum number of events to process
       // -------------------------------------------
@@ -288,19 +293,19 @@ int ReadCommandLineSettings(int argc, char **argv)
       }
       // ROOT virtual memory max size
       // -----------------------------------
-      if (strncmp(argv[i],"-vr", 3)==0) {
-         if (i >= argc - 1 || strncmp(argv[i + 1], "-", 1) == 0) { 
+      if (strncmp(argv[i], "-vr", 3) == 0) {
+         if (i >= argc - 1 || strncmp(argv[i + 1], "-", 1) == 0) {
             cout << "No size specified after \"-vr\" option" << endl;
             return -1;
          }
          if (Config.EventLimit < 0) {
             cout << "Negative Virtual RAM size specified" << endl;
             return -1;
+         } else {
+            Config.ROOT_MaxVirtSize = atoi(argv[++i]) * 1024u * 1024u;
+            cout << "ROOT TTree->SetMaxVirtualSize( " << Config.ROOT_MaxVirtSize << " )" << endl;
          }
-         else {
-            Config.ROOT_MaxVirtSize = atoi(argv[++i]);
-         }
-         
+
       }
       // Verbose mode
       // -------------------------------------------
@@ -346,8 +351,8 @@ int ReadCommandLineSettings(int argc, char **argv)
       }
       // Manual PEak Selection
       // -------------------------------------------
-      if (strncmp(argv[i],"-mp", 3)==0) {
-         if (i >= argc - 1 || strncmp(argv[i + 1], "-", 1) == 0) { // if last arg or next is new option
+      if (strncmp(argv[i], "-mp", 3) == 0) {
+         if (i >= argc - 1 || strncmp(argv[i + 1], "-", 1) == 0) {      // if last arg or next is new option
             cout << "--------------------------------------" << endl;
             cout << "Manual Peak Selection For Calibration!" << endl;
             cout << "--------------------------------------" << endl;
@@ -357,7 +362,7 @@ int ReadCommandLineSettings(int argc, char **argv)
             while (strncmp(argv[i + 1], "-", 1) > 0) {  // loop plot items 
                Plot[n] = atoi(argv[++i]);
                cout << "n,Plot[n] = " << n << ", " << Plot[n] << endl;
-               if ((Plot[n] < 0) || (Plot[n] > Limits[n])) {  // allowed range is the same as for plotting
+               if ((Plot[n] < 0) || (Plot[n] > Limits[n])) {    // allowed range is the same as for plotting
                   cout << "Error with specification of manual peak select!" << endl;
                   return -1;
                }
@@ -372,7 +377,7 @@ int ReadCommandLineSettings(int argc, char **argv)
             }
             cout << "Manually selecting peaks for Cl: " << Plot[0] << " Cr: " << Plot[1] << " Seg: " << Plot[2] << endl;
             Config.ManualPeakSelect[Plot[0] - 1][Plot[1]][Plot[2]] = 1;
-            Config.CalibPlots[Plot[0] - 1][Plot[1]][Plot[2]] = 1;  // Also set this channel to plot so we can see it!
+            Config.CalibPlots[Plot[0] - 1][Plot[1]][Plot[2]] = 1;       // Also set this channel to plot so we can see it!
          }
       }
       // add 0ch = 0keV to calibration
@@ -449,7 +454,7 @@ int ReadCommandLineSettings(int argc, char **argv)
 }
 
 
-int ReadConfigFile(std::string filename)       // this is a dummy function
+int ReadConfigFile(std::string filename)        // this is a dummy function
 {                               // One day it should read in a config text file
    cout << filename << endl;
    return 0;
@@ -460,42 +465,49 @@ int ReadConfigFile(std::string filename)       // this is a dummy function
 void PrintHelp()
 {
    cout << "You seem confused, perhaps this will help.." << endl << endl;
-   cout << "To run:" << endl << "./Sort -f InFile1 [InFile2...] " << endl;
-   cout << "Options: " << endl;
+   cout << "To run:" << endl << "./Sort[Histos/Trees] -f InFile1 [InFile2...] " << endl;
+   cout << "Options: " << endl << endl;
    cout <<
-       "[-e (energy Calibration File)] - select alternate (e)nergy calibration file.  In the absense of an entry in this file, all channels will default to using the calibrated energy from the input TTree."
+       "\t[-e (energy Calibration File)] - select alternate (e)nergy calibration file.  In the absense of an entry in this file, all channels will default to using the calibrated energy from the input TTree."
        << endl;
    cout <<
-       "Format for calibration file should be (TIGNOM) (some other string e.g. chg or wavechg) (g0) (g1) [(g2) (g3)].  Lines begining \"#\" will be ignored."
-       << endl;
+       "\tFormat for calibration file should be (TIGNOM) (some other string e.g. chg or wavechg) (g0) (g1) [(g2) (g3)].  Lines begining \"#\" will be ignored."
+       << endl << endl;
    cout <<
        "[-w (Wave calibration file)] - select calibration for energy derived from (w)aveforms.  No defaults. Required for succesfully running XTalk analysis. Format same as for energy calibration file."
-       << endl;
-   cout << "[-s (Source e.g. 60Co, 152eu)] - select (s)ource to be used for calibration." << endl;
-   cout << "[-n N] - limit the (n)umber of events processed to N" << endl;
-   cout << "[-o (path)] - save all (o)utput to (path) rather than ./" << endl;
+       << endl << endl;
+   cout << "[-s (Source e.g. 60Co, 152eu, Ba133)] - select (s)ource to be used for calibration." << endl;
+   cout << "\tThis is required to run calibration." << endl << endl;
+   cout << "[-n N] - limit the (n)umber of events processed to N" << endl << endl;
+   cout << "[-o (path)] - save all (o)utput to (path) rather than ./" << endl << endl;
    cout <<
        "[--cal/--eff/--prop] - run the calibration, efficiency, or proportianal crosstalk parts of the code on a fragment tree input."
-       << endl;
+       << endl << endl;
    cout <<
        "[--calspec] - run calibration on a histogram file (CalibOutXXXX.root, hisXXXX.root).  This option overrides all other run options."
        << endl;
    cout << "\tCalibOutX.root format assumes spectra named according to those produced by --cal." << endl;
    cout <<
        "\thisX.root assumes no wave spectra and format ChrgXXXX names with numbers according to TIGRESS DAQ analyser convention"
-       << endl;
+       << endl << endl;
+   cout << "[-z] - Include an additional point at 0ch = 0keV in any calibrations." << endl << endl;
    cout <<
        "[-q] - Quiet mode.  [-v] - Verbose mode.  Default prints progress through run and configuration.  Quiet doesn't.  Verbose also prints other stuff"
-       << endl;
+       << endl << endl;
    cout <<
        "[-p (Clover) (Crystal) (Seg)] - Plot certain segment when doing calibration.  With no additional arguments will plot all."
-       << endl;
-   cout << "[-z] - Include an additional point at 0ch = 0keV in any calibrations." << endl;
+       << endl << endl;
+
    cout <<
        "[-d (Clover) (Crystal) (Seg)] - Selects a particular (d)etection element to fit.  Defaults to all. Affect --calspec only"
-       << endl;
+       << endl << endl;
    cout <<
        "[-mp (Clover) (Crystal) (Seg)] - Manually selects calibration peaks for a particular (d)etection element to   Defaults to all."
-       << endl;
+       << endl << endl;
+   cout << "[-vr (VRam in Mb)] - Specify in Mb what should be passed to Tree->SetMaxVirtualSize()." << endl;
+   cout << "\tOnly effects SortTrees, not SortHistos." << endl;
+   cout << "\tToo small and sort will be slow, too large and it will crash." << endl;
+   cout << "\tIt is printed back in bytes.  (Overflows above 4095Mb, check if unsure)" << endl;
+
    cout << endl;
 }

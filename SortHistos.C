@@ -37,7 +37,7 @@ using namespace std;
 #include "CalibTools.h"
 #include "Utils.h"
 
-TApplication *App;       // Pointer to root environment for plotting etc
+TApplication *App;              // Pointer to root environment for plotting etc
 
 int main(int argc, char **argv)
 {
@@ -47,7 +47,6 @@ int main(int argc, char **argv)
       cout << "Failed to configure the run - exiting!" << endl;
       return -1;
    }
-   
    // Set options for histo stats
    gStyle->SetOptStat("iouRMen");
 
@@ -60,18 +59,14 @@ int main(int argc, char **argv)
 
    // Check what we are supposed to be doing call function
    if (Config.RunSpecCal == 1) {
-      if(CalibrateFiles() > 0) {
+      if (CalibrateFiles() > 0) {
          cout << "CalibrateFiles() failed." << endl;
          return 1;
       }
    }
-   
-   if(Config.RunSpecEff == 1)  {
-      
-   }  
+
+   if (Config.RunSpecEff == 1) {
+
+   }
    return 0;
 }
-
-
-
-

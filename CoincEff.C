@@ -49,15 +49,15 @@ extern RunConfig Config;
 // File pointers:
 static TFile *outfile = 0;
 
-static TDirectory *dEnergy, *dAddBack, *dOther = {0};
+static TDirectory *dEnergy, *dAddBack, *dOther = { 0 };
 
 // Spectra pointers here, thinking I will start all pointer names with h
 static TH1F *hTestSpectrum = 0;
-static TH1F *hCrystalEn[CLOVERS][CRYSTALS] = {{ 0 }};
+static TH1F *hCrystalEn[CLOVERS][CRYSTALS] = { {0} };
 static TH1F *hCloverEn[CLOVERS] = { 0 };
 static TH1F *hCloverABEn[CLOVERS] = { 0 };
 static TH1F *hCloverABEnGated[CLOVERS] = { 0 };
-static TH1F *hCrystalEnGated[CLOVERS][CRYSTALS] = {{ 0 }};
+static TH1F *hCrystalEnGated[CLOVERS][CRYSTALS] = { {0} };
 
 static TH1F *hArrayEn = 0;
 
@@ -124,7 +124,7 @@ void CoincEff(std::vector < TTigFragment > &ev)
          // If Core
          if (mnemonic.segment == 0 && mnemonic.outputsensor == "a") {
             //cout << "Energy: " << ev[i].ChargeCal << "\tCharge: " << ev[i].Charge << endl;
-            
+
             // Get calibrated charge
             if (!Config.HaveAltEnergyCalibration) {
                //cout << "Using standard calibration..." << endl;
@@ -133,16 +133,16 @@ void CoincEff(std::vector < TTigFragment > &ev)
                int NewCoeffFound = 0;
                //std::vector < float >Coefficients;
                for (CalChan = 0; CalChan < EnCalibNames.size(); CalChan++) {
-                  if (strncmp(EnCalibNames[CalChan].c_str(), name.c_str(), 9) == 0) { // bug!  this will match the first core
+                  if (strncmp(EnCalibNames[CalChan].c_str(), name.c_str(), 9) == 0) {   // bug!  this will match the first core
                      // name it finds to either a OR b.  Compare 10 chars woud work but then case sensitivity isses on the x/a/b 
                      // at the end.  Don't really need second core energy right now so I will come back to this later
                      NewCoeffFound = 1;
                      break;
                   }
                }
-               if (NewCoeffFound == 1) {      // If a new set of coeffs was found, then calibrate
+               if (NewCoeffFound == 1) {        // If a new set of coeffs was found, then calibrate
                   Energy = CalibrateEnergy(ev[i].Charge, EnCalibValues.at(CalChan));
-               } else {               // else use the existing calibration
+               } else {         // else use the existing calibration
                   Energy = ev[i].ChargeCal;
                }
             }
@@ -219,7 +219,7 @@ int InitCoincEff()
    // Initialise output file                
    std::string tempstring = Config.OutPath + Config.EffOut;
    outfile = new TFile(tempstring.c_str(), "RECREATE");
-   
+
    dEnergy = outfile->mkdir("Energy");
    dAddBack = outfile->mkdir("AddBack");
    dOther = outfile->mkdir("Other");
@@ -228,38 +228,38 @@ int InitCoincEff()
    int Clover, Crystal;
    dOther->cd();
    hTestSpectrum = new TH1F("TS", "Test Spectrum", 4096, 0, 4095);
-   
+
    dEnergy->cd();
    hArrayEn = new TH1F("TIG Sum En", "TIGRESS Sum Energy (keV)", EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
    for (Clover = 1; Clover <= CLOVERS; Clover++) {
       sprintf(name, "TIG%02d En", Clover);
       sprintf(title, "TIG%02d Clover Energy (keV)", Clover);
-      hCloverEn[Clover-1] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
-      
+      hCloverEn[Clover - 1] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
+
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
          sprintf(name, "TIG%02d%c En", Clover, Colours[Crystal]);
          sprintf(title, "TIG%02d%c Core Energy (keV)", Clover, Colours[Crystal]);
          if (Clover == 0 && Crystal == 0) {
             //cout << "Creating: " << name << title << endl;   
          }
-         hCrystalEn[Clover-1][Crystal] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
+         hCrystalEn[Clover - 1][Crystal] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
          sprintf(name, "TIG%02d%c Gated", Clover, Colours[Crystal]);
          sprintf(title, "TIG%02d%c Gated Core Energy (keV)", Clover, Colours[Crystal]);
-         hCrystalEnGated[Clover-1][Crystal] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
+         hCrystalEnGated[Clover - 1][Crystal] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
       }
    }
-   
+
    dAddBack->cd();
    for (Clover = 1; Clover <= CLOVERS; Clover++) {
       sprintf(name, "TIG%02d AB", Clover);
       sprintf(title, "TIG%02d Clover Add-Back Energy (keV)", Clover);
-      hCloverABEn[Clover-1] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
+      hCloverABEn[Clover - 1] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
       sprintf(name, "TIG%02d Gated AB", Clover);
       sprintf(title, "TIG%02d Gated Clover Add-Back Energy (keV)", Clover);
-      hCloverABEnGated[Clover-1] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
+      hCloverABEnGated[Clover - 1] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
    }
-   
-   return 0;   
+
+   return 0;
 }
 
 
@@ -271,20 +271,20 @@ void FinalCoincEff()
    FitResult FitRes;
    ofstream EffOut;
    char str[CHAR_BUFFER_SIZE];
-   float CrystalEff[CLOVERS*CRYSTALS] = {0.0};
-   float dCrystalEff[CLOVERS*CRYSTALS] = {0.0};
-   float ABEff[CLOVERS] = {0.0};
-   float dABEff[CLOVERS] = {0.0};
+   float CrystalEff[CLOVERS * CRYSTALS] = { 0.0 };
+   float dCrystalEff[CLOVERS * CRYSTALS] = { 0.0 };
+   float ABEff[CLOVERS] = { 0.0 };
+   float dABEff[CLOVERS] = { 0.0 };
    float CloverNumbers[CLOVERS];
-   float CrystalNumbers[CLOVERS*CRYSTALS];
-   
+   float CrystalNumbers[CLOVERS * CRYSTALS];
+
    for (Clover = 1; Clover <= CLOVERS; Clover++) {
-      CloverNumbers[Clover-1] = Clover;
+      CloverNumbers[Clover - 1] = Clover;
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
-         CrystalNumbers[((Clover-1)*CRYSTALS)+Crystal] = ((Clover-1)*CRYSTALS)+Crystal;
+         CrystalNumbers[((Clover - 1) * CRYSTALS) + Crystal] = ((Clover - 1) * CRYSTALS) + Crystal;
       }
    }
-   
+
    // Open a file to output efficiencies:   
    if (OUTPUT_EFF) {
       std::string tempstring = Config.OutPath + Config.EffTxtOut;
@@ -299,7 +299,7 @@ void FinalCoincEff()
    }
    for (Clover = 1; Clover <= CLOVERS; Clover++) {
       memset(&FitRes, 0.0, sizeof(FitResult));  // Clear this, should be overwritten every time but just in case...
-      FitPeak(hCloverABEnGated[Clover-1], FIT_LOW, FIT_HIGH, &FitRes);
+      FitPeak(hCloverABEnGated[Clover - 1], FIT_LOW, FIT_HIGH, &FitRes);
       Counts = (EN_SPECTRA_CHANS / EN_SPECTRA_MAX) * FitRes.Const * FitRes.Sigma * sqrt(2 * PI);
       dCountsFit = Counts * sqrt(pow(FitRes.dConst / FitRes.Const, 2) + pow(FitRes.dSigma / FitRes.Sigma, 2));  // Fitting error
       dCountsStat = sqrt(Counts);
@@ -316,9 +316,9 @@ void FinalCoincEff()
          EffOut << "\t" << Counts << " +/- " << dCounts;
          EffOut << "\t" << Eff << " +/- " << dEff << endl;
       }
-      
-      ABEff[Clover-1] = Eff;
-      dABEff[Clover-1] = dEff;
+
+      ABEff[Clover - 1] = Eff;
+      dABEff[Clover - 1] = dEff;
    }
    // then crystal spectra
    if (OUTPUT_EFF) {
@@ -328,7 +328,7 @@ void FinalCoincEff()
    for (Clover = 1; Clover <= CLOVERS; Clover++) {
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
          memset(&FitRes, 0.0, sizeof(FitResult));
-         FitPeak(hCrystalEnGated[Clover-1][Crystal], 1300.0, 1365.0, &FitRes);
+         FitPeak(hCrystalEnGated[Clover - 1][Crystal], 1300.0, 1365.0, &FitRes);
          Counts = (EN_SPECTRA_CHANS / EN_SPECTRA_MAX) * FitRes.Const * FitRes.Sigma * sqrt(2 * PI);
          dCountsFit = Counts * sqrt(pow(FitRes.dConst / FitRes.Const, 2) + pow(FitRes.dSigma / FitRes.Sigma, 2));       // Fitting error
          dCountsStat = sqrt(Counts);
@@ -345,37 +345,36 @@ void FinalCoincEff()
             EffOut << "\t" << Counts << " +/- " << dCounts;
             EffOut << "\t" << Eff << " +/- " << dEff << endl;
          }
-         
-         if((FitRes.Sigma>0)&&(FitRes.Const)>0) {
-            CrystalEff[((Clover-1)*CRYSTALS)+Crystal] = Eff;
-            dCrystalEff[((Clover-1)*CRYSTALS)+Crystal] = dEff;
-         }
-         else {
-            CrystalEff[((Clover-1)*CRYSTALS)+Crystal] = 0.0;
-            dCrystalEff[((Clover-1)*CRYSTALS)+Crystal] = 0.0;
+
+         if ((FitRes.Sigma > 0) && (FitRes.Const) > 0) {
+            CrystalEff[((Clover - 1) * CRYSTALS) + Crystal] = Eff;
+            dCrystalEff[((Clover - 1) * CRYSTALS) + Crystal] = dEff;
+         } else {
+            CrystalEff[((Clover - 1) * CRYSTALS) + Crystal] = 0.0;
+            dCrystalEff[((Clover - 1) * CRYSTALS) + Crystal] = 0.0;
          }
       }
    }
-   
+
    // Produce plots of efficiency
-   TGraphErrors CrystalEffPlot(CLOVERS*CRYSTALS, CrystalNumbers, CrystalEff, NULL, dCrystalEff);
+   TGraphErrors CrystalEffPlot(CLOVERS * CRYSTALS, CrystalNumbers, CrystalEff, NULL, dCrystalEff);
    CrystalEffPlot.SetMarkerColor(2);
    CrystalEffPlot.SetMarkerStyle(20);
    CrystalEffPlot.SetMarkerSize(1.0);
    CrystalEffPlot.SetTitle("Crystal Efficiency");
-   CrystalEffPlot.GetYaxis()->SetRange(0,1);
-   for(Clover=1;Clover<=CLOVERS;Clover++) {
+   CrystalEffPlot.GetYaxis()->SetRange(0, 1);
+   for (Clover = 1; Clover <= CLOVERS; Clover++) {
       //sprintf(str,"TIG%02dB",Clover);
       //CrystalEffPlot.GetXaxis()->SetBinLabel(((Clover-1)*(CRYSTALS+1)),str); 
    }
-   
+
    TGraphErrors ABEffPlot(CLOVERS, CloverNumbers, ABEff, NULL, dABEff);
    ABEffPlot.SetMarkerColor(2);
    ABEffPlot.SetMarkerStyle(20);
    ABEffPlot.SetMarkerSize(1.0);
    ABEffPlot.SetTitle("Clover Add-back Efficiency");
-   ABEffPlot.GetYaxis()->SetRange(0,1);
-   for(Clover=1;Clover<=CLOVERS;Clover++) {
+   ABEffPlot.GetYaxis()->SetRange(0, 1);
+   for (Clover = 1; Clover <= CLOVERS; Clover++) {
       //sprintf(str,"TIG%02d",Clover);
       //ABEffPlot.GetXaxis()->SetBinLabel(Clover,str); 
    }
@@ -384,26 +383,26 @@ void FinalCoincEff()
    outfile->cd();
    CrystalEffPlot.Write();
    ABEffPlot.Write();
-   
+
    // Write histograms
    dOther->cd();
    hTestSpectrum->Write();
-   
+
    dEnergy->cd();
    hArrayEn->Write();
    for (Clover = 1; Clover <= CLOVERS; Clover++) {
-      hCloverEn[Clover-1]->Write();
+      hCloverEn[Clover - 1]->Write();
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
-         hCrystalEn[Clover-1][Crystal]->Write();
-         hCrystalEnGated[Clover-1][Crystal]->Write();
+         hCrystalEn[Clover - 1][Crystal]->Write();
+         hCrystalEnGated[Clover - 1][Crystal]->Write();
       }
    }
    dAddBack->cd();
    for (Clover = 1; Clover <= CLOVERS; Clover++) {
-      hCloverABEn[Clover-1]->Write();
-      hCloverABEnGated[Clover-1]->Write();
+      hCloverABEn[Clover - 1]->Write();
+      hCloverABEnGated[Clover - 1]->Write();
    }
-   
+
    outfile->Close();
    if (OUTPUT_EFF) {
       EffOut.close();

@@ -1,9 +1,9 @@
 // Functions for managing calibration in SortHistos
 // ------------------------------------------------
 // Loop all files/sources
-int CalibrateFiles(); 
+int CalibrateFiles();
 // Loop histos in one file
-int FitHistoFile(TFile *file, int FileType, int FileNum, MasterFitMap *FitMap, MasterFitMap *WaveFitMap);
+int FitHistoFile(TFile * file, int FileType, int FileNum, MasterFitMap * FitMap, MasterFitMap * WaveFitMap);
 
 // Functions for fitting a spectrum 
 // --------------------------------
@@ -20,13 +20,9 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings, HistoFit * Fit, H
 // Other general helper functions
 // ------------------------------
 // Configure fit settings for Energy/WaveEn spectrum
-int ConfigureEnergyFit(int Clover, int Crystal, int Seg, int FileType, int FileNum, FitSettings *Settings) ;
-int ConfigureWaveEnFit(int Clover, int Crystal, int Seg,  int FileType, int FileNum, FitSettings *Settings) ;
+int ConfigureEnergyFit(int Clover, int Crystal, int Seg, int FileType, int FileNum, FitSettings * Settings);
+int ConfigureWaveEnFit(int Clover, int Crystal, int Seg, int FileType, int FileNum, FitSettings * Settings);
 // Generate text report of fits and calibrations
 int CalibrationReport(HistoFit * Fit, HistoCal * Cal, ofstream & ReportOut, std::string HistName, FitSettings Settings);
 // Write out .cal file (not implemented yet)
-int WriteCalFile(HistoFit *Fit, ofstream &CalFileOut, std::string HistName, FitSettings Settings);
-
-
-
-
+int WriteCalFile(HistoFit * Fit, ofstream & CalFileOut, std::string HistName, FitSettings Settings);

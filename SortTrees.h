@@ -16,5 +16,3 @@ extern vector < vector < float >>EnCalibValues;
 // Waveform calibration
 extern vector < string > WaveCalibNames;
 extern vector < vector < float >>WaveCalibValues;
-
-

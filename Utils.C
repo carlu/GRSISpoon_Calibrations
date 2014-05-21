@@ -10,7 +10,7 @@ using namespace std;
 #include <math.h>
 
 // ROOT libaries
-#include <TRandom3.h> 
+#include <TRandom3.h>
 
 // Other libraries
 #include "SortTrees.h"
@@ -168,5 +168,3 @@ float CalcWaveCharge(std::vector < int >wavebuffer)
    Charge = Final - Initial;
    return Charge;
 }
-
-

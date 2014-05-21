@@ -80,7 +80,7 @@ int InitCalib()
 
    char name[512], title[512];
    int Clover, Crystal, Seg;
-   
+
    if (PLOT_WAVE) {
       cWave1 = new TCanvas();
    }
@@ -142,7 +142,6 @@ int InitCalib()
       sprintf(title, "Temporary wave histogram");
       WaveHist = new TH1F(name, title, Config.WaveformSamples, 0, Config.WaveformSamples);
    }
-
    // Check one source only given
    if (Config.SourceNumCore.size() != 1) {
       cout << "Only one source should be given for calibration of TTree as the sort will sum all input files." << endl;
@@ -150,19 +149,22 @@ int InitCalib()
    }
 
    if (Config.PrintVerbose) {
-      cout << "Searching for core Peaks: " << Config.Sources[Config.SourceNumCore[0]][0] << "kev and " << Config.
-          Sources[Config.SourceNumCore[0]]
+      cout << "Searching for core Peaks: " << Config.Sources[Config.
+                                                             SourceNumCore[0]][0] << "kev and " <<
+          Config.Sources[Config.SourceNumCore[0]]
           [1] << "keV (Ratio " << Config.Sources[Config.SourceNumCore[0]][0] /
           Config.Sources[Config.SourceNumCore[0]][1] << ")" << endl;
-      cout << "Searching for front seg peaks: " << Config.Sources[Config.SourceNumFront[0]][0] << "kev and " << Config.
-          Sources[Config.SourceNumFront[0]][1] << "keV (Ratio " << Config.Sources[Config.SourceNumFront[0]][0] /
+      cout << "Searching for front seg peaks: " << Config.Sources[Config.
+                                                                  SourceNumFront[0]][0] << "kev and " <<
+          Config.Sources[Config.SourceNumFront[0]][1] << "keV (Ratio " << Config.Sources[Config.SourceNumFront[0]][0] /
           Config.Sources[Config.SourceNumFront[0]][1] << ")" << endl;
-      cout << "Searching for back seg peaks: " << Config.Sources[Config.SourceNumBack[0]][0] << "kev and " << Config.
-          Sources[Config.SourceNumBack[0]][1] << "keV (Ratio " << Config.Sources[Config.SourceNumBack[0]][0] /
+      cout << "Searching for back seg peaks: " << Config.Sources[Config.
+                                                                 SourceNumBack[0]][0] << "kev and " <<
+          Config.Sources[Config.SourceNumBack[0]][1] << "keV (Ratio " << Config.Sources[Config.SourceNumBack[0]][0] /
           Config.Sources[Config.SourceNumBack[0]][1] << ")" << endl;
    }
-   
-   
+
+
    return 0;
 }
 
@@ -186,7 +188,7 @@ int Calib(std::vector < TTigFragment > &ev)
    static double FitTimeElapsed = 0.0;
    int FileType;
    int FileNum;
-   
+
    int TimeBin = 0;
    float TB = 0.0;
 
@@ -200,7 +202,7 @@ int Calib(std::vector < TTigFragment > &ev)
 
       //Get time of first fragment
       if (FirstEvent == 1) {
-         StartTime = ev[Frag].MidasTimeStamp;      //ev[Frag].MidasTimeStamp;
+         StartTime = ev[Frag].MidasTimeStamp;   //ev[Frag].MidasTimeStamp;
          FirstEvent = 0;
          if (Config.PrintBasic) {
             cout << "MIDAS time of first fragment: " << ctime(&StartTime) << endl;
@@ -208,12 +210,11 @@ int Calib(std::vector < TTigFragment > &ev)
       }
       // Insert test for time earlier than StartTime.....
       if (ev[Frag].MidasTimeStamp < StartTime) {
-         StartTime = ev[Frag].MidasTimeStamp;      //ev[i].MidasTimeStamp;
+         StartTime = ev[Frag].MidasTimeStamp;   //ev[i].MidasTimeStamp;
          if (Config.PrintBasic) {
             cout << "Earlier event found! Updating time of first fragment to: " << ctime(&StartTime) << endl;
          }
       }
-
       //Slave = ((ev[Frag].ChannelAddress & 0x00F00000) >> 20);
       //Port = ((ev[Frag].ChannelAddress & 0x00000F00) >> 8);
       Chan = (ev[Frag].ChannelAddress & 0x000000FF);
@@ -277,12 +278,12 @@ int Calib(std::vector < TTigFragment > &ev)
                   // Increment raw charge spectra
                   if (DEBUG) {
                      cout << "A: Filling " << Clover
-                         << ", " << Crystal << ", 0, " << mnemonic.outputsensor << " with charge = " << ev[Frag].
-                         Charge << endl;
+                         << ", " << Crystal << ", 0, " << mnemonic.
+                         outputsensor << " with charge = " << ev[Frag].Charge << endl;
                   }
                   hCharge[Clover - 1][Crystal][0]->Fill(ev[Frag].Charge);
                   hWaveCharge[Clover - 1][Crystal][0]->Fill(WaveCharge);
-                  hCrystalChargeTemp[Clover-1][Crystal]->Fill(ev[Frag].Charge);
+                  hCrystalChargeTemp[Clover - 1][Crystal]->Fill(ev[Frag].Charge);
                }
             } else {
                if (Chan == 9) {
@@ -305,7 +306,7 @@ int Calib(std::vector < TTigFragment > &ev)
          } else {
             if (mnemonic.segment < 9) {
                if (ev[Frag].Charge > 0) {
-                  hCharge[Clover - 1][Crystal][mnemonic.segment]->Fill(ev[Frag].Charge);   // Fill segment spectra
+                  hCharge[Clover - 1][Crystal][mnemonic.segment]->Fill(ev[Frag].Charge);        // Fill segment spectra
                   hWaveCharge[Clover - 1][Crystal][mnemonic.segment]->Fill(WaveCharge);
                }
             }
@@ -343,30 +344,29 @@ int Calib(std::vector < TTigFragment > &ev)
                   if (Config.PrintVerbose) {
                      cout << "Clov: " << j << " Crys: " << k;
                   }
-                  
                   // Configure Fit                  
                   HistoFit Fit;
                   HistoCal Cal;
                   FitSettings Settings = { 0 };
                   FileType = 1; // used to generate histogram name for histo calibration.  Doesn't matter here.  
                   FileNum = 0;  // Used to id source.  Should only be one source type if this function is running.  
-                  Config.WriteFits = 0;  // Don't want to write fits for these temp spectra.
-                  ConfigureEnergyFit(j,k, 0, FileType, FileNum, &Settings);
-                  Settings.TempFit = 1;                  
+                  Config.WriteFits = 0; // Don't want to write fits for these temp spectra.
+                  ConfigureEnergyFit(j, k, 0, FileType, FileNum, &Settings);
+                  Settings.TempFit = 1;
                   // Perform Fit
-                  FitSuccess = FitGammaSpectrum(hCrystalChargeTemp[j-1][k], &Fit, &Cal, Settings);
-                  
+                  FitSuccess = FitGammaSpectrum(hCrystalChargeTemp[j - 1][k], &Fit, &Cal, Settings);
+
                   // Build map of fit results
                   ChannelFitMap ChanFits;
-                  for(unsigned int Line=0; Line<Fit.PeakFits.size(); Line ++) {
-                     ChanFits.insert(ChannelFitPair(Fit.PeakFits.at(Line).Energy,Fit.PeakFits.at(Line)));
+                  for (unsigned int Line = 0; Line < Fit.PeakFits.size(); Line++) {
+                     ChanFits.insert(ChannelFitPair(Fit.PeakFits.at(Line).Energy, Fit.PeakFits.at(Line)));
                   }
-                  
+
                   // Clear PeakFits as it will be refilled in CalibrateChannel()
                   Fit.PeakFits.clear();
                   // Calibrate fit map
                   CalibSuccess = CalibrateChannel(ChanFits, Settings, &Fit, &Cal);
-                  
+
                   // Calibration Record
                   if (FitSuccess == 0 && CalibSuccess == 0) {
                      hCrystalGain[j - 1][k]->SetBinContent(TimeBin, Cal.LinGainFit[1]);
@@ -387,7 +387,7 @@ int Calib(std::vector < TTigFragment > &ev)
 
       }
    }
-   
+
    return 0;
 }
 

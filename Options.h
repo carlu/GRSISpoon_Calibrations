@@ -13,7 +13,7 @@
 #define MAX_EVENTS 0
 #define DEBUG_TREE_LOOP 0
 // ROOT Stuff
-#define ROOT_VIRT_SIZE    1024u*1024u*1024u      // 1x10^7 or ~10Mb seems to run fast-ish but not freeze the system completely.
+#define ROOT_VIRT_SIZE    1024u*1024u*1024u     // 1x10^7 or ~10Mb seems to run fast-ish but not freeze the system completely.
                                      // that's on my 6Gb 2.6GHz i5 (YMMV)
                                      // Correction: for a longer run file 10^9 was needed
 // Stuff about the experimental setup
@@ -85,9 +85,6 @@ struct RunConfig {              // this struct will hold all information
     std::vector < std::string > files;
    // root output files
     std::string OutPath;
-   // text output files
-    std::string EffTxtOut;
-    std::string PropTxtOut;
    // Information on energy and wave calibration files
     std::string EnergyCalibrationFile;
    bool HaveAltEnergyCalibration;
@@ -101,8 +98,8 @@ struct RunConfig {              // this struct will hold all information
    int EventLimit;
    // ROOT stuff
    unsigned int ROOT_MaxVirtSize;
-   
-   
+
+
    // Global physics settings
    // ------------------------------------------
    // Properties of waveforms stored in the data
@@ -110,10 +107,10 @@ struct RunConfig {              // this struct will hold all information
    unsigned int WaveInitialSamples;
    unsigned int WaveFinalSamples;
    // source Information
-   std::vector < std::vector < float >>Sources;
-   std::vector <int> SourceNumCore;
-   std::vector <int> SourceNumFront;
-   std::vector <int> SourceNumBack;
+    std::vector < std::vector < float >>Sources;
+    std::vector < int >SourceNumCore;
+    std::vector < int >SourceNumFront;
+    std::vector < int >SourceNumBack;
    // Energy thresholds
    float EnergyThresh;
    int ChargeThresh;
@@ -133,33 +130,39 @@ struct RunConfig {              // this struct will hold all information
    bool CalList[CLOVERS][CRYSTALS][SEGS + 2];   // mask to determine which channels CalibSpectra() should run on
    bool CalListProvided;
    // Output
-   std::string CalOut;         // First 8 letters of this should match any file loaded in to offline cal
+    std::string CalOut;         // First 8 letters of this should match any file loaded in to offline cal
     std::string CalSpecOut;
-   std::string CalName;
-   std::string AnaName;
+    std::string CalName;
+    std::string AnaName;
    bool WriteFits;              // --cal: write histo after fits, --calof: write new file with histos and fits
    // What to plot
    bool PlotFits;
-   bool CalibPlots[CLOVERS][CRYSTALS][SEGS + 2];  // records if fits should be plotted for each channel
+   bool CalibPlots[CLOVERS][CRYSTALS][SEGS + 2];        // records if fits should be plotted for each channel
    bool PlotCalib;
    bool PlotResidual;
    bool PlotCalibSummary;
    // Calibration options
    bool FitZero;                // Add extra calibration point at 0ch = 0keV
    bool ManualPeakSelect[CLOVERS][CRYSTALS][SEGS + 2];  // records if manual peak selection should be used
-   bool ManualPeakCorrection;  // Manual peak selection if auto fails
-   
+   bool ManualPeakCorrection;   // Manual peak selection if auto fails
+
    // CoincEff()
    // What to plot
    bool PlotEff;
    bool OutputEff;
    // Output
-   std::string EffOut;
-    
+    std::string EffOut;
+    std::string EffTxtOut;
+   // Reference values
+   bool EffHaveSimRef;
+    std::string EffSimRefFileName;
+   bool EffHaveExpRef;
+    std::string EffExpRefFileName;
+
    // PropXtalk()
    // Output
-   std::string PropOut;
-
+    std::string PropOut;
+    std::string PropTxtOut;
 };
 
 // --------------------------------------------------------
@@ -175,11 +178,3 @@ extern RunConfig Config;
 int LoadDefaultSettings();
 int ReadCommandLineSettings(int argc, char **argv);
 int ReadOptionsFile(std::string filename);
-
-
-
-
-
-
-
-
