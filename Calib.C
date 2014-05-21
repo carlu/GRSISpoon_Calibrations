@@ -56,7 +56,7 @@ static TH1F *WaveHist = 0;
 
 // Functions called from main:   
 int InitCalib();
-void Calib(std::vector < TTigFragment > &ev);
+int Calib(std::vector < TTigFragment > &ev);
 void FinalCalib();
 // Functions called from here:
 void ResetTempSpectra();
@@ -167,7 +167,7 @@ int InitCalib()
 }
 
 
-void Calib(std::vector < TTigFragment > &ev)
+int Calib(std::vector < TTigFragment > &ev)
 {
 
    //Variables
@@ -362,6 +362,8 @@ void Calib(std::vector < TTigFragment > &ev)
                      ChanFits.insert(ChannelFitPair(Fit.PeakFits.at(Line).Energy,Fit.PeakFits.at(Line)));
                   }
                   
+                  // Clear PeakFits as it will be refilled in CalibrateChannel()
+                  Fit.PeakFits.clear();
                   // Calibrate fit map
                   CalibSuccess = CalibrateChannel(ChanFits, Settings, &Fit, &Cal);
                   
@@ -371,6 +373,7 @@ void Calib(std::vector < TTigFragment > &ev)
                      hCrystalOffset[j - 1][k]->SetBinContent(TimeBin, Cal.LinGainFit[0]);
 
                   } else {
+                     cout << "Calibration of temporary spectra failed!" << endl;
                      continue;
                   }
                }
@@ -384,6 +387,8 @@ void Calib(std::vector < TTigFragment > &ev)
 
       }
    }
+   
+   return 0;
 }
 
 

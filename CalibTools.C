@@ -237,6 +237,12 @@ int CalibrateFiles() {
                
                CalibSuccess = CalibrateChannel(FitMap[ChanVector], Settings, &Fit, &Cal);
                
+               // Check for failure
+               if (CalibSuccess > 0) {
+                  cout << "Calibration of : " << Settings.HistName << " failed!" << endl;
+                  return 1;
+               }
+               
                // Fill histograms of calibration values
                switch (Crystal) { // Calculate channel number (old TIGRESS DAQ numbering)
                case 0:
@@ -264,7 +270,7 @@ int CalibrateFiles() {
                QuadHist->Fill(Cal.QuadGainFit[2]);
    
                // Now print reports on results of fits and calibration.
-               if (Cal.LinesUsed > 1 && CalibSuccess) {
+               if (Cal.LinesUsed > 1 && CalibSuccess == 0) {
                   if (Cal.LinesUsed < 3 || FORCE_LINEAR) {
                      GainOut << Settings.OutputName << ":\t" << Cal.LinGainFit[0];
                      GainOut << "\t" << Cal.LinGainFit[1] << endl;
@@ -276,14 +282,13 @@ int CalibrateFiles() {
                   //GainOut << HistName << " Fail!!!" << endl;
                }
                // Write full calibration report
-               if (Cal.LinesUsed > 0 && CalibSuccess) {
+               if (Cal.LinesUsed > 1 && CalibSuccess == 0) {
                   CalibrationReport(&Fit, &Cal, ReportOut, Settings.OutputName, Settings);
                } else {
                   ReportOut << endl << "------------------------------------------" << endl << Settings.OutputName << endl <<
                       "------------------------------------------" << endl << endl;
                   ReportOut << "Fail Fail Fail! The calibration has failed!" << endl;
                }
-               
                // Write .cal file for GRSISpoon
                if (Config.CalFile) {
                   WriteCalFile(&Fit, CalFileOut, Settings.HistName, Settings);
@@ -331,9 +336,15 @@ int CalibrateFiles() {
                }
                
                CalibSuccess = CalibrateChannel(WaveFitMap[ChanVector], Settings, &Fit, &Cal);
+               
+               // Check for failure
+               if (CalibSuccess > 0) {
+                  cout << "Calibration of : " << Settings.HistName << " failed!" << endl;
+                  return 1;
+               } 
             
                // Now print reports on results of fits and calibration.
-               if (Cal.LinesUsed > 1) {
+               if (Cal.LinesUsed > 1 && CalibSuccess == 0) {
                   if (Cal.LinesUsed < 3 || FORCE_LINEAR) {
                      WaveOut << Settings.OutputName << ":\t" << Cal.LinGainFit[0];
                      WaveOut << "\t" << Cal.LinGainFit[1] << endl;
@@ -345,7 +356,7 @@ int CalibrateFiles() {
                   //WaveOut << HistName << " Fail!!!" << endl;
                }
                // Write full calibration report
-               if (Cal.LinesUsed > 0) {
+               if (Cal.LinesUsed > 1 && CalibSuccess == 0) {
                   CalibrationReport(&Fit, &Cal, WaveReportOut, Settings.OutputName, Settings);
                } else {
                   WaveReportOut << endl << "------------------------------------------" << endl << Settings.OutputName << endl <<
@@ -785,7 +796,6 @@ int FitGammaSpectrum(TH1F * Histo, HistoFit * Fit, HistoCal * Cal, FitSettings S
             // Store fit result for use in calibration                      
             //memcpy(&Fit->PeakFits[Line], &FitRes[Line], sizeof(FitResult));
             Fit->PeakFits.push_back(FitRes[Line]);
-            Fit->FitSuccess.push_back(1);
          }
 
          //-------------------------------------------------------------//
@@ -841,7 +851,6 @@ int FitGammaSpectrum(TH1F * Histo, HistoFit * Fit, HistoCal * Cal, FitSettings S
                //memcpy(&Fit->PeakFits[Line], &FitRes[Line], sizeof(FitResult));
                //Fit->FitSuccess[Line] = 1;
                Fit->PeakFits.push_back(FitRes[Line]);
-               Fit->FitSuccess.push_back(1);
             }
          }
 
@@ -1005,8 +1014,8 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings, HistoFit *Fit, Hi
    
    FitResult LineFit;
    
+   // Loop lines, check, add to calibration list if ok
    LinesUsed = 0;
-   
    for (ChannelFitMapIt Line = Fits.begin(); Line != Fits.end(); Line++) {
       TestsPassed = 0;
       Energy = Line->first;
@@ -1027,15 +1036,16 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings, HistoFit *Fit, Hi
             }
             LinesUsed += 1;
             TestsPassed = 1;
-            Fit->FitSuccess.push_back(1);
-            if(LinesUsed > (MAX_TOTAL_LINES -2)) {  // Stop adding lines if we are going to overflow arrays
-               break;                                // -1 here, -2 because of poss of 0ch=0keV line
-            }
-            
          }
       }
-      if(TestsPassed==0) {
+      if(TestsPassed==1) {
+         Fit->FitSuccess.push_back(1);
+      }
+      else {
          Fit->FitSuccess.push_back(0);
+      }
+      if(LinesUsed > (MAX_TOTAL_LINES -2)) {  // Stop adding lines if we are going to overflow arrays
+         break;                                // -1 here, -2 because of poss of 0ch=0keV line
       }
    }
    
@@ -1063,6 +1073,13 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings, HistoFit *Fit, Hi
       Fit->PeakFits.push_back(ZeroFit);
       Fit->FitSuccess.push_back(1);
    }   
+   
+   // Check list of fits and accepted fits match
+   if (Fit->PeakFits.size() != Fit->FitSuccess.size()) {
+      cout << "Error -> PeakFits.size() != Fit->FitSuccess.size()" << endl;
+      cout << Fit->PeakFits.size() << " != " << Fit->FitSuccess.size() << endl;
+      return 1;
+   }
    
    Cal->LinesUsed = LinesUsed;
    
@@ -1152,11 +1169,7 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings, HistoFit *Fit, Hi
       cout << "CSPD = " << CalibFitQuad->GetChisquare() / CalibFitQuad->GetNDF() << endl << endl;
    }
 
-   
-   
-   
    return 0;
-
 }
 
 // Other general helper functions
