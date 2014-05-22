@@ -135,7 +135,6 @@ int main(int argc, char **argv)
       NumCal = ReadCalibrationFile(Config.WaveCalibrationFile, &WaveCalibNames, &WaveCalibValues);
       if (Config.PrintBasic) {
          cout << "Wave energy calibratrion values: " << endl;
-         //cout << WaveCalibNames.size() << endl << WaveCalibValues.size() << endl;
          for (i = 0; i < NumCal; i++) {
             cout << i;
             cout << ": " << WaveCalibNames.at(i);
@@ -145,7 +144,6 @@ int main(int argc, char **argv)
       }
    }
    // Initialise spectra   
-
    if (Config.RunEfficiency) {
       if (Config.PrintBasic) {
          cout << "Initialising Efficiency Spectra..." << endl;
@@ -206,8 +204,6 @@ int main(int argc, char **argv)
 
    for (ChainEvent = 0; ChainEvent < NumChainEntries; ChainEvent++) {
 
-      //cout << "HERE!" << endl;
-
       Chain->LoadTree(ChainEvent);
       TreeNum = Chain->GetTreeNumber();
 
@@ -221,8 +217,6 @@ int main(int argc, char **argv)
          continue;              // This works in conjuncion with the line below "i += (NumTreeEntries - 10);"
          // if i still falls in the same tree, then it is incremented without sorting until the next tree
       }
-
-      //cout << "HERE!!" << endl;
 
       TTree *Tree = Chain->GetTree();
 
@@ -266,7 +260,6 @@ int main(int argc, char **argv)
          if (DEBUG_TREE_LOOP) {
             cout << endl;
          }
-         //cout << "HERE!!!!! " << endl;
 
          if (FragNum < 3) {     // Init to 1, incremented on first GetEntryWithIndex, so should be at least 3 if any frags found      
             EmptyEventCount++;
@@ -320,7 +313,6 @@ int main(int argc, char **argv)
    }
 
    // Now finalise sorts and write spectra to files....  
-
    if (Config.RunEfficiency) {
       FinalCoincEff();
    }
