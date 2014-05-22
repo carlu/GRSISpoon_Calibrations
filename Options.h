@@ -98,7 +98,8 @@ struct RunConfig {              // this struct will hold all information
    int EventLimit;
    // ROOT stuff
    unsigned int ROOT_MaxVirtSize;
-
+   // Configuration file
+   std::string ConfigFile;
 
    // Global physics settings
    // ------------------------------------------

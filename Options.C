@@ -45,6 +45,8 @@ int LoadDefaultSettings()
    Config.HaveAltEnergyCalibration = 0;
    Config.WaveCalibrationFile = "./WCal.txt";
    Config.HaveWaveCalibration = 0;
+   
+   Config.ConfigFile = "./Config.txt";
 
    // Global physics settings
    // ------------------------------------------
@@ -57,6 +59,7 @@ int LoadDefaultSettings()
       {276.398, 356.017, 80.9971, 302.853, 383.851}     // 133Ba
    };
    // Push source lines to vector of vectors.
+   // This is horrible.  Need to find another way to initialise these vectors.
    vector < float >SourceTemp;
    for (int i = 0; i < 2; i++) {
       SourceTemp.push_back(Sources[0][i]);
@@ -200,6 +203,23 @@ int ReadCommandLineSettings(int argc, char **argv)
                cout << "\t" << Config.files.at(FileNum) << endl;
             }
          }
+      }
+      // Load Configuration file
+      // -------------------------------------------
+      if (strncmp(argv[i], "-c", 2) == 0) {     // if option is Ecal file
+         if (i >= argc - 1 || strncmp(argv[i + 1], "-", 1) == 0) {      // return error if no file
+            cout << "No file specified after \"-c\" option." << endl;
+            return -1;
+         }
+         if(ReadConfigFile(argv[++i]) == 0) {
+            ConfigFileLoaded = 1;
+            Config.ConfigFile = argv[i];
+            cout << "Configuration loaded from " << Config.ConfigFile << endl;
+         }
+         else {
+            cout << "Failed to load configuration from " << Config.ConfigFile << endl;
+         }
+         
       }
       // Energy Calibration file
       // -------------------------------------------
@@ -443,12 +463,11 @@ int ReadCommandLineSettings(int argc, char **argv)
             Config.RunPropCrosstalk = 1;
          }
       }
-      // General Configuration file
-      // -------------------------------------------
-
-
    }
-
+   // Look for default configuration file if non given
+   if(ConfigFileLoaded == 0) {
+      
+   }   
 
    return 0;
 }
@@ -456,6 +475,7 @@ int ReadCommandLineSettings(int argc, char **argv)
 
 int ReadConfigFile(std::string filename)        // this is a dummy function
 {                               // One day it should read in a config text file
+
    cout << filename << endl;
    return 0;
 }

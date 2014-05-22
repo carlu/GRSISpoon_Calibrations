@@ -1,0 +1,13 @@
+# Configuration file for GRSISpoon Calibration Sort.
+
+# reference efficiency values at 1332.5keV
+SIM_CLOVER_AB_EFF_HEFF
+SIM_CLOVER_AB_EFF_HPT
+SIM_CRYSTAL_EFF_HEFF
+SIM_CRYSTAL_EFF_HPT
+EXP_CLOVER_AB_EFF_HEFF
+EXP_CLOVER_AB_EFF_HPT
+EXP_CRYSTAL_EFF_HEFF
+EXP_CRYSTAL_EFF_HPT
+
+# Parameters for fiting of peaks in calibration
