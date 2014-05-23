@@ -4,9 +4,11 @@
 // C/C++ libraries:
 using namespace std;
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <cstdlib>
 #include <string.h>
+#include <map>
 
 #include "Options.h"
 
@@ -46,7 +48,8 @@ int LoadDefaultSettings()
    Config.WaveCalibrationFile = "./WCal.txt";
    Config.HaveWaveCalibration = 0;
    
-   Config.ConfigFile = "./Config.txt";
+   Config.ConfigFile = getenv("GRSISYS");
+   Config.ConfigFile += "_Calibrations/Config.txt";
 
    // Global physics settings
    // ------------------------------------------
@@ -138,7 +141,6 @@ int LoadDefaultSettings()
 // Also some options here are required i.e. file and function to perform
 int ReadCommandLineSettings(int argc, char **argv)
 {
-
    // -f : input (f)iles
    // -e : (E)nergyCalFile
    // -w : (W)aveCalFile
@@ -202,6 +204,7 @@ int ReadCommandLineSettings(int argc, char **argv)
             for (FileNum = 0; FileNum < Config.files.size(); FileNum++) {       // print list of files back to screen
                cout << "\t" << Config.files.at(FileNum) << endl;
             }
+            cout << endl;
          }
       }
       // Load Configuration file
@@ -211,15 +214,16 @@ int ReadCommandLineSettings(int argc, char **argv)
             cout << "No file specified after \"-c\" option." << endl;
             return -1;
          }
-         if(ReadConfigFile(argv[++i]) == 0) {
-            ConfigFileLoaded = 1;
+         cout << "Checking for configuration file in custom location: " << argv[++i] << endl;
+         if(ReadConfigFile(argv[i]) == 0) {
+            ConfigFileLoaded = 1;         // if this is not set default location will also be checked          
             Config.ConfigFile = argv[i];
-            cout << "Configuration loaded from " << Config.ConfigFile << endl;
+            cout << "Config Loaded!" << endl;
          }
          else {
-            cout << "Failed to load configuration from " << Config.ConfigFile << endl;
+            cout << "Failed!" << endl;  // default will be loaded
          }
-         
+         cout << endl;
       }
       // Energy Calibration file
       // -------------------------------------------
@@ -466,6 +470,14 @@ int ReadCommandLineSettings(int argc, char **argv)
    }
    // Look for default configuration file if non given
    if(ConfigFileLoaded == 0) {
+      cout << "Checking for configuration file in default location: " << Config.ConfigFile << "  ..." << endl;
+      if(ReadConfigFile(Config.ConfigFile) == 0) {
+         cout << "Config Loaded!" << endl;
+      }
+      else {
+         cout << "Failed!" << endl;
+         return -1;
+      }
       
    }   
 
@@ -475,8 +487,89 @@ int ReadCommandLineSettings(int argc, char **argv)
 
 int ReadConfigFile(std::string filename)        // this is a dummy function
 {                               // One day it should read in a config text file
+   // Variables
+   std::ifstream File;
+   std::string Line;
+   unsigned int Lines = 0;       // count of lines in config file 
+   unsigned int Comments = 0;    //   "      comments       "
+   unsigned int Blank = 0;       //   "      blank lines    "
 
-   cout << filename << endl;
+   // See if file can be opened.
+   File.open(filename,std::ifstream::in);
+   if (!File) {  // If not loaded then return with error.
+      return 1;
+   }
+   
+   while(getline(File,Line)) {
+      //cout << Line << endl;
+      if (strcmp(Line.c_str(), "SIM_CLOVER_AB_EFF") == 0) {
+         if(ReadCloverRef(&File, &Config.Sim_Clover_AB_Eff) > 0) {
+            cout << "SIM_CLOVER_AB_EFF reference loaded" << endl;
+            cout << "size = " <<  Config.Sim_Clover_AB_Eff.size() << endl;
+         }
+      }
+      if (strcmp(Line.c_str(), "EXP_CLOVER_AB_EFF") == 0) {
+         if(ReadCloverRef(&File, &Config.Exp_Clover_AB_Eff) > 0) {
+            cout << "EXP_CLOVER_AB_EFF reference loaded" << endl;
+            cout << "size = " <<  Config.Exp_Clover_AB_Eff.size() << endl;
+         }
+      }
+      
+      
+   }
+   
+   return 0;
+}
+
+int ReadCloverRef(std::ifstream *File, ReferenceValueMap *Map) {
+   
+   std::string Line;
+   std::vector<int> Vect;
+   int Count = 0;
+   int Clover;
+   float Val;
+   while(getline(*File,Line)) {
+      if(sscanf(Line.c_str(), "%d %f", &Clover, &Val) == 2) {
+         //cout << Line << " done!" << endl;
+         Vect.clear();
+         Vect.push_back(Clover);
+         Map->insert(ReferenceValuePair(Vect,Val));
+         Count += 1;
+      }
+      else {
+         //cout << " miss" << endl;
+         return Count;
+      }
+   }
+
+   return Count;
+}
+
+int ReadCrystalRef(std::ifstream *File, ReferenceValueMap *Map) {
+
+   std::string Line;
+   std::vector<int> Vect;
+   int Count = 0;
+   int Clover;
+   int Crystal;
+   float Val;
+   while(getline(*File,Line)) {
+      if(sscanf(Line.c_str(), "%d %d %f", &Clover, &Crystal, &Val) == 3) {
+         //cout << Line << " done!" << endl;
+         Vect.clear();
+         Vect.push_back(Clover);
+         Vect.push_back(Crystal);
+         Map->insert(ReferenceValuePair(Vect,Val));
+         Count += 1;
+      }
+      else {
+         //cout << " miss" << endl;
+         return Count;
+      }
+   }
+
+   return Count;
+
    return 0;
 }
 

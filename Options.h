@@ -68,6 +68,10 @@
 #define OUTPUT_GAIN 1           // write full-run gains to file
 #define OUTPUT_REPORT 1         // write full report including all fits and gains
 
+// Definitions of types
+typedef map < std::vector<int>, float > ReferenceValueMap;
+typedef pair <std::vector<int>, float > ReferenceValuePair;
+
 // Define structure for storing full configuration 
 struct RunConfig {              // this struct will hold all information 
 
@@ -146,6 +150,8 @@ struct RunConfig {              // this struct will hold all information
    bool FitZero;                // Add extra calibration point at 0ch = 0keV
    bool ManualPeakSelect[CLOVERS][CRYSTALS][SEGS + 2];  // records if manual peak selection should be used
    bool ManualPeakCorrection;   // Manual peak selection if auto fails
+   // Reference 
+   ReferenceValueMap Crystal_FWHM;
 
    // CoincEff()
    // What to plot
@@ -155,6 +161,11 @@ struct RunConfig {              // this struct will hold all information
     std::string EffOut;
     std::string EffTxtOut;
    // Reference values
+   ReferenceValueMap Sim_Clover_AB_Eff;  // # SIM_CLOVER_AB_EFF
+   ReferenceValueMap Sim_Crystal_Eff;    // # SIM_CRYSTAL_EFF
+   ReferenceValueMap Exp_Clover_AB_Eff;  // # EXP_CLOVER_AB_EFF
+   ReferenceValueMap Exp_Crystal_Eff;    // # EXP_CRYSTAL_EFF
+   
    bool EffHaveSimRef;
     std::string EffSimRefFileName;
    bool EffHaveExpRef;
@@ -179,3 +190,9 @@ extern RunConfig Config;
 int LoadDefaultSettings();
 int ReadCommandLineSettings(int argc, char **argv);
 int ReadOptionsFile(std::string filename);
+int ReadCloverRef(std::ifstream *File, ReferenceValueMap *Map);
+int ReadCrystalRef(std::ifstream *File, ReferenceValueMap *Map);
+
+
+
+

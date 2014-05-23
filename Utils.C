@@ -8,6 +8,7 @@ using namespace std;
 #include <string.h>
 #include <fstream>
 #include <math.h>
+#include <map>
 
 // ROOT libaries
 #include <TRandom3.h>
