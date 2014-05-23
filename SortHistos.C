@@ -1,5 +1,4 @@
-// To  compile: g++ SortHistos.C CalibTools.C Options.C Utils.C -I$GRSISYS/include --std=c++0x -o SortHistos $GRSISYS/libraries/TigFormat/libFormat.so $GRSISYS/libraries/libCalManager.so $GRSISYS/libraries/libRootIOManager.so -O0 `root-config --cflags --libs`  -lSpectrum -lgsl -lgslcblas -g
-
+// To  compile: g++ SortHistos.C CalibTools.C Options.C Utils.C -I$GRSISYS/include --std=c++0x -o SortHistos  -O0 `root-config --cflags --libs`  -lSpectrum -g
 using namespace std;
 // C/C++ libraries:
 #include <iostream>

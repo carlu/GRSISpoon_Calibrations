@@ -138,7 +138,7 @@ int LoadDefaultSettings()
 }
 
 // Override defaults with options from commandd line. 
-// Also some options here are required i.e. file and function to perform
+// Also some options here are required i.e. file and function (--cal,--eff)
 int ReadCommandLineSettings(int argc, char **argv)
 {
    // -f : input (f)iles
@@ -214,14 +214,14 @@ int ReadCommandLineSettings(int argc, char **argv)
             cout << "No file specified after \"-c\" option." << endl;
             return -1;
          }
-         cout << "Checking for configuration file in custom location: " << argv[++i] << endl;
+         cout << "Checking for configuration file in custom location: " << argv[++i] << "..." << endl;
          if(ReadConfigFile(argv[i]) == 0) {
             ConfigFileLoaded = 1;         // if this is not set default location will also be checked          
             Config.ConfigFile = argv[i];
-            cout << "Config Loaded!" << endl;
+            cout << "Config Loaded!" << endl << endl;
          }
          else {
-            cout << "Failed!" << endl;  // default will be loaded
+            cout << "Failed!" << endl <<endl;  // default will be loaded
          }
          cout << endl;
       }
@@ -303,10 +303,10 @@ int ReadCommandLineSettings(int argc, char **argv)
          if (Config.EventLimit == 0) {
             cout << "No event limit set." << endl;
          } else {
-            cout << "Run limited to " << Config.EventLimit << " events." << endl;
+            cout << "Run limited to " << Config.EventLimit << " events." << endl << endl;
          }
       }
-      // Maximum number of events to process
+      // Alternate output path
       // -------------------------------------------
       if (strncmp(argv[i], "-o", 2) == 0) {
          if (i >= argc - 1 || strncmp(argv[i + 1], "-", 1) == 0) {      // return error if no source given
@@ -470,12 +470,12 @@ int ReadCommandLineSettings(int argc, char **argv)
    }
    // Look for default configuration file if non given
    if(ConfigFileLoaded == 0) {
-      cout << "Checking for configuration file in default location: " << Config.ConfigFile << "  ..." << endl;
+      cout << "Checking for configuration file in default location: " << Config.ConfigFile << "..." << endl;
       if(ReadConfigFile(Config.ConfigFile) == 0) {
-         cout << "Config Loaded!" << endl;
+         cout << "Config Loaded!" << endl << endl;
       }
       else {
-         cout << "Failed!" << endl;
+         cout << "Failed!" << endl << endl;
          return -1;
       }
       
@@ -484,43 +484,83 @@ int ReadCommandLineSettings(int argc, char **argv)
    return 0;
 }
 
-
-int ReadConfigFile(std::string filename)        // this is a dummy function
-{                               // One day it should read in a config text file
+// Read in data from configuration file.
+// Some things e.g. reference values for clover efficienccies will not be used if config file isn't found.
+// Other things, like fit parameters, should be set to sensible defaults and overwritten if found in the config file.
+int ReadConfigFile(std::string filename) 
+{                 
    // Variables
    std::ifstream File;
    std::string Line;
-   unsigned int Lines = 0;       // count of lines in config file 
+   unsigned int Items = 0;       // count of lines in config file 
    unsigned int Comments = 0;    //   "      comments       "
-   unsigned int Blank = 0;       //   "      blank lines    "
-
+   unsigned int Other = 0;
    // See if file can be opened.
    File.open(filename,std::ifstream::in);
    if (!File) {  // If not loaded then return with error.
       return 1;
    }
    
+   // Looplines and look for known keys .
    while(getline(File,Line)) {
       //cout << Line << endl;
+      if(strncmp(Line.c_str(), "#", 1) == 0) {
+         Comments += 1;
+         continue;
+      }
+      
+      // Reference Values for comparison with measured efficiencies
       if (strcmp(Line.c_str(), "SIM_CLOVER_AB_EFF") == 0) {
          if(ReadCloverRef(&File, &Config.Sim_Clover_AB_Eff) > 0) {
-            cout << "SIM_CLOVER_AB_EFF reference loaded" << endl;
-            cout << "size = " <<  Config.Sim_Clover_AB_Eff.size() << endl;
+            cout << "SIM_CLOVER_AB_EFF reference loaded";
+            cout << " (size = " <<  Config.Sim_Clover_AB_Eff.size() << ")"<< endl;
+            Items += 1;
+            continue;            
          }
       }
       if (strcmp(Line.c_str(), "EXP_CLOVER_AB_EFF") == 0) {
          if(ReadCloverRef(&File, &Config.Exp_Clover_AB_Eff) > 0) {
-            cout << "EXP_CLOVER_AB_EFF reference loaded" << endl;
-            cout << "size = " <<  Config.Exp_Clover_AB_Eff.size() << endl;
+            cout << "EXP_CLOVER_AB_EFF reference loaded";
+            cout << " (size = " <<  Config.Exp_Clover_AB_Eff.size() << ")" << endl;
+            Items += 1;
+            continue;            
+         }
+      }
+      if (strcmp(Line.c_str(), "SIM_CRYSTAL_EFF") == 0) {
+         if(ReadCrystalRef(&File, &Config.Sim_Crystal_Eff) > 0) {
+            cout << "SIM_CRYSTAL_EFF reference loaded";
+            cout << " (size = " <<  Config.Sim_Crystal_Eff.size() << ")" << endl;
+            Items += 1;
+            continue;            
+         }
+      }
+      if (strcmp(Line.c_str(), "EXP_CRYSTAL_EFF") == 0) {
+         if(ReadCrystalRef(&File, &Config.Exp_Crystal_Eff) > 0) {
+            cout << "EXP_CRYSTAL_EFF reference loaded";
+            cout << " (size = " <<  Config.Exp_Crystal_Eff.size() << ")" << endl;
+            Items += 1;
+            continue;            
          }
       }
       
+      // Reference values for resolutions
+      
+      
+      // Fit parameters
+      
+      
+      // Other
+      Other += 1;
       
    }
+   
+   cout << "Read " << Items << " items, " << Comments << " comments, " << Other << " others." << endl;
    
    return 0;
 }
 
+// Called from ReadConfigFile() to read values by Clover.
+// expects format "int float" for clover, Value 
 int ReadCloverRef(std::ifstream *File, ReferenceValueMap *Map) {
    
    std::string Line;
@@ -537,14 +577,14 @@ int ReadCloverRef(std::ifstream *File, ReferenceValueMap *Map) {
          Count += 1;
       }
       else {
-         //cout << " miss" << endl;
          return Count;
       }
    }
-
    return Count;
 }
 
+// Called from ReadConfigFile() to read values by Crystal.
+// expects format "int int float" for clover, crystal, Value 
 int ReadCrystalRef(std::ifstream *File, ReferenceValueMap *Map) {
 
    std::string Line;
@@ -563,14 +603,10 @@ int ReadCrystalRef(std::ifstream *File, ReferenceValueMap *Map) {
          Count += 1;
       }
       else {
-         //cout << " miss" << endl;
          return Count;
       }
    }
-
    return Count;
-
-   return 0;
 }
 
 
