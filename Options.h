@@ -69,8 +69,9 @@
 #define OUTPUT_REPORT 1         // write full report including all fits and gains
 
 // Definitions of types
-typedef map < std::vector<int>, float > ReferenceValueMap;
-typedef pair <std::vector<int>, float > ReferenceValuePair;
+typedef std::map < std::vector<int>, float > ReferenceValueMap;
+typedef std::pair <std::vector<int>, float > ReferenceValuePair;
+typedef std::map <std::vector<int>, float> :: iterator ReferenceValueMapIt;
 
 // Define structure for storing full configuration 
 struct RunConfig {              // this struct will hold all information 

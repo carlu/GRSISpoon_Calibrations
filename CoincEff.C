@@ -265,19 +265,36 @@ int InitCoincEff()
 
 void FinalCoincEff()
 {
-
+   // general bookkeeping variables.
    int Clover, Crystal;
    float Counts, dCounts, dCountsFit, dCountsStat, Eff, dEff;
    FitResult FitRes;
-   ofstream EffOut;
    char str[CHAR_BUFFER_SIZE];
+   std::vector<int> Vect;
+   float Val;
+   // Output
+   ofstream EffOut;
+   // Arrays to store calculated efficiencies
    float CrystalEff[CLOVERS * CRYSTALS] = { 0.0 };
    float dCrystalEff[CLOVERS * CRYSTALS] = { 0.0 };
    float ABEff[CLOVERS] = { 0.0 };
    float dABEff[CLOVERS] = { 0.0 };
+   // Arrays to store reference efficiencies
+   float SimABEffRef[CLOVERS] = { 0.0 };
+   float SimCrystalEffRef[CLOVERS * CRYSTALS] = { 0.0 };
+   float ExpABEffRef[CLOVERS] = { 0.0 };
+   float ExpCrystalEffRef[CLOVERS * CRYSTALS] = { 0.0 };
+   // X values for plots
    float CloverNumbers[CLOVERS];
    float CrystalNumbers[CLOVERS * CRYSTALS];
 
+   // Open output file:   
+   if (OUTPUT_EFF) {
+      std::string tempstring = Config.OutPath + Config.EffTxtOut;
+      EffOut.open(tempstring.c_str());
+   }
+
+   // set x values for plots
    for (Clover = 1; Clover <= CLOVERS; Clover++) {
       CloverNumbers[Clover - 1] = Clover;
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
@@ -285,11 +302,40 @@ void FinalCoincEff()
       }
    }
 
-   // Open a file to output efficiencies:   
-   if (OUTPUT_EFF) {
-      std::string tempstring = Config.OutPath + Config.EffTxtOut;
-      EffOut.open(tempstring.c_str());
+   // Set reference values for plots.
+   if(Config.Sim_Clover_AB_Eff.size() > 0) {
+      for (ReferenceValueMapIt Ref = Config.Sim_Clover_AB_Eff.begin(); Ref != Config.Sim_Clover_AB_Eff.end(); Ref++) {
+         Vect = Ref->first;
+         Val = Ref->second;
+         SimABEffRef[Vect.at(0)-1] = Val;
+      }
    }
+   if(Config.Exp_Clover_AB_Eff.size() > 0) {
+      for (ReferenceValueMapIt Ref = Config.Exp_Clover_AB_Eff.begin(); Ref != Config.Exp_Clover_AB_Eff.end(); Ref++) {
+         Vect = Ref->first;
+         Val = Ref->second;
+         ExpABEffRef[Vect.at(0)-1] = Val;
+      }
+   }
+   if(Config.Exp_Crystal_Eff.size() > 0) {
+      for (ReferenceValueMapIt Ref = Config.Exp_Crystal_Eff.begin(); Ref != Config.Exp_Crystal_Eff.end(); Ref++) {
+         Vect = Ref->first;
+         Val = Ref->second;
+         Clover = Vect.at(0);
+         Crystal = Vect.at(1);
+         ExpCrystalEffRef[((Clover - 1) * CRYSTALS) + Crystal] = Val;
+      }
+   }
+   if(Config.Sim_Crystal_Eff.size() > 0) {
+      for (ReferenceValueMapIt Ref = Config.Sim_Crystal_Eff.begin(); Ref != Config.Sim_Crystal_Eff.end(); Ref++) {
+         Vect = Ref->first;
+         Val = Ref->second;
+         Clover = Vect.at(0);
+         Crystal = Vect.at(1);
+         SimCrystalEffRef[((Clover - 1) * CRYSTALS) + Crystal] = Val;
+      }
+   }
+   
    // now fit 1332.5keV peak in gain matched spectra
    memset(&FitRes, 0.0, sizeof(FitResult));
    // First the clover add-back Spectra
@@ -356,34 +402,78 @@ void FinalCoincEff()
       }
    }
 
-   // Produce plots of efficiency
+   // Produce plots of crystal efficiency
    TGraphErrors CrystalEffPlot(CLOVERS * CRYSTALS, CrystalNumbers, CrystalEff, NULL, dCrystalEff);
    CrystalEffPlot.SetMarkerColor(2);
    CrystalEffPlot.SetMarkerStyle(20);
    CrystalEffPlot.SetMarkerSize(1.0);
    CrystalEffPlot.SetTitle("Crystal Efficiency");
+   CrystalEffPlot.SetName("Crys Eff");
    CrystalEffPlot.GetYaxis()->SetRange(0, 1);
    for (Clover = 1; Clover <= CLOVERS; Clover++) {
       //sprintf(str,"TIG%02dB",Clover);
       //CrystalEffPlot.GetXaxis()->SetBinLabel(((Clover-1)*(CRYSTALS+1)),str); 
    }
-
+   // Reference plots
+   TGraph SimCrystalEffPlot(CLOVERS, CloverNumbers, SimCrystalEffRef);
+   SimCrystalEffPlot.SetMarkerColor(4);
+   SimCrystalEffPlot.SetMarkerStyle(21);
+   SimCrystalEffPlot.SetMarkerSize(1.0);
+   SimCrystalEffPlot.SetTitle("Simulated Crystal Efficiency");
+   SimCrystalEffPlot.SetName("Sim Crys Eff");
+   SimCrystalEffPlot.GetYaxis()->SetRange(0, 1);
+   TGraph ExpCrystalEffPlot(CLOVERS, CloverNumbers, ExpCrystalEffRef);
+   ExpCrystalEffPlot.SetMarkerColor(4);
+   ExpCrystalEffPlot.SetMarkerStyle(21);
+   ExpCrystalEffPlot.SetMarkerSize(1.0);
+   ExpCrystalEffPlot.SetTitle("Reference Crystal Efficiency");
+   ExpCrystalEffPlot.SetName("Ref Crys Eff");
+   ExpCrystalEffPlot.GetYaxis()->SetRange(0, 1);
+   
+   // Produce plots of Clover AB efficiency
    TGraphErrors ABEffPlot(CLOVERS, CloverNumbers, ABEff, NULL, dABEff);
    ABEffPlot.SetMarkerColor(2);
    ABEffPlot.SetMarkerStyle(20);
    ABEffPlot.SetMarkerSize(1.0);
    ABEffPlot.SetTitle("Clover Add-back Efficiency");
+   ABEffPlot.SetName("Cl AB Eff");
    ABEffPlot.GetYaxis()->SetRange(0, 1);
    for (Clover = 1; Clover <= CLOVERS; Clover++) {
       //sprintf(str,"TIG%02d",Clover);
       //ABEffPlot.GetXaxis()->SetBinLabel(Clover,str); 
    }
-
+   // produce Reference plots
+   TGraph SimABEffPlot(CLOVERS, CloverNumbers, SimABEffRef);
+   SimABEffPlot.SetMarkerColor(4);
+   SimABEffPlot.SetMarkerStyle(21);
+   SimABEffPlot.SetMarkerSize(1.0);
+   SimABEffPlot.SetTitle("Simulated Clover Add-back Efficiency");
+   SimABEffPlot.SetName("Sim Cl AB Eff");
+   SimABEffPlot.GetYaxis()->SetRange(0, 1);
+   TGraph ExpABEffPlot(CLOVERS, CloverNumbers, ExpABEffRef);
+   ExpABEffPlot.SetMarkerColor(4);
+   ExpABEffPlot.SetMarkerStyle(21);
+   ExpABEffPlot.SetMarkerSize(1.0);
+   ExpABEffPlot.SetTitle("Reference Clover Add-back Efficiency");
+   ExpABEffPlot.SetName("Ref Cl AB Eff");
+   ExpABEffPlot.GetYaxis()->SetRange(0, 1);
+   
    // Write plots
    outfile->cd();
    CrystalEffPlot.Write();
    ABEffPlot.Write();
-
+   if(Config.Sim_Clover_AB_Eff.size() > 0) {
+      SimABEffPlot.Write();
+   }
+   if(Config.Exp_Clover_AB_Eff.size() > 0) {
+      ExpABEffPlot.Write();
+   }
+   if(Config.Exp_Crystal_Eff.size() > 0) {
+      ExpCrystalEffPlot.Write();
+   }
+   if(Config.Sim_Crystal_Eff.size() > 0) {
+      SimCrystalEffPlot.Write();
+   }
    // Write histograms
    dOther->cd();
    hTestSpectrum->Write();

@@ -518,18 +518,18 @@ int ReadConfigFile(std::string filename)
             continue;            
          }
       }
-      if (strcmp(Line.c_str(), "EXP_CLOVER_AB_EFF") == 0) {
-         if(ReadCloverRef(&File, &Config.Exp_Clover_AB_Eff) > 0) {
-            cout << "EXP_CLOVER_AB_EFF reference loaded";
-            cout << " (size = " <<  Config.Exp_Clover_AB_Eff.size() << ")" << endl;
+       if (strcmp(Line.c_str(), "SIM_CRYSTAL_EFF") == 0) {
+         if(ReadCrystalRef(&File, &Config.Sim_Crystal_Eff) > 0) {
+            cout << "SIM_CRYSTAL_EFF reference loaded";
+            cout << " (size = " <<  Config.Sim_Crystal_Eff.size() << ")" << endl;
             Items += 1;
             continue;            
          }
       }
-      if (strcmp(Line.c_str(), "SIM_CRYSTAL_EFF") == 0) {
-         if(ReadCrystalRef(&File, &Config.Sim_Crystal_Eff) > 0) {
-            cout << "SIM_CRYSTAL_EFF reference loaded";
-            cout << " (size = " <<  Config.Sim_Crystal_Eff.size() << ")" << endl;
+      if (strcmp(Line.c_str(), "EXP_CLOVER_AB_EFF") == 0) {
+         if(ReadCloverRef(&File, &Config.Exp_Clover_AB_Eff) > 0) {
+            cout << "EXP_CLOVER_AB_EFF reference loaded";
+            cout << " (size = " <<  Config.Exp_Clover_AB_Eff.size() << ")" << endl;
             Items += 1;
             continue;            
          }
