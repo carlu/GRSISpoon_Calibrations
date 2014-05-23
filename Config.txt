@@ -10,7 +10,17 @@
 # EXP_CRYSTAL_EFF
 
 # Parameters for fiting of peaks in calibration
+MAX_TIME
+36000.0
 
+TIME_BINS
+20
+
+FIT_TEMP_SPECTRA
+1
+
+FIT_FINAL_SPECTRA
+1
 
 # reference efficiency values at 1332.5keV 
 

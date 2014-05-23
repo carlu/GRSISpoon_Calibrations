@@ -141,6 +141,12 @@ struct RunConfig {              // this struct will hold all information
     std::string CalName;
     std::string AnaName;
    bool WriteFits;              // --cal: write histo after fits, --calof: write new file with histos and fits
+   // Gain drift/time dependent stuff
+   float MaxTime;        // in seconds, max time after start of run.
+   unsigned int TimeBins;
+   float TimeBinSize;
+   bool Fit_Temp_Spectra;
+   bool Fit_Final_Spectra;
    // What to plot
    bool PlotFits;
    bool CalibPlots[CLOVERS][CRYSTALS][SEGS + 2];        // records if fits should be plotted for each channel

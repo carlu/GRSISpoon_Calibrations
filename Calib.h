@@ -1,12 +1,4 @@
-// Stuff for time based analysis
-#define MAX_TIME 36000.0        // in seconds, max time after start of run.
-#define TIME_BINS 20            // timed energy spectra to collect data for this many seconds
-#define TIME_BIN_SIZE MAX_TIME/TIME_BINS
-#define FIT_TEMP_SPECTRA 1      // 1= find and fit peaks when time bin changes.  0= do not.
-#define FIT_FINAL_SPECTRA 1     // 1 = fit final spectra
-
 // General options
-#define NOTIFY_TIME_BIN 1       // print to stdout when spectra are reset
 #define VERBOSE 1               // print lots of info on peak search and fitting
 #define DEBUG 0                 // PRint Debugging messages to screen
 

@@ -93,10 +93,10 @@ int InitCalib()
          dOther->cd();
          sprintf(name, "TIG%02d%c Gain", Clover, Num2Col(Crystal));
          sprintf(title, "TIG%02d%c Gain vs Time", Clover, Num2Col(Crystal));
-         hCrystalGain[Clover - 1][Crystal] = new TH1F(name, title, TIME_BINS, 0, MAX_TIME);
+         hCrystalGain[Clover - 1][Crystal] = new TH1F(name, title, Config.TimeBins, 0, Config.MaxTime);
          sprintf(name, "TIG%02d%c Offset", Clover, Num2Col(Crystal));
          sprintf(title, "TIG%02d%c Offset vs Time", Clover + 1, Num2Col(Crystal));
-         hCrystalOffset[Clover - 1][Crystal] = new TH1F(name, title, TIME_BINS, 0, MAX_TIME);
+         hCrystalOffset[Clover - 1][Crystal] = new TH1F(name, title, Config.TimeBins, 0,Config.MaxTime);
          // Spectra for charge from FPGA
          dCharge->cd();
          Seg = 0;
@@ -131,7 +131,7 @@ int InitCalib()
    dOther->cd();
    sprintf(name, "Midas Time");
    sprintf(title, "Midas Timestamps (s)");
-   hMidasTime = new TH1F(name, title, TIME_BINS, 0, MAX_TIME);
+   hMidasTime = new TH1F(name, title, Config.TimeBins, 0, Config.MaxTime);
 
    if (PLOT_WAVE) {
       sprintf(name, "Wavetemp");
@@ -313,13 +313,13 @@ int Calib(std::vector < TTigFragment > &ev)
          hMidasTime->Fill(RunTimeElapsed);
          //cout << "Time: " << ctime(&MidasTime) << endl;
          // Have we moved on to a new time period?
-         if ((RunTimeElapsed - FitTimeElapsed >= TIME_BIN_SIZE) && FIT_TEMP_SPECTRA) {
+         if ((RunTimeElapsed - FitTimeElapsed >= Config.TimeBinSize) && Config.Fit_Temp_Spectra) {
 
-            TB = ((MidasTime - StartTime) / MAX_TIME);
-            TimeBin = TB * TIME_BINS;
+            TB = ((MidasTime - StartTime) / Config.MaxTime);
+            TimeBin = TB * Config.TimeBins;
 
             if (DEBUG) {
-               cout << "MT: " << MidasTime << " ST: " << StartTime << " MT: " << MAX_TIME << " TIME_BINS: " << TIME_BINS
+               cout << "MT: " << MidasTime << " ST: " << StartTime << " MT: " << Config.MaxTime << " TIME_BINS: " << Config.TimeBins
                    << " TB: " << TB << " TimeBin: " << TimeBin << endl;
             }
 

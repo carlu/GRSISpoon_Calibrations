@@ -24,7 +24,9 @@ RunConfig Config;
 // Load sensible defaults before reading any options
 int LoadDefaultSettings()
 {
-
+   // Settings related to how the code works
+   // ---------------------------------------
+   // Which parts of code to run
    Config.RunCalibration = 0;
    Config.RunSpecCal = 0;
    Config.RunEfficiency = 0;
@@ -33,27 +35,31 @@ int LoadDefaultSettings()
    Config.RunWaveform = 0;
    Config.RunDiffCrosstalk = 0;
 
+   // root output files
    Config.OutPath = "./";
-
-   Config.PrintBasic = 1;
-   Config.PrintFrequency = PRINT_FREQ;
-   Config.PrintVerbose = 0;
-
-   Config.EventLimit = MAX_EVENTS;
-
-   Config.ROOT_MaxVirtSize = ROOT_VIRT_SIZE;
-
+   // Information on energy and wave calibration files
    Config.EnergyCalibrationFile = "./ECal.txt";
    Config.HaveAltEnergyCalibration = 0;
    Config.WaveCalibrationFile = "./WCal.txt";
    Config.HaveWaveCalibration = 0;
-   
+   // What to print and how often
+   Config.PrintBasic = 1;
+   Config.PrintFrequency = PRINT_FREQ;
+   Config.PrintVerbose = 0;
+   // Limit on number of events
+   Config.EventLimit = MAX_EVENTS;
+   // ROOT stuff
+   Config.ROOT_MaxVirtSize = ROOT_VIRT_SIZE;
+   // Where to find the default config file   
    Config.ConfigFile = getenv("GRSISYS");
    Config.ConfigFile += "_Calibrations/Config.txt";
 
    // Global physics settings
    // ------------------------------------------
-
+   // Properties of waveforms stored in the data
+   Config.WaveformSamples = 200;
+   Config.WaveInitialSamples = 65;
+   Config.WaveFinalSamples = 65;
    // Source information
    float Sources[4][10] = {
       {1173.237, 1332.501},     // 60Co
@@ -84,11 +90,7 @@ int LoadDefaultSettings()
    }
    Config.Sources.push_back(SourceTemp);
 
-   // Properties of waveforms stored in the data
-   Config.WaveformSamples = 200;
-   Config.WaveInitialSamples = 65;
-   Config.WaveFinalSamples = 65;
-   // Thresholds
+   // Energy thresholds
    Config.EnergyThresh = 5;     // keV
    Config.ChargeThresh = 100;
    // Array mode
@@ -104,11 +106,18 @@ int LoadDefaultSettings()
    Config.CalListProvided = 0;
    // Output
    Config.CalOut = "CalibOut.root";     // Name for Tree calibration output file
-   Config.CalName = Config.CalOut.substr(0, Config.CalOut.size() - 5);  // name expected for hist calib input.  
-   // .root stripped because run number may exist 
+   Config.CalName = Config.CalOut.substr(0, Config.CalOut.size() - 5);  // name expected for hist calib input. 
+      // .root stripped because run number may exist 
    Config.AnaName = "his";
    Config.CalSpecOut = "CalibSpecOut.root";
    Config.WriteFits = 1;
+   // Gain drift/time dependent stuff
+   Config.MaxTime = 36000.0;
+   Config.TimeBins = 20;
+   Config.TimeBinSize = Config.MaxTime / Config.TimeBins;
+   Config.Fit_Temp_Spectra = 1;
+   Config.Fit_Final_Spectra = 1;
+   
    // Plots
    Config.PlotFits = 0;
    Config.PlotCalib = 0;
@@ -495,6 +504,9 @@ int ReadConfigFile(std::string filename)
    unsigned int Items = 0;       // count of lines in config file 
    unsigned int Comments = 0;    //   "      comments       "
    unsigned int Other = 0;
+   float ValF;
+   int ValI;
+   
    // See if file can be opened.
    File.open(filename,std::ifstream::in);
    if (!File) {  // If not loaded then return with error.
@@ -547,8 +559,24 @@ int ReadConfigFile(std::string filename)
       
       
       // Fit parameters
-      
-      
+      if (strcmp(Line.c_str(), "MAX_TIME")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%f", &ValF) == 1) {
+            Config.MaxTime = ValF;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
+      if (strcmp(Line.c_str(), "TIME_BINS")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%d", &ValI) == 1) {
+            Config.TimeBins = ValI;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
       // Other
       Other += 1;
       
