@@ -301,8 +301,8 @@ void FinalCoincEff()
          CrystalNumbers[((Clover - 1) * CRYSTALS) + Crystal] = ((Clover - 1) * CRYSTALS) + Crystal;
       }
    }
-
-   // Set reference values for plots.
+   // Set reference values for plots and report.
+   // Simulated Add-back
    if(Config.Sim_Clover_AB_Eff.size() > 0) {
       for (ReferenceValueMapIt Ref = Config.Sim_Clover_AB_Eff.begin(); Ref != Config.Sim_Clover_AB_Eff.end(); Ref++) {
          Vect = Ref->first;
@@ -310,6 +310,7 @@ void FinalCoincEff()
          SimABEffRef[Vect.at(0)-1] = Val;
       }
    }
+   // Experimental Add-back
    if(Config.Exp_Clover_AB_Eff.size() > 0) {
       for (ReferenceValueMapIt Ref = Config.Exp_Clover_AB_Eff.begin(); Ref != Config.Exp_Clover_AB_Eff.end(); Ref++) {
          Vect = Ref->first;
@@ -317,15 +318,7 @@ void FinalCoincEff()
          ExpABEffRef[Vect.at(0)-1] = Val;
       }
    }
-   if(Config.Exp_Crystal_Eff.size() > 0) {
-      for (ReferenceValueMapIt Ref = Config.Exp_Crystal_Eff.begin(); Ref != Config.Exp_Crystal_Eff.end(); Ref++) {
-         Vect = Ref->first;
-         Val = Ref->second;
-         Clover = Vect.at(0);
-         Crystal = Vect.at(1);
-         ExpCrystalEffRef[((Clover - 1) * CRYSTALS) + Crystal] = Val;
-      }
-   }
+   // Simulated crystal
    if(Config.Sim_Crystal_Eff.size() > 0) {
       for (ReferenceValueMapIt Ref = Config.Sim_Crystal_Eff.begin(); Ref != Config.Sim_Crystal_Eff.end(); Ref++) {
          Vect = Ref->first;
@@ -335,6 +328,17 @@ void FinalCoincEff()
          SimCrystalEffRef[((Clover - 1) * CRYSTALS) + Crystal] = Val;
       }
    }
+   // Experimental crystal
+   if(Config.Exp_Crystal_Eff.size() > 0) {
+      for (ReferenceValueMapIt Ref = Config.Exp_Crystal_Eff.begin(); Ref != Config.Exp_Crystal_Eff.end(); Ref++) {
+         Vect = Ref->first;
+         Val = Ref->second;
+         Clover = Vect.at(0);
+         Crystal = Vect.at(1);
+         ExpCrystalEffRef[((Clover - 1) * CRYSTALS) + Crystal] = Val;
+      }
+   }
+   
    
    // now fit 1332.5keV peak in gain matched spectra
    memset(&FitRes, 0.0, sizeof(FitResult));
@@ -526,7 +530,7 @@ void FitPeak(TH1F * Histo, float Min, float Max, FitResult * FitRes)
       FitRange->SetParameter(0, ConstEst);
       Centre = (Min + Max) / 2.0;
       FitRange->SetParameter(1, Centre);
-      FitRange->SetParameter(2, ENERGY_SIGMA_ZERO + ENERGY_SIGMA_1MEV);
+      FitRange->SetParameter(2, Config.EnergySigmaZero + Config.EnergySigma1MeV);
       BG = (Histo->GetBinContent(xaxis->FindBin(Min)) + Histo->GetBinContent(xaxis->FindBin(Max))) / 2.0;
       FitRange->SetParameter(3, BG);
 

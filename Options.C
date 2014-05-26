@@ -60,6 +60,8 @@ int LoadDefaultSettings()
    Config.WaveformSamples = 200;
    Config.WaveInitialSamples = 65;
    Config.WaveFinalSamples = 65;
+   // Charge evaluation
+   Config.Integration = INTEGRATION;
    // Source information
    float Sources[4][10] = {
       {1173.237, 1332.501},     // 60Co
@@ -111,12 +113,15 @@ int LoadDefaultSettings()
    Config.AnaName = "his";
    Config.CalSpecOut = "CalibSpecOut.root";
    Config.WriteFits = 1;
+   // Charge spectra
+   Config.ChargeBins = 16384;
+   Config.ChargeMax = 1500000;
+   Config.WaveChargeMax = 16384;
    // Gain drift/time dependent stuff
    Config.MaxTime = 36000.0;
    Config.TimeBins = 20;
    Config.TimeBinSize = Config.MaxTime / Config.TimeBins;
-   Config.Fit_Temp_Spectra = 1;
-   Config.Fit_Final_Spectra = 1;
+   Config.FitTempSpectra = 1;
    
    // Plots
    Config.PlotFits = 0;
@@ -124,8 +129,37 @@ int LoadDefaultSettings()
    Config.PlotResidual = 0;
    Config.PlotCalibSummary = 0;
    memset(&Config.CalibPlots, 0, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
-   // Calibrating options
+   // Peak Search stuff
+   Config.EnSearchThresh = 0.055;
+   Config.EnSearchSigma = 10;
+   Config.WaveSearchThresh = 0.01;
+   Config.WaveSearchSigma = 20;
+   // Energy/ch fitting 
+   // Estimate of gain for input of fit
+   Config.EnGainEst = 0.16;
+   Config.WaveGainEst = 0.6;
+   // Extra calibration point at 0 ch = 0 keV
    Config.FitZero = 0;
+   Config.ZeroErr = 0.01;
+   Config.ForceLinear = 0;         // force linear calibration, even if numlines > 2
+   // Peak fitting parameters
+   Config.MinFitCounts = 500;       // Minimum counts in whole spectrum for fit to be attempted
+   Config.FitWidth_keV = 15;       // Width of region either side of peak to be fitted
+   Config.FitBackground = 1;      // 1 = yes, 0 = no.  Should be best to use this all the time but left option there just in case.
+   Config.BackWidth_keV = 5;      // Width at each side of fit region to be used as background estimate
+   
+   // Initial values for custom fit functions
+   Config.EnergySigmaZero = 0.45;
+   Config.EnergySigma1MeV = 0.45; 
+   Config.WaveSigmaZero   = 1.5; 
+   Config.WaveSigma1MeV   = 0.4;
+   // Checks on fit quality
+   Config.GausHeightMin  = 10.0;
+   Config.GausCSPDMax    = 50.0;
+   Config.GausSigmaMin   = 250.0;
+   
+   // Manual peak select options
+   
    memset(&Config.ManualPeakSelect, 0, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
    Config.ManualPeakCorrection = 1;
 
@@ -530,18 +564,18 @@ int ReadConfigFile(std::string filename)
             continue;            
          }
       }
-       if (strcmp(Line.c_str(), "SIM_CRYSTAL_EFF") == 0) {
-         if(ReadCrystalRef(&File, &Config.Sim_Crystal_Eff) > 0) {
-            cout << "SIM_CRYSTAL_EFF reference loaded";
-            cout << " (size = " <<  Config.Sim_Crystal_Eff.size() << ")" << endl;
-            Items += 1;
-            continue;            
-         }
-      }
       if (strcmp(Line.c_str(), "EXP_CLOVER_AB_EFF") == 0) {
          if(ReadCloverRef(&File, &Config.Exp_Clover_AB_Eff) > 0) {
             cout << "EXP_CLOVER_AB_EFF reference loaded";
             cout << " (size = " <<  Config.Exp_Clover_AB_Eff.size() << ")" << endl;
+            Items += 1;
+            continue;            
+         }
+      }
+      if (strcmp(Line.c_str(), "SIM_CRYSTAL_EFF") == 0) {
+         if(ReadCrystalRef(&File, &Config.Sim_Crystal_Eff) > 0) {
+            cout << "SIM_CRYSTAL_EFF reference loaded";
+            cout << " (size = " <<  Config.Sim_Crystal_Eff.size() << ")" << endl;
             Items += 1;
             continue;            
          }
@@ -556,9 +590,39 @@ int ReadConfigFile(std::string filename)
       }
       
       // Reference values for resolutions
+      if (strcmp(Line.c_str(), "CRYSTAL_FHWM_1332") == 0) {
+         if(ReadCrystalRef(&File, &Config.Crystal_FWHM_1332) > 0) {
+            cout << "CRYSTAL_FHWM_1332 reference loaded";
+            cout << " (size = " <<  Config.Crystal_FWHM_1332.size() << ")" << endl;
+            Items += 1;
+            continue;            
+         }
+      }
       
+      // Physics/DAQ Settings
+      if (strcmp(Line.c_str(), "INTEGRATION")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%d", &ValI) == 1) {
+            Config.Integration = ValI;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
       
-      // Fit parameters
+      // Calibration/fit parameters
+      // ----------------------------
+      // Fit temporary spectra during --cal run for gain drift check?
+      if (strcmp(Line.c_str(), "FIT_TEMP_SPECTRA")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%d", &ValI) == 1) {
+            Config.FitTempSpectra = ValI;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
+      // Time spectra properties
       if (strcmp(Line.c_str(), "MAX_TIME")==0) {
          getline(File,Line);
          if(sscanf(Line.c_str(), "%f", &ValF) == 1) {
@@ -577,6 +641,195 @@ int ReadConfigFile(std::string filename)
          else {Other += 1;}
          continue;
       }
+      // Charge spectra properties
+      if (strcmp(Line.c_str(), "CHARGE_BINS")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%d", &ValI) == 1) {
+            Config.ChargeBins = ValI;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
+      if (strcmp(Line.c_str(), "CHARGE_MAX")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%f", &ValF) == 1) {
+            Config.ChargeMax = ValF;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
+      if (strcmp(Line.c_str(), "WAVE_CHARGE_MAX")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%f", &ValF) == 1) {
+            Config.WaveChargeMax = ValF;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
+      // Peak Search
+      // Peak Search stuff
+      if (strcmp(Line.c_str(), "EN_SEARCH_THRESH")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%f", &ValF) == 1) {
+            Config.EnSearchThresh = ValF;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
+      if (strcmp(Line.c_str(), "EN_SEARCH_SIGMA")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%f", &ValF) == 1) {
+            Config.EnSearchSigma = ValF;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
+      if (strcmp(Line.c_str(), "WAVE_SEARCH_THRESH")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%f", &ValF) == 1) {
+            Config.WaveSearchThresh = ValF;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
+      if (strcmp(Line.c_str(), "WAVE_SEARCH_SIGMA")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%f", &ValF) == 1) {
+            Config.WaveSearchSigma = ValF;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
+      if (strcmp(Line.c_str(), "EN_GAIN_EST")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%f", &ValF) == 1) {
+            Config.EnGainEst = ValF;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
+      if (strcmp(Line.c_str(), "WAVE_GAIN_EST")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%f", &ValF) == 1) {
+            Config.WaveGainEst = ValF;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
+      // Peak fitting
+      if (strcmp(Line.c_str(), "MIN_FIT_COUNTS")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%d", &ValI) == 1) {
+            Config.MinFitCounts = ValI;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
+      if (strcmp(Line.c_str(), "FIT_WIDTH_KEV")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%f", &ValF) == 1) {
+            Config.FitWidth_keV = ValF;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
+      if (strcmp(Line.c_str(), "BACK_WIDTH_KEV")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%f", &ValF) == 1) {
+            Config.BackWidth_keV = ValF;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
+      if (strcmp(Line.c_str(), "FIT_BACKGROUND")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%d", &ValI) == 1) {
+            Config.FitBackground = ValI;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
+      if (strcmp(Line.c_str(), "ENERGY_SIGMA_ZERO")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%f", &ValF) == 1) {
+            Config.EnergySigmaZero = ValF;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
+      if (strcmp(Line.c_str(), "ENERGY_SIGMA_1MEV")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%f", &ValF) == 1) {
+            Config.EnergySigma1MeV = ValF;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
+      if (strcmp(Line.c_str(), "WAVE_SIGMA_ZERO")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%f", &ValF) == 1) {
+            Config.WaveSigmaZero = ValF;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
+      if (strcmp(Line.c_str(), "WAVE_SIGMA_1MEV")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%f", &ValF) == 1) {
+            Config.WaveSigma1MeV = ValF;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
+      if (strcmp(Line.c_str(), "GAUS_HEIGHT_MIN")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%f", &ValF) == 1) {
+            Config.GausHeightMin = ValF;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
+      if (strcmp(Line.c_str(), "GAUS_CSPD_MAX")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%f", &ValF) == 1) {
+            Config.GausCSPDMax = ValF;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
+      if (strcmp(Line.c_str(), "GAUS_SIGMA_MIN")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%f", &ValF) == 1) {
+            Config.GausSigmaMin = ValF;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
+      
+      if (strcmp(Line.c_str(), "")!=0) {
+         cout << "WARNING: Unable to idenify configuration item: " << Line.c_str() << " skipping..." << endl;
+      }
+      
       // Other
       Other += 1;
       

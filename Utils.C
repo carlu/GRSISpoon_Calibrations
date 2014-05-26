@@ -121,8 +121,8 @@ float CalibrateEnergy(int Charge, std::vector < float >Coefficients)
    if (Coefficients.size() == 0) {
       return ChargeF;
    }
-   if (INTEGRATION != 0) {
-      TempInt = INTEGRATION;
+   if (Config.Integration != 0) {
+      TempInt = Config.Integration;
    }
    for (unsigned int i = 0; i < Coefficients.size(); i++) {
       Energy += Coefficients[i] * pow((ChargeF / TempInt), i);

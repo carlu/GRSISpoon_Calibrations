@@ -1,46 +1,12 @@
 // General options
-#define VERBOSE 1               // print lots of info on peak search and fitting
 #define DEBUG 0                 // PRint Debugging messages to screen
-
-// Plotting
-#define PLOT_FITS 0             // plot fits, all chans plotted if below items = 0
-#define PLOT_CLOVER 0           // select 1-16 to plot that only
-#define PLOT_CRYSTAL 0          // 1-4
-#define PLOT_SEG 0              //  1-10
-#define PLOT_CALIB 0            // Plot calibration
-#define PLOT_RESIDUAL 0
-#define PLOT_CALIB_SUMMARY 1    // Plot and histo of calibration values
 
 // Charge spectra stuff
 //#define INTEGRATION 125 // Integration factor applied to charge values
       // This definition moved to main.h
 
 #define MAX_LINES 12            // Maximum number of lines for any source
-
-#define CHARGE_BINS 16384
-#define CHARGE_MAX 1500000
-
-// Use waveform energy
-#define PLOT_WAVE 0
-#define WAVE_CHARGE_MAX 16384
-
 #define MAX_TOTAL_LINES 25      // maximum number of gamma lines to be fitted across all source
-
-// Extra calibration point at 0 ch = 0 keV
-#define INCLUDE_ZERO 0          // Add an extra calibration point at 0ch = 0 keV
-#define FORCE_LINEAR 0          // Forces gain output file to use linear fit, even if more than 2 lines fitted
-#define ZERO_ERR 0.01
-
-// Peak Fitting
-#define MIN_FIT_COUNTS 500      // Minimum counts in whole spectrum for fit to be attempted
-#define FIT_WIDTH_KEV 15
-#define FIT_BACKGROUND 1        // 1 = yes, 0 = no.  Should be best to use this all the time but left option there just in case.
-#define BACK_WIDTH_KEV 10
-
-// Energy/ch fitting 
-// Estimate of gain for input of fit
-#define EN_GAIN_EST 0.16        // will need modifting for any change of digitiser shaping paramas or different preamps
-#define WAVE_GAIN_EST 0.6       //  will need modifying for high/low gain TIG10 or dfferent preamps
 
 struct FitSettings {
    int Source;                  // Source number

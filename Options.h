@@ -29,38 +29,13 @@
 
 // Information for calib and eff
 // --------------------------------------------
-// Peaks
-#define SOURCE_NUM_FRONT 0      //1 // Source for front segments and core 0=60Co, 1=152Eu, 2=152Eu (no 121)
-#define SOURCE_NUM_BACK 0       //2 // Source for back segments
-#define SOURCE_NUM_CORE 0       //1 // Source for core
-#define NUM_LINES 2             // Number of lines to fit
 
-// Peak Search stuff
-#define EN_SEARCH_THRESH 0.055  //0.0028  // minimum peak height for search as frac of max peak height
-                                 // It seems as if this value needs to be much lower than the actual minimum peak height
-#define EN_SEARCH_SIGMA 10      //50 // Expected sigma of peaks
-#define WAVE_SEARCH_THRESH 0.01 //0.0028  // minimum peak height for search as frac of max peak height
-                                 // It seems as if this value needs to be much lower than the actual minimum peak height
-#define WAVE_SEARCH_SIGMA 20    //50 // Expected sigma of peaks
-#define MIN_GAIN 0.125          // = 0.075 / 125    // These values cover from 0.5x to 2x the typical TIGRESS gain
-#define MAX_GAIN 0.172          // 0.3 / 125
-#define MIN_GAIN_WAVE 0.6       // = 0.075 / 125    // These values cover from 0.5x to 2x the typical TIGRESS gain
-#define MAX_GAIN_WAVE 0.7       // 0.3 / 125
-
-// Initial values for custom fit functions
-// These only effect the custom functions used if FIT_BACKGROUND == 1
-#define GAUS_CONST_INITIAL 100  // initial guess for peak height
-#define ENERGY_SIGMA_ZERO 0.45  // sigma of peaks in keV at zero energy.
-#define ENERGY_SIGMA_1MEV 0.45  // increase in sigma from zero to 1MeV, roughly same as sigma at 0, also in keV.
-#define WAVE_SIGMA_ZERO 1.5     // estimated sigma, in keV, at zero, in wave emergy spectrum
-#define WAVE_SIGMA_1MEV 0.4     // increase in sigma, in keV, from 0 to 1MeV
-// Checks on fit quality
-#define GAUS_HEIGHT_MIN 10      // minimum peak height for fit to be used in calibration
-#define GAUS_CSPD_MAX 50        // maximum CSPD for peak to be used in calibration
-#define GAUS_SIGMA_MIN 250      // fits with sigma below this will be ignored
-                               // will use abs(sigma) for test as some peaks seem to converge on sensible but -ve sigma
-
-
+// Plotting
+#define PLOT_FITS 0             // plot fits, all chans plotted if below items = 0
+#define PLOT_CALIB 0            // Plot calibration
+#define PLOT_RESIDUAL 0
+#define PLOT_CALIB_SUMMARY 1    // Plot and histo of calibration values
+#define PLOT_WAVE 0
 
 // Other info for calibration code
 #define FIT_EN 1                //
@@ -112,6 +87,8 @@ struct RunConfig {              // this struct will hold all information
    unsigned int WaveformSamples;
    unsigned int WaveInitialSamples;
    unsigned int WaveFinalSamples;
+   // integration in charge evaluation
+   unsigned int Integration;
    // source Information
     std::vector < std::vector < float >>Sources;
     std::vector < int >SourceNumCore;
@@ -122,7 +99,6 @@ struct RunConfig {              // this struct will hold all information
    int ChargeThresh;
    // Array mode
    bool HighEffMode;            // 1 if TIGRESS is in high eff mode (11cm), 0 if in high peak/total (14.5cm)
-
 
    // Physics settings for individual functions
    // ------------------------------------------
@@ -145,20 +121,53 @@ struct RunConfig {              // this struct will hold all information
    float MaxTime;        // in seconds, max time after start of run.
    unsigned int TimeBins;
    float TimeBinSize;
-   bool Fit_Temp_Spectra;
-   bool Fit_Final_Spectra;
+   bool FitTempSpectra;  // should the temporary charge spectra be fitted for gain drift check
+   // Charge spectra
+   int ChargeBins;
+   float ChargeMax;
+   float WaveChargeMax;
    // What to plot
    bool PlotFits;
    bool CalibPlots[CLOVERS][CRYSTALS][SEGS + 2];        // records if fits should be plotted for each channel
    bool PlotCalib;
    bool PlotResidual;
    bool PlotCalibSummary;
+   // Fit Options
+   // Peak Search stuff (passed to ROOT's TSpectrum->Search() method)
+   float EnSearchThresh;
+   float EnSearchSigma;
+   float WaveSearchThresh;
+   float WaveSearchSigma;
+   // Energy/ch fitting 
+   // Estimate of gain for input of fit
+   float EnGainEst;
+   float WaveGainEst;
+   // Extra calibration point at 0 ch = 0 keV
+   // Peak Fitting
+   unsigned int MinFitCounts;  // Minimum counts in whole spectrum for fit to be attempted
+   float FitWidth_keV;           // Width of region either side of peak to be fitted
+   bool FitBackground;           // 1 = yes, 0 = no.  Should be best to use this all the time but left option there just in case.
+   float BackWidth_keV; 
+   
+   // Initial values for custom fit functions
+   // These only effect the custom functions used if FIT_BACKGROUND == 1
+   float EnergySigmaZero;
+   float EnergySigma1MeV; 
+   float WaveSigmaZero; 
+   float WaveSigma1MeV;
+   // Checks on fit quality
+   float GausHeightMin;
+   float GausCSPDMax;
+   float GausSigmaMin;
+   
    // Calibration options
    bool FitZero;                // Add extra calibration point at 0ch = 0keV
+   float ZeroErr;
+   bool ForceLinear;         // force linear calibration, even if numlines > 2
    bool ManualPeakSelect[CLOVERS][CRYSTALS][SEGS + 2];  // records if manual peak selection should be used
    bool ManualPeakCorrection;   // Manual peak selection if auto fails
    // Reference 
-   ReferenceValueMap Crystal_FWHM;
+   ReferenceValueMap Crystal_FWHM_1332;  // # CRYSTAL_FHWM_1332
 
    // CoincEff()
    // What to plot
@@ -169,8 +178,8 @@ struct RunConfig {              // this struct will hold all information
     std::string EffTxtOut;
    // Reference values
    ReferenceValueMap Sim_Clover_AB_Eff;  // # SIM_CLOVER_AB_EFF
-   ReferenceValueMap Sim_Crystal_Eff;    // # SIM_CRYSTAL_EFF
    ReferenceValueMap Exp_Clover_AB_Eff;  // # EXP_CLOVER_AB_EFF
+   ReferenceValueMap Sim_Crystal_Eff;    // # SIM_CRYSTAL_EFF
    ReferenceValueMap Exp_Crystal_Eff;    // # EXP_CRYSTAL_EFF
    
    bool EffHaveSimRef;

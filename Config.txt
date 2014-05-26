@@ -9,7 +9,11 @@
 # EXP_CLOVER_AB_EFF
 # EXP_CRYSTAL_EFF
 
-# Parameters for fiting of peaks in calibration
+# Physics/DAQ Settings
+INTEGRATION
+125
+
+# Parameters for Calibration and fitting functions
 MAX_TIME
 36000.0
 
@@ -19,8 +23,60 @@ TIME_BINS
 FIT_TEMP_SPECTRA
 1
 
-FIT_FINAL_SPECTRA
-1
+CHARGE_BINS
+16384
+
+CHARGE_MAX
+1500000
+
+WAVE_CHARGE_MAX
+16384
+
+# Peak Search stuff
+EN_SEARCH_THRESH
+0.055  
+
+EN_SEARCH_SIGMA
+10
+
+WAVE_SEARCH_THRESH
+0.01 
+
+WAVE_SEARCH_SIGMA
+20
+
+EN_GAIN_EST
+0.16        
+
+WAVE_GAIN_EST
+0.6
+
+ENERGY_SIGMA_ZERO
+0.45
+
+ENERGY_SIGMA_1MEV
+0.45  
+
+WAVE_SIGMA_ZERO
+1.5     
+
+WAVE_SIGMA_1MEV
+0.4 
+
+# Checks on fit quality
+
+GAUS_HEIGHT_MIN
+10    
+
+GAUS_CSPD_MAX
+50
+
+GAUS_SIGMA_MIN
+250
+
+# minimum counts for fitting of histogram to be attempted
+MIN_FIT_COUNTS
+500
 
 # reference efficiency values at 1332.5keV 
 
@@ -41,6 +97,24 @@ SIM_CLOVER_AB_EFF
 14 0.5
 15 0.5
 16 0.5
+
+EXP_CLOVER_AB_EFF
+1 0.75
+2 0.75
+3 0.75
+4 0.75
+5 0.75
+6 0.75
+7 0.75
+8 0.75
+9 0.75
+10 0.75
+11 0.75
+12 0.75
+13 0.75
+14 0.75
+15 0.75
+16 0.75
 
 SIM_CRYSTAL_EFF
 1 0 0.06
@@ -108,24 +182,6 @@ SIM_CRYSTAL_EFF
 16 2 0.06
 16 3 0.06
 
-EXP_CLOVER_AB_EFF
-1 0.75
-2 0.75
-3 0.75
-4 0.75
-5 0.75
-6 0.75
-7 0.75
-8 0.75
-9 0.75
-10 0.75
-11 0.75
-12 0.75
-13 0.75
-14 0.75
-15 0.75
-16 0.75
-
 EXP_CRYSTAL_EFF
 1 0 0.065
 1 1 0.065
@@ -192,7 +248,71 @@ EXP_CRYSTAL_EFF
 16 2 0.065
 16 3 0.065
 
-
+CRYSTAL_FHWM_1332
+1 0 2.3
+1 1 2.3
+1 2 2.3
+1 3 2.3
+2 0 2.3
+2 1 2.3
+2 2 2.3
+2 3 2.3
+3 0 2.3
+3 1 2.3
+3 2 2.3
+3 3 2.3
+4 0 2.3
+4 1 2.3
+4 2 2.3
+4 3 2.3
+5 0 2.3
+5 1 2.3
+5 2 2.3
+5 3 2.3
+6 0 2.3
+6 1 2.3
+6 2 2.3
+6 3 2.3
+7 0 2.3
+7 1 2.3
+7 2 2.3
+7 3 2.3
+8 0 2.3
+8 1 2.3
+8 2 2.3
+8 3 2.3
+9 0 2.3
+9 1 2.3
+9 2 2.3
+9 3 2.3
+10 0 2.3
+10 1 2.3
+10 2 2.3
+10 3 2.3
+11 0 2.3
+11 1 2.3
+11 2 2.3
+11 3 2.3
+12 0 2.3
+12 1 2.3
+12 2 2.3
+12 3 2.3
+13 0 2.3
+13 1 2.3
+13 2 2.3
+13 3 2.3
+14 0 2.3
+14 1 2.3
+14 2 2.3
+14 3 2.3
+15 0 2.3
+15 1 2.3
+15 2 2.3
+15 3 2.3
+16 0 2.3
+16 1 2.3
+16 2 2.3
+16 3 2.3
 
 
 

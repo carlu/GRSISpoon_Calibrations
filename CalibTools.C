@@ -270,7 +270,7 @@ int CalibrateFiles()
 
                // Now print reports on results of fits and calibration.
                if (Cal.LinesUsed > 1 && CalibSuccess == 0) {
-                  if (Cal.LinesUsed < 3 || FORCE_LINEAR) {
+                  if (Cal.LinesUsed < 3 || Config.ForceLinear) {
                      GainOut << Settings.OutputName << ":\t" << Cal.LinGainFit[0];
                      GainOut << "\t" << Cal.LinGainFit[1] << endl;
                   } else {
@@ -342,7 +342,7 @@ int CalibrateFiles()
                }
                // Now print reports on results of fits and calibration.
                if (Cal.LinesUsed > 1 && CalibSuccess == 0) {
-                  if (Cal.LinesUsed < 3 || FORCE_LINEAR) {
+                  if (Cal.LinesUsed < 3 || Config.ForceLinear) {
                      WaveOut << Settings.OutputName << ":\t" << Cal.LinGainFit[0];
                      WaveOut << "\t" << Cal.LinGainFit[1] << endl;
                   } else {
@@ -639,7 +639,7 @@ int FitGammaSpectrum(TH1F * Histo, HistoFit * Fit, HistoCal * Cal, FitSettings S
    if (Config.PrintVerbose) {
       cout << "\tIntegral: " << Integral;
    }
-   if (Integral > MIN_FIT_COUNTS) {
+   if (Integral > Config.MinFitCounts) {
 
       if (Settings.PlotOn || Settings.PeakSelect || Settings.BackupPeakSelect) {
          cCalib1->cd(1);
@@ -881,8 +881,8 @@ int FitSinglePeak(TH1F * Histo, int Line, float Centre, TF1 * FitRange, FitResul
 
    // Find min, max, and other things needed for the fit
    // In keV....
-   MinkeV = float (Config.Sources[Settings.Source][Line] - FIT_WIDTH_KEV);
-   MaxkeV = float (Config.Sources[Settings.Source][Line] + FIT_WIDTH_KEV);
+   MinkeV = float (Config.Sources[Settings.Source][Line] - Config.FitWidth_keV);
+   MaxkeV = float (Config.Sources[Settings.Source][Line] + Config.FitWidth_keV);
    // In charge/ADC units
    Min = MinkeV * (Centre / Config.Sources[Settings.Source][Line]);
    Max = MaxkeV * (Centre / Config.Sources[Settings.Source][Line]);
@@ -900,7 +900,7 @@ int FitSinglePeak(TH1F * Histo, int Line, float Centre, TF1 * FitRange, FitResul
       }
    }
    // find number of bins to be used for initial background estimate
-   BackBins = int (BACK_WIDTH_KEV * (Centre / Config.Sources[Settings.Source][Line]) * Settings.Dispersion);
+   BackBins = int (Config.BackWidth_keV * (Centre / Config.Sources[Settings.Source][Line]) * Settings.Dispersion);
    // Find the estimate for sigma
    SigmaZero = (Settings.SigmaEstZero * (Centre / Config.Sources[Settings.Source][Line]));
    Sigma1MeV = (Settings.SigmaEst1MeV * (Centre / Config.Sources[Settings.Source][Line]));
@@ -914,7 +914,7 @@ int FitSinglePeak(TH1F * Histo, int Line, float Centre, TF1 * FitRange, FitResul
       cCalib1->cd();
    }
 
-   if (FIT_BACKGROUND == 0) {
+   if (Config.FitBackground == 0) {
       FitRange = new TF1("GausFit", "gaus", Min, Max);
       //FitRange->SetParLimits(2,GAUS_SIGMA_MIN,GAUS_SIGMA_MAX);
    } else {
@@ -966,7 +966,7 @@ int FitSinglePeak(TH1F * Histo, int Line, float Centre, TF1 * FitRange, FitResul
    if (Settings.PlotOn || Config.PrintVerbose) {
       cout << "Peak " << Line << " Params: " << FitRes->Const << " " << FitRes->Mean << " " << FitRes->Sigma << endl;
       cout << "Peak " << Line << " Errors: " << FitRes->dConst << " " << FitRes->dMean << " " << FitRes->dSigma << endl;
-      if (FIT_BACKGROUND == 1) {
+      if (Config.FitBackground == 1) {
          cout << "Background = " << FitRange->GetParameter(3) << endl;
       }
       cout << "ChiSq: " << FitRes->ChiSq << " NDF: " << FitRes->NDF << " CSPD: " << FitRes->ChiSq /
@@ -1014,8 +1014,8 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings, HistoFit * Fit, H
 
       Fit->PeakFits.push_back(LineFit); // Store fit for use in calibration and report 
 
-      if (LineFit.Const > GAUS_HEIGHT_MIN) {    // Enough counts?
-         if ((LineFit.ChiSq / LineFit.NDF) < GAUS_CSPD_MAX) {   // Good enouhg fit?
+      if (LineFit.Const > Config.GausHeightMin) {    // Enough counts?
+         if ((LineFit.ChiSq / LineFit.NDF) < Config.GausCSPDMax) {   // Good enouhg fit?
             // If passed, add this fit to calibration points
             Energies[LinesUsed] = Energy;
             dEnergies[LinesUsed] = 0.0; // ignore error here for now.
@@ -1044,7 +1044,7 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings, HistoFit * Fit, H
       Energies[LinesUsed] = 0.0;
       dEnergies[LinesUsed] = 0.0;
       Centroids[LinesUsed] = 0.0;
-      dCentroids[LinesUsed] = ZERO_ERR;
+      dCentroids[LinesUsed] = Config.ZeroErr;
       if (Config.PrintVerbose) {
          cout << Energies[LinesUsed] << " keV\t" << Centroids[LinesUsed] << " +/- " << dCentroids[LinesUsed] <<
              " ch" << endl;
@@ -1089,13 +1089,13 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings, HistoFit * Fit, H
       cout << endl;
    }
    // Set up fit functions
-   TF1 *CalibFitLin = new TF1("CalibFitLin", "[0] + ([1]*x)", 0.0, CHARGE_MAX);
+   TF1 *CalibFitLin = new TF1("CalibFitLin", "[0] + ([1]*x)", 0.0, Config.ChargeMax);
    CalibFitLin->SetParName(0, "Offset");
    CalibFitLin->SetParName(1, "Gain");
    CalibFitLin->SetParameter(0, 0.0);
    CalibFitLin->SetParameter(1, Settings.GainEst);
    CalibFitLin->SetLineColor(4);        // Blue?
-   TF1 *CalibFitQuad = new TF1("CalibFitQuad", "[0] + ([1]*x) + ([2]*x*x)", 0.0, CHARGE_MAX);
+   TF1 *CalibFitQuad = new TF1("CalibFitQuad", "[0] + ([1]*x) + ([2]*x*x)", 0.0, Config.ChargeMax);
    CalibFitQuad->SetParName(0, "Offset");
    CalibFitQuad->SetParName(1, "Gain");
    CalibFitQuad->SetParName(2, "Quad");
@@ -1263,21 +1263,21 @@ int ConfigureEnergyFit(int Clover, int Crystal, int Seg, int FileType, int FileN
 
    if (FileType == 1) {
       Settings->Integration = INTEGRATION;
-      Settings->Dispersion = float (CHARGE_BINS) / float (CHARGE_MAX);
+      Settings->Dispersion = float (Config.ChargeBins) / float (Config.ChargeMax);
    }
    if (FileType == 2) {         // histogram file from analyser
       Settings->Integration = 1;
       Settings->Dispersion = 1;
    }
 
-   Settings->SearchSigma = EN_SEARCH_SIGMA;
-   Settings->SearchThresh = EN_SEARCH_THRESH;
-   Settings->SigmaEstZero = ENERGY_SIGMA_ZERO;
-   Settings->SigmaEst1MeV = ENERGY_SIGMA_1MEV;
+   Settings->SearchSigma = Config.EnSearchSigma;
+   Settings->SearchThresh = Config.EnSearchThresh;
+   Settings->SigmaEstZero =Config.EnergySigmaZero;
+   Settings->SigmaEst1MeV = Config.EnergySigma1MeV;
    Settings->FitZero = Config.FitZero;
    Settings->BackupPeakSelect = 0;
    Settings->TempFit = 0;
-   Settings->GainEst = EN_GAIN_EST;
+   Settings->GainEst = Config.EnGainEst;
 
    return 0;
 }
@@ -1324,15 +1324,15 @@ int ConfigureWaveEnFit(int Clover, int Crystal, int Seg, int FileType, int FileN
    }
 
    Settings->Integration = 1;
-   Settings->Dispersion = float (CHARGE_BINS) / float (WAVE_CHARGE_MAX);
-   Settings->SearchSigma = WAVE_SEARCH_SIGMA;
-   Settings->SearchThresh = WAVE_SEARCH_THRESH;
-   Settings->SigmaEstZero = WAVE_SIGMA_ZERO;
-   Settings->SigmaEst1MeV = WAVE_SIGMA_1MEV;
+   Settings->Dispersion = float (Config.ChargeBins) / float (Config.WaveChargeMax);
+   Settings->SearchSigma = Config.WaveSearchSigma;
+   Settings->SearchThresh = Config.WaveSearchThresh;
+   Settings->SigmaEstZero = Config.WaveSigmaZero;
+   Settings->SigmaEst1MeV = Config.WaveSigma1MeV;
    Settings->FitZero = Config.FitZero;
    Settings->BackupPeakSelect = 0;
    Settings->TempFit = 0;
-   Settings->GainEst = WAVE_GAIN_EST;
+   Settings->GainEst = Config.WaveGainEst;
 
    return 0;
 }

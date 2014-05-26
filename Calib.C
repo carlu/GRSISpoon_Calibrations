@@ -88,7 +88,7 @@ int InitCalib()
          dTemp->cd();
          sprintf(name, "TIG%02d%c Tmp Chg", Clover, Num2Col(Crystal));
          sprintf(title, "TIG%02d%c Temp Core Charge (arb)", Clover, Num2Col(Crystal));
-         hCrystalChargeTemp[Clover - 1][Crystal] = new TH1F(name, title, CHARGE_BINS, 0, CHARGE_MAX);
+         hCrystalChargeTemp[Clover - 1][Crystal] = new TH1F(name, title, Config.ChargeBins, 0, Config.ChargeMax);
          // histo for record of calibration from temp spectra
          dOther->cd();
          sprintf(name, "TIG%02d%c Gain", Clover, Num2Col(Crystal));
@@ -102,28 +102,28 @@ int InitCalib()
          Seg = 0;
          sprintf(name, "TIG%02d%cN%02da Chg", Clover, Num2Col(Crystal), Seg);
          sprintf(title, "TIG%02d%cN%02da Charge (arb)", Clover, Num2Col(Crystal), Seg);
-         hCharge[Clover - 1][Crystal][Seg] = new TH1F(name, title, CHARGE_BINS, 0, CHARGE_MAX);
+         hCharge[Clover - 1][Crystal][Seg] = new TH1F(name, title, Config.ChargeBins, 0, Config.ChargeMax);
          sprintf(name, "TIG%02d%cN%02db Chg", Clover, Num2Col(Crystal), Seg);
          sprintf(title, "TIG%02d%cN%02db Charge (arb)", Clover, Num2Col(Crystal), Seg);
-         hCharge[Clover - 1][Crystal][9] = new TH1F(name, title, CHARGE_BINS, 0, CHARGE_MAX);
+         hCharge[Clover - 1][Crystal][9] = new TH1F(name, title, Config.ChargeBins, 0, Config.ChargeMax);
          for (Seg = 1; Seg <= SEGS; Seg++) {
             sprintf(name, "TIG%02d%cP%02dx Chg", Clover, Num2Col(Crystal), Seg);
             sprintf(title, "TIG%02d%cP%02dx Charge (arb)", Clover, Num2Col(Crystal), Seg);
-            hCharge[Clover - 1][Crystal][Seg] = new TH1F(name, title, CHARGE_BINS, 0, CHARGE_MAX);
+            hCharge[Clover - 1][Crystal][Seg] = new TH1F(name, title, Config.ChargeBins, 0, Config.ChargeMax);
          }
          // and charge derived from waveform
          dWaveCharge->cd();
          Seg = 0;
          sprintf(name, "TIG%02d%cN%02da WaveChg", Clover, Num2Col(Crystal), Seg);
          sprintf(title, "TIG%02d%cN%02da Waveform Charge (arb)", Clover, Num2Col(Crystal), Seg);
-         hWaveCharge[Clover - 1][Crystal][Seg] = new TH1F(name, title, CHARGE_BINS, 0, WAVE_CHARGE_MAX);
+         hWaveCharge[Clover - 1][Crystal][Seg] = new TH1F(name, title, Config.ChargeBins, 0, Config.WaveChargeMax);
          sprintf(name, "TIG%02d%cN%02db WaveChg", Clover, Num2Col(Crystal), Seg);
          sprintf(title, "TIG%02d%cN%02db Waveform Charge (arb)", Clover, Num2Col(Crystal), Seg);
-         hWaveCharge[Clover - 1][Crystal][9] = new TH1F(name, title, CHARGE_BINS, 0, WAVE_CHARGE_MAX);
+         hWaveCharge[Clover - 1][Crystal][9] = new TH1F(name, title, Config.ChargeBins, 0, Config.WaveChargeMax);
          for (Seg = 1; Seg <= SEGS; Seg++) {
             sprintf(name, "TIG%02d%cP%02dx WaveChg", Clover, Num2Col(Crystal), Seg);
             sprintf(title, "TIG%02d%cP%02dx Waveform Charge (arb)", Clover, Num2Col(Crystal), Seg);
-            hWaveCharge[Clover - 1][Crystal][Seg] = new TH1F(name, title, CHARGE_BINS, 0, WAVE_CHARGE_MAX);
+            hWaveCharge[Clover - 1][Crystal][Seg] = new TH1F(name, title, Config.ChargeBins, 0, Config.WaveChargeMax);
          }
       }
    }
@@ -313,7 +313,7 @@ int Calib(std::vector < TTigFragment > &ev)
          hMidasTime->Fill(RunTimeElapsed);
          //cout << "Time: " << ctime(&MidasTime) << endl;
          // Have we moved on to a new time period?
-         if ((RunTimeElapsed - FitTimeElapsed >= Config.TimeBinSize) && Config.Fit_Temp_Spectra) {
+         if ((RunTimeElapsed - FitTimeElapsed >= Config.TimeBinSize) && Config.FitTempSpectra) {
 
             TB = ((MidasTime - StartTime) / Config.MaxTime);
             TimeBin = TB * Config.TimeBins;
