@@ -7,8 +7,6 @@
 
 #define MIN_FIT_COUNTS 10
 
-#define OUTPUT_EFF 1
-
 #define EN_SPECTRA_CHANS 8192
 #define EN_SPECTRA_MAX 2048
 

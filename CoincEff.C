@@ -266,12 +266,13 @@ int InitCoincEff()
 void FinalCoincEff()
 {
    // general bookkeeping variables.
-   int Clover, Crystal;
+   int Clover, Crystal, Index;
    float Counts, dCounts, dCountsFit, dCountsStat, Eff, dEff;
    FitResult FitRes;
    char str[CHAR_BUFFER_SIZE];
    std::vector<int> Vect;
    float Val;
+   bool Err;
    // Output
    ofstream EffOut;
    // Arrays to store calculated efficiencies
@@ -289,7 +290,7 @@ void FinalCoincEff()
    float CrystalNumbers[CLOVERS * CRYSTALS];
 
    // Open output file:   
-   if (OUTPUT_EFF) {
+   if (Config.OutputEff) {
       std::string tempstring = Config.OutPath + Config.EffTxtOut;
       EffOut.open(tempstring.c_str());
    }
@@ -343,7 +344,7 @@ void FinalCoincEff()
    // now fit 1332.5keV peak in gain matched spectra
    memset(&FitRes, 0.0, sizeof(FitResult));
    // First the clover add-back Spectra
-   if (OUTPUT_EFF) {
+   if (Config.OutputEff) {
       EffOut << "Clover Addback: (" << hTestSpectrum->GetBinContent(4) << " counts in 1173 gate):" << endl;
       EffOut << "Name\tConst\tdConst\t\tMean\tdMean\t\tSigma\tdSigma\t\tCounts\tdCounts\t\tEff\tdEff" << endl;
    }
@@ -358,20 +359,45 @@ void FinalCoincEff()
       dEff =
           Eff * sqrt(pow(dCounts / Counts, 2) +
                      pow(sqrt(hTestSpectrum->GetBinContent(4)) / hTestSpectrum->GetBinContent(4), 2));
-      if (OUTPUT_EFF) {
+      // Perform consistancy checks
+      Err = 0;
+      if(Config.Sim_Clover_AB_Eff.size() > 0) {
+         if(SimABEffRef[Clover-1] > 0.0) {
+            if(fabs(SimABEffRef[Clover-1] - Eff) > 3*dEff) {
+               Err = 1;
+               cout << "WARNING! - Clover " << Clover << " AB Eff (" << Eff << " +/- " << dEff;
+               cout << " does not match simulation (" << SimABEffRef[Clover-1] << ")" << endl;
+            }
+         }
+      }         
+      if(Config.Exp_Clover_AB_Eff.size() > 0) {
+         if(ExpABEffRef[Clover-1] > 0.0) {
+            if(fabs(ExpABEffRef[Clover-1] - Eff) > 3*dEff) {
+               Err = 1;
+               cout << "WARNING! - Clover " << Clover << " AB Eff (" << Eff << " +/- " << dEff;
+               cout << " does not match reference (" << ExpABEffRef[Clover-1] << ")" << endl;
+            }
+         }
+      }
+      // Output        
+      if (Config.OutputEff) {
          sprintf(str, "TIG%02d:\t", Clover);
          EffOut << str << FitRes.Const << " +/- " << FitRes.dConst;
          EffOut << "\t" << FitRes.Mean << " +/- " << FitRes.dMean;
          EffOut << "\t" << FitRes.Sigma << " +/- " << FitRes.dSigma;
          EffOut << "\t" << Counts << " +/- " << dCounts;
-         EffOut << "\t" << Eff << " +/- " << dEff << endl;
+         EffOut << "\t" << Eff << " +/- " << dEff;
+         if(Err==1) {
+            EffOut << " *warning*";
+         }
+         EffOut << endl;
       }
 
       ABEff[Clover - 1] = Eff;
       dABEff[Clover - 1] = dEff;
    }
    // then crystal spectra
-   if (OUTPUT_EFF) {
+   if (Config.OutputEff) {
       EffOut << endl << "Crystals: (" << hTestSpectrum->GetBinContent(2) << " counts in 1173 gate):" << endl;
       EffOut << "Name\tConst\tdConst\t\tMean\tdMean\t\tSigma\tdSigma\t\tCounts\tdCounts\t\tEff\tdEff" << endl;
    }
@@ -387,13 +413,40 @@ void FinalCoincEff()
          dEff =
              Eff * sqrt(pow(dCounts / Counts, 2) +
                         pow(sqrt(hTestSpectrum->GetBinContent(4)) / hTestSpectrum->GetBinContent(4), 2));
-         if (OUTPUT_EFF) {
+         // Perform consistancy checks
+         Err = 0;
+         if(Config.Sim_Crystal_Eff.size() > 0) {
+            Index = ((Clover - 1) * CRYSTALS) + Crystal;
+            if(SimCrystalEffRef[Index] > 0.0) {
+               if(fabs(SimCrystalEffRef[Index] - Eff) > 3*dEff) {
+                  Err = 1;
+                  cout << "WARNING! - Crystal " << Clover  << Num2Col(Crystal) << " Eff (" << Eff << " +/- " << dEff;
+                  cout << " does not match simulation (" << SimCrystalEffRef[Index] << ")" << endl;
+               }
+            }
+         }
+         if(Config.Exp_Crystal_Eff.size() > 0) {
+            Index = ((Clover - 1) * CRYSTALS) + Crystal;
+            if(ExpCrystalEffRef[Index] > 0.0) {
+               if(fabs(ExpCrystalEffRef[Index] - Eff) > 3*dEff) {
+                  Err = 1;
+                  cout << "WARNING! - Crystal " << Clover  << Num2Col(Crystal) << " Eff (" << Eff << " +/- " << dEff;
+                  cout << " does not match reference (" << ExpCrystalEffRef[Index] << ")" << endl;
+               }
+            }
+         }
+         // Output
+         if (Config.OutputEff) {
             sprintf(str, "TIG%02d%c:\t", Clover, Num2Col(Crystal));
             EffOut << str << FitRes.Const << " +/- " << FitRes.dConst;
             EffOut << "\t" << FitRes.Mean << " +/- " << FitRes.dMean;
             EffOut << "\t" << FitRes.Sigma << " +/- " << FitRes.dSigma;
             EffOut << "\t" << Counts << " +/- " << dCounts;
-            EffOut << "\t" << Eff << " +/- " << dEff << endl;
+            EffOut << "\t" << Eff << " +/- " << dEff;
+            if(Err==1) {
+               EffOut << " *warning*";
+            }
+            EffOut << endl;
          }
 
          if ((FitRes.Sigma > 0) && (FitRes.Const) > 0) {
@@ -498,7 +551,7 @@ void FinalCoincEff()
    }
 
    outfile->Close();
-   if (OUTPUT_EFF) {
+   if (Config.OutputEff) {
       EffOut.close();
    }
 }
