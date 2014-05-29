@@ -56,6 +56,7 @@ struct RunConfig {              // this struct will hold all information
    // Which parts of code to run
    bool RunCalibration;
    bool RunSpecCal;
+   bool RunSpecCal2;
    bool RunEfficiency;
    bool RunSpecEff;
    bool RunPropCrosstalk;

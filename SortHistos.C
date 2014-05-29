@@ -65,7 +65,7 @@ int main(int argc, char **argv)
    }
 
    if (Config.RunSpecEff == 1) {
-
+      cout << "Relative efficiency fitting not yet implemented." << endl;
    }
    return 0;
 }

@@ -29,6 +29,7 @@ int LoadDefaultSettings()
    // Which parts of code to run
    Config.RunCalibration = 0;
    Config.RunSpecCal = 0;
+   Config.RunSpecCal2 = 0;
    Config.RunEfficiency = 0;
    Config.RunSpecEff = 0;
    Config.RunPropCrosstalk = 0;
@@ -494,6 +495,10 @@ int ReadCommandLineSettings(int argc, char **argv)
             RunConfGiven = 1;
          }
          // offline calibration
+         if (strncmp(argv[i], "--calspec2", 7) == 0) {
+            Config.RunSpecCal2 = 1;
+         }
+         // offline calibration
          if (strncmp(argv[i], "--calspec", 7) == 0) {
             Config.RunSpecCal = 1;
          }
@@ -504,6 +509,9 @@ int ReadCommandLineSettings(int argc, char **argv)
          // efficiency
          if (strncmp(argv[i], "--eff", 5) == 0) {
             Config.RunEfficiency = 1;
+         }
+         if (strncmp(argv[i], "--speceff", 5) == 0) {
+            Config.RunSpecEff = 1;
          }
          // proportional crosstalk
          if (strncmp(argv[i], "--prop", 6) == 0) {
