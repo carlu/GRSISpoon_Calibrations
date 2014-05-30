@@ -495,7 +495,7 @@ int ReadCommandLineSettings(int argc, char **argv)
             RunConfGiven = 1;
          }
          // offline calibration
-         if (strncmp(argv[i], "--calspec2", 7) == 0) {
+         if (strncmp(argv[i], "--calspec2", 10) == 0) {
             Config.RunSpecCal2 = 1;
          }
          // offline calibration

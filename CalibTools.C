@@ -37,6 +37,7 @@ using namespace std;
 #include "SortTrees.h"
 #include "Calib.h"
 #include "CalibTools.h"
+#include "CalibTools2.h"
 #include "Utils.h"
 
 extern TApplication *App;
@@ -410,7 +411,8 @@ int CalibrateFiles()
    return 0;
 }
 
-// Loop histograms in one file
+// Loop histograms in one file and call peak fitting function
+// Two loops, one for FPGA energy, one for Wave energy as they require different fit settings.
 int FitHistoFile(TFile * file, int FileType, int FileNum, MasterFitMap * FitMap, MasterFitMap * WaveFitMap)
 {
 
@@ -487,8 +489,12 @@ int FitHistoFile(TFile * file, int FileType, int FileNum, MasterFitMap * FitMap,
                   HistoCal Cal;
 
                   // Perform fit
-                  FitSuccess = FitGammaSpectrum(Histo, &Fit, &Cal, Settings);
-
+                  if(Config.RunSpecCal2 == 1) {
+                     FitSuccess = FitGammaSpectrum2(Histo, &Fit, &Cal, Settings);
+                  }
+                  else {
+                     FitSuccess = FitGammaSpectrum(Histo, &Fit, &Cal, Settings);
+                  }
                   // Write fit results to map
                   // First add all fitted lines to ChannelFit map
                   ChanFits.clear();
@@ -554,9 +560,13 @@ int FitHistoFile(TFile * file, int FileType, int FileNum, MasterFitMap * FitMap,
                   // Perform Fit                  
                   HistoFit WaveFit;
                   HistoCal WaveCal;
-
-                  FitSuccess = FitGammaSpectrum(Histo, &WaveFit, &WaveCal, Settings);
-
+                  
+                  if(Config.RunSpecCal2 == 1) {
+                     FitSuccess = FitGammaSpectrum2(Histo, &WaveFit, &WaveCal, Settings);
+                  }
+                  else {
+                     FitSuccess = FitGammaSpectrum(Histo, &WaveFit, &WaveCal, Settings);
+                  }
                   // Write fit results to map
                   // First add all fitted lines to ChannelFit map
                   ChanFits.clear();
@@ -1439,3 +1449,28 @@ int WriteCalFile(HistoFit * Fit, ofstream & CalFileOut, std::string HistName, Fi
 
    return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

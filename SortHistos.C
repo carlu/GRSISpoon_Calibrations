@@ -57,7 +57,7 @@ int main(int argc, char **argv)
    StopWatch.Start();
 
    // Check what we are supposed to be doing call function
-   if (Config.RunSpecCal == 1) {
+   if (Config.RunSpecCal == 1 || Config.RunSpecCal2) {
       if (CalibrateFiles() > 0) {
          cout << "CalibrateFiles() failed." << endl;
          return 1;
