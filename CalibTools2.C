@@ -33,6 +33,7 @@ using namespace std;
 #include "Fit/Fitter.h"
 #include "Fit/BinData.h"
 #include "Fit/Chi2FCN.h"
+#include "HFitInterface.h"
 
 // TriScope libraries
 //#include "TTigFragment.h"
@@ -74,23 +75,41 @@ int FitGammaSpectrum2(TH1F * Histo, HistoFit * Fit, HistoCal * Cal, FitSettings 
       std::string fName = CharBuf; 
       
       // Energy = Offset + (Gain*(Charge/Int))
-      // Applying gaussian formaula to peaks in spectrum mean = charge/int
-      // therefore mean = (Energy - Offset) / Gain
+      // Applying gaussian formaula to peaks in spectrum, mean = measured charge / integration
+      // therefore mean of gaussian = (Energy - Offset) / Gain
       // This get's complicated for quadratic calibration and also fewer variables generally 
       // makes the fit more reliable so only linear calibration here.  Fit results can
       // be reused later for a quadratic calibration
-      // Previous gaus formula: "([0]*exp(-0.5*((x-[1])/[2])**2))+[3]"
+      // Previous gaus + bgd formula: "([0]*exp(-0.5*((x-[1])/[2])**2))+[3]"
       // New one:               [peak height]*exp(-0.5*((x-((Energy-[Offset])/[Gain]))/[sigma])) + [background] 
       snprintf(CharBuf,CHAR_BUFFER_SIZE,"([2]*exp(-0.5*((x- (  (%f - [0]) / [1] )  )/[3])**2))+[4]",Config.Sources.at(Settings.Source).at(Line));
       // Global fit: [0] = Offset, [1] = Gain   Unique fit: [2] = peak height [3] = sigma [4] = background
-      
       std::string fFormula = CharBuf;
-      //TF1 fPeak = new TF1 (fName.c_str(), )
+      cout << "Function Name    : " << fName << endl; 
+      cout << "Function Formula : " << fFormula << endl;
+      TF1 fPeak(fName.c_str(),fFormula.c_str(),0.0,Config.ChargeMax);
+      vfPeaks.push_back(fPeak);
+      
+      ROOT::Fit::DataRange Range;
+      Range.SetRange(0,Config.ChargeMax);
+      
+      ROOT::Fit::DataOptions opt;
+      ROOT::Fit::BinData Data(opt,Range);
+      ROOT::Fit::FillData(Data, Histo);
+      vData.push_back(Data);
+      
+      // Add TF1s to WrappedMultiTF1
+      ROOT::Math::WrappedMultiTF1 wfPeak(fPeak,1);
+      vwfPeaks.push_back(wfPeak);
+      
+      // Create Chi2Functions from WrappedMultiTF1s and BinData
+      ROOT::Fit::Chi2Function Chi2fPeaks(Data,wfPeak);
+      vChi2fPeaks.push_back(Chi2fPeaks);
       
    }
-   // Add TF1s to WrappedMultiTF1
    
-   // Create Chi2Functions from WrappedMultiTF1s and BinData
+   
+   
    
    // Create global Chi2 function
    
