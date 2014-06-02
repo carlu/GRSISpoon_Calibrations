@@ -66,8 +66,8 @@ int LoadDefaultSettings()
    // Source information
    float Sources[4][10] = {
       {1173.237, 1332.501},     // 60Co
-      {121.7817, 1408.006, 244.6975, 344.2785, 411.116, 778.9040, 964.079, 1112.074},   // 152Eu
-      {344.2785, 1408.006, 244.6975, 411.116, 778.9040, 964.079, 1112.074},     // 152Eu (no 121)
+      {121.7817, 1408.006, 244.6975, 344.2785, 411.116, 778.9040, 964.079, 1112.074, 867.378, 1299.14 },   // 152Eu
+      {344.2785, 1408.006, 244.6975, 411.116, 778.9040, 964.079, 1112.074, 867.378, 1299.14},     // 152Eu (no 121)
       {276.398, 356.017, 80.9971, 302.853, 383.851}     // 133Ba
    };
    // Push source lines to vector of vectors.
@@ -78,12 +78,12 @@ int LoadDefaultSettings()
    }
    Config.Sources.push_back(SourceTemp);
    SourceTemp.clear();
-   for (int i = 0; i < 7; i++) {
+   for (int i = 0; i < 10; i++) {
       SourceTemp.push_back(Sources[1][i]);
    }
    Config.Sources.push_back(SourceTemp);
    SourceTemp.clear();
-   for (int i = 0; i < 7; i++) {
+   for (int i = 0; i < 9; i++) {
       SourceTemp.push_back(Sources[2][i]);
    }
    Config.Sources.push_back(SourceTemp);
