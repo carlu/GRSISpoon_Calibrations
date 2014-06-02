@@ -48,32 +48,47 @@ using namespace std;
 
 extern TApplication *App;
 
+class GlobalChi2:public ROOT::Math::FitMethodFunction {
 
+public:
+   GlobalChi2(int dim, int npoints,
+              std::vector < ROOT::Math::FitMethodFunction > &fPeaks):ROOT::Math::FitMethodFunction(dim, npoints) {
+   }
+  
+   
+private:
+   std::vector < ROOT::Math::FitMethodFunction > *fChi2_Peaks;
+
+   //const  ROOT::Math::FitMethodFunction * fChi2_1;
+   //const  ROOT::Math::FitMethodFunction * fChi2_2;   
+
+};
 
 // FitGammaSpectrum2
 // An attempt to improve low statistics fitting by fitting all peaks simulataneously 
 // with gain coeffs as the parameters and peak centroids calculated from those.
-int FitGammaSpectrum2(TH1F * Histo, HistoFit * Fit, HistoCal * Cal, FitSettings Settings) {
-   
+int FitGammaSpectrumGlobalMulti(TH1F * Histo, HistoFit * Fit, HistoCal * Cal, FitSettings Settings)
+{
+
    // General variables 
-   int Line; 
+   int Line;
    char CharBuf[CHAR_BUFFER_SIZE];
    // Storring functions etc
-   std::vector<TF1> vfPeaks;
-   std::vector<ROOT::Math::WrappedMultiTF1> vwfPeaks;
-   std::vector<ROOT::Fit::DataRange> vRanges;
-   std::vector<ROOT::Fit::BinData> vData;
-   std::vector<ROOT::Fit::Chi2Function> vChi2fPeaks;
-   
-   
+   std::vector < TF1 > vfPeaks;
+   std::vector < ROOT::Math::WrappedMultiTF1 > vwfPeaks;
+   std::vector < ROOT::Fit::DataRange > vRanges;
+   std::vector < ROOT::Fit::BinData > vData;
+   std::vector < ROOT::Fit::Chi2Function > vChi2fPeaks;
+
+
    // Loop lines and create TF1, DataRange and BinData for each
-   for(Line = 0; Line < Config.Sources.at(Settings.Source).size(); Line ++) {
-   
+   for (Line = 0; Line < Config.Sources.at(Settings.Source).size(); Line++) {
+
       cout << Config.Sources.at(Settings.Source).at(Line) << " " << endl;
-      
-      snprintf(CharBuf,CHAR_BUFFER_SIZE,"fPeak-%d",Line);
-      std::string fName = CharBuf; 
-      
+
+      snprintf(CharBuf, CHAR_BUFFER_SIZE, "fPeak-%d", Line);
+      std::string fName = CharBuf;
+
       // Energy = Offset + (Gain*(Charge/Int))
       // Applying gaussian formaula to peaks in spectrum, mean = measured charge / integration
       // therefore mean of gaussian = (Energy - Offset) / Gain
@@ -82,45 +97,43 @@ int FitGammaSpectrum2(TH1F * Histo, HistoFit * Fit, HistoCal * Cal, FitSettings 
       // be reused later for a quadratic calibration
       // Previous gaus + bgd formula: "([0]*exp(-0.5*((x-[1])/[2])**2))+[3]"
       // New one:               [peak height]*exp(-0.5*((x-((Energy-[Offset])/[Gain]))/[sigma])) + [background] 
-      snprintf(CharBuf,CHAR_BUFFER_SIZE,"([2]*exp(-0.5*((x- (  (%f - [0]) / [1] )  )/[3])**2))+[4]",Config.Sources.at(Settings.Source).at(Line));
+      snprintf(CharBuf, CHAR_BUFFER_SIZE, "([2]*exp(-0.5*((x- (  (%f - [0]) / [1] )  )/[3])**2))+[4]",
+               Config.Sources.at(Settings.Source).at(Line));
       // Global fit: [0] = Offset, [1] = Gain   Unique fit: [2] = peak height [3] = sigma [4] = background
       std::string fFormula = CharBuf;
-      cout << "Function Name    : " << fName << endl; 
+      cout << "Function Name    : " << fName << endl;
       cout << "Function Formula : " << fFormula << endl;
-      TF1 fPeak(fName.c_str(),fFormula.c_str(),0.0,Config.ChargeMax);
+      TF1 fPeak(fName.c_str(), fFormula.c_str(), 0.0, Config.ChargeMax);
       vfPeaks.push_back(fPeak);
-      
+
       ROOT::Fit::DataRange Range;
-      Range.SetRange(0,Config.ChargeMax);
-      
+      Range.SetRange(0, Config.ChargeMax);
+
       ROOT::Fit::DataOptions opt;
-      ROOT::Fit::BinData Data(opt,Range);
+      ROOT::Fit::BinData Data(opt, Range);
       ROOT::Fit::FillData(Data, Histo);
       vData.push_back(Data);
-      
+
       // Add TF1s to WrappedMultiTF1
-      ROOT::Math::WrappedMultiTF1 wfPeak(fPeak,1);
+      ROOT::Math::WrappedMultiTF1 wfPeak(fPeak, 1);
       vwfPeaks.push_back(wfPeak);
-      
+
       // Create Chi2Functions from WrappedMultiTF1s and BinData
-      ROOT::Fit::Chi2Function Chi2fPeaks(Data,wfPeak);
+      ROOT::Fit::Chi2Function Chi2fPeaks(Data, wfPeak);
       vChi2fPeaks.push_back(Chi2fPeaks);
-      
+
    }
-   
-   
-   
-   
+
+
+
+
    // Create global Chi2 function
-   
+
    // Fitter
-   
+
    // Set/Limit/Fix parameters
-   
-   
-   
+
+
+
    return 0;
 }
-
-
-

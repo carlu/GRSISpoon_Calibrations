@@ -490,7 +490,7 @@ int FitHistoFile(TFile * file, int FileType, int FileNum, MasterFitMap * FitMap,
 
                   // Perform fit
                   if(Config.RunSpecCal2 == 1) {
-                     FitSuccess = FitGammaSpectrum2(Histo, &Fit, &Cal, Settings);
+                     FitSuccess = FitGammaSpectrumGlobalMulti(Histo, &Fit, &Cal, Settings);
                   }
                   else {
                      FitSuccess = FitGammaSpectrum(Histo, &Fit, &Cal, Settings);
@@ -562,7 +562,7 @@ int FitHistoFile(TFile * file, int FileType, int FileNum, MasterFitMap * FitMap,
                   HistoCal WaveCal;
                   
                   if(Config.RunSpecCal2 == 1) {
-                     FitSuccess = FitGammaSpectrum2(Histo, &WaveFit, &WaveCal, Settings);
+                     FitSuccess = FitGammaSpectrumGlobalMulti(Histo, &WaveFit, &WaveCal, Settings);
                   }
                   else {
                      FitSuccess = FitGammaSpectrum(Histo, &WaveFit, &WaveCal, Settings);
