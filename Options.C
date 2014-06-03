@@ -34,6 +34,7 @@ int LoadDefaultSettings()
    Config.RunPropCrosstalk = 0;
    Config.RunWaveform = 0;
    Config.RunDiffCrosstalk = 0;
+   Config.RunGeTiming = 0;
 
    // root output files
    Config.OutPath = "./";
@@ -176,6 +177,11 @@ int LoadDefaultSettings()
 
    // Options for PropXtakl()
    Config.PropOut = "PropXTalkOut.root";
+   
+   
+   // Options for GeTiming
+   // Output
+   Config.GeTimingOut = "GeTimingOut.root";
 
    return 0;
 }
@@ -508,6 +514,9 @@ int ReadCommandLineSettings(int argc, char **argv)
          // proportional crosstalk
          if (strncmp(argv[i], "--prop", 6) == 0) {
             Config.RunPropCrosstalk = 1;
+         }
+         if(strncmp(argv[i], "--getim", 7) == 0) {
+            Config.RunGeTiming = 1;
          }
       }
    }

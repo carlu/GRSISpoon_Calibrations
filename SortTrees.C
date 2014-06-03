@@ -92,6 +92,10 @@ void PropXtalk(std::vector < TTigFragment > &ev);
 int InitPropXtalk();
 void FinalPropXtalk();
 
+void GeTiming(std::vector < TTigFragment > &ev);
+int InitGeTiming();
+void FinalGeTiming();
+
 int main(int argc, char **argv)
 {
    // Variables, Constants, etc
@@ -171,6 +175,16 @@ int main(int argc, char **argv)
          return 1;
       }
    }
+   if (Config.RunGeTiming) {
+      if (Config.PrintBasic) {
+         cout << "Initialising Ge Timing Spectra..." << endl;
+      }
+      if (InitGeTiming() != 0) {
+         cout << "InitGeTiming Failed!" << endl;
+         return 1;
+      }
+   }
+   
 
    TChain *Chain = new TChain("FragmentTree");
 
@@ -285,6 +299,10 @@ int main(int argc, char **argv)
          if (Config.RunPropCrosstalk) {
             PropXtalk(evFrags);
          }
+         if(Config.RunGeTiming) {
+            GeTiming(evFrags);
+         }
+         
          if (DEBUG_TREE_LOOP) {
             cout << "ev Num =  " << TreeEvent << ", ev.size() = " << evFrags.size() << endl;
          }
@@ -321,6 +339,9 @@ int main(int argc, char **argv)
    }
    if (Config.RunPropCrosstalk) {
       FinalPropXtalk();
+   }
+   if (Config.RunGeTiming) {
+      FinalGeTiming();
    }
 
    return 0;
