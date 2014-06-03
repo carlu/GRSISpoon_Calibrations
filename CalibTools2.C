@@ -137,3 +137,38 @@ int FitGammaSpectrumGlobalMulti(TH1F * Histo, HistoFit * Fit, HistoCal * Cal, Fi
 
    return 0;
 }
+
+
+int FitGammaSpectrumGlobal(TH1F * Histo, HistoFit * Fit, HistoCal * Cal, FitSettings Settings) {
+
+   // Loop lines and construct formula
+   int ParamNum = 0;
+   int Line;
+   char CharBuf[CHAR_BUFFER_SIZE];
+   std::string Formula;
+   
+   for (Line = 0; Line < Config.Sources.at(Settings.Source).size(); Line++) {
+      if(ParamNum > 0) {
+         snprintf(CharBuf,CHAR_BUFFER_SIZE," + ");
+         Formula += CharBuf;
+      }
+      snprintf(CharBuf,CHAR_BUFFER_SIZE,"([%d] * exp( -0.5 * (x - (%f - [%d]) / [%d] ) ** 2 ))", ParamNum++, 
+         Config.Sources.at(Settings.Source).at(Line), ParamNum++, ParamNum++);
+      Formula += CharBuf;
+      
+      cout << "Formula: " << Formula << endl;
+   
+   }
+
+   snprintf(CharBuf,CHAR_BUFFER_SIZE," + [%d]",ParamNum++);
+   Formula += CharBuf;
+   cout << "Formula: " << Formula << endl;
+   
+   return 0;
+
+}
+
+
+
+
+
