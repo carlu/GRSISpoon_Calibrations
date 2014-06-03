@@ -62,6 +62,7 @@ struct RunConfig {              // this struct will hold all information
    bool RunPropCrosstalk;
    bool RunWaveform;
    bool RunDiffCrosstalk;
+   bool RunGeTiming;
    // Input files
     std::vector < std::string > files;
    // root output files
@@ -192,6 +193,10 @@ struct RunConfig {              // this struct will hold all information
    // Output
     std::string PropOut;
     std::string PropTxtOut;
+    
+   // GeTiming()
+   // Output
+   std::string GeTimingOut;
 };
 
 // --------------------------------------------------------
