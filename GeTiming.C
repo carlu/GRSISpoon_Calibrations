@@ -20,6 +20,7 @@ using namespace std;
 //#include <TVector3.h>
 #include <TH1F.h>
 #include <TH2F.h>
+#include <TH3F.h>
 #include <TApplication.h>
 #include <TCanvas.h>
 #include <TGraphErrors.h>
@@ -43,6 +44,8 @@ using namespace std;
 static TH1F *hEn[CLOVERS][CRYSTALS][SEGS + 2];  // energy for each individual channel, both cores and segs
 static TH1F *hSegSegTime[CLOVERS][CRYSTALS]; 
 static TH1F *hTimeToTrig[CLOVERS][CRYSTALS][SEGS + 2];
+static TH2F *hGatedEnergyTimeToTrig;
+static TH3F *hEnergyEnergyTimeToTrig;
 
 // Other global stuff
 static TFile *outfile = 0;
@@ -56,15 +59,28 @@ void FinalGeTiming();
 
 void GeTiming(std::vector < TTigFragment > &ev) {
    
-   unsigned int Frag, CalChan;
+   unsigned int Frag, CalChan, i;
    int Chan, Clover,Crystal, Seg;
+   int GateClover, GateCrystal;
+   int TimeDiff;
+   bool GatePassed = 0;
    std::string Name;
    float En;
    char Colour;
    
-   float Energies[CLOVERS][CRYSTALS][SEGS+2];
-   int CloverSegFold[CLOVERS];
+   float GateLow = 1400.0;
+   float GateHigh = 1416.0;
    
+   bool Hits[CLOVERS][CRYSTALS][SEGS+2] = {0};
+   float Energies[CLOVERS][CRYSTALS][SEGS+2] = {0.0};
+   int TimeToTrigs[CLOVERS][CRYSTALS][SEGS+2] = {0};
+   int CloverSegFold[CLOVERS] = {0};
+   int CrystalSegFold[CLOVERS][CRYSTALS] = {0};
+   int CrystalFold = 0;
+   int Times[2] = {0};
+   float TempEn[2];
+   int TempTime[2];
+   bool Success = 0;
    
    
    for (Frag = 0; Frag < ev.size(); Frag++) {
@@ -119,29 +135,124 @@ void GeTiming(std::vector < TTigFragment > &ev) {
                Seg = 9;
             }
          }
-         
-         hEn[Clover - 1][Crystal][Seg]->Fill(En);
-         
-         hTimeToTrig[Clover - 1][Crystal][Seg]->Fill(ev[Frag].TimeToTrig);
-         
+
          // Fill energy array and hit pattern
          if(En > Config.ChargeThresh) {
+            Hits[Clover - 1][Crystal][Seg] = 1;
+            hEn[Clover - 1][Crystal][Seg]->Fill(En);
             Energies[Clover - 1][Crystal][Seg] = En;
+            
+            TimeToTrigs[Clover - 1][Crystal][Seg] = ev[Frag].TimeToTrig;
+            hTimeToTrig[Clover - 1][Crystal][Seg]->Fill(ev[Frag].TimeToTrig);
+            
+            // If this is a seg, count clover fold
             if(Seg > 0 && Seg < 9) {
                CloverSegFold[Clover-1] += 1;
+               CrystalSegFold[Clover -1][Crystal] += 1;
+            }
+            if(Seg==0) {
+               CrystalFold += 1;
             }
          }
-         
-         
       }
    }
    
+   
    // Loop clovers
+   i = 0;
    
-   // Check seg fold
+   // Loop clovers
+   for(Clover = 1; Clover <=CLOVERS; Clover ++) {
+      // Loop crystals
+      for(Crystal = 0; Crystal < CRYSTALS; Crystal++) {
+         // If energy gate passed
+         if(Energies[Clover-1][Crystal][0] > GateLow && Energies[Clover-1][Crystal][0] < GateHigh) {
+            // If seg fold is two
+            if(CrystalSegFold[Clover -1][Crystal] == 2) {
+               // Find hit segments
+               for(Seg = 1; Seg <= SEGS; Seg++) {
+                  if(Hits[Clover-1][Crystal][Seg] == 1) {
+                     // Store TimeToTrig
+                     Times[i] = TimeToTrigs[Clover-1][Crystal][Seg];
+                     i++;
+                  }
+               }
+               // If we found both hit segments
+               if(i==2) {
+                  // Increment difference in TimeToTrigs
+                  hSegSegTime[Clover-1][Crystal]->Fill(Times[0] - Times[1] + 500);
+               }   
+               
+               
+            }
+         }
+      }
+   }
    
-   // Check energy gate on core
    
+   // Gated 2D energy vs time to trig
+   GatePassed = 0;
+   GateClover = 0;
+   GateCrystal = 0;
+   for(Clover = 1; Clover <=CLOVERS; Clover ++) {
+      // Loop crystals
+      for(Crystal = 0; Crystal < CRYSTALS; Crystal++) {
+         // If energy gate passed
+         if(Energies[Clover-1][Crystal][0] > GateLow && Energies[Clover-1][Crystal][0] < GateHigh) {
+            GatePassed = 1;
+            GateClover = Clover;
+            GateCrystal = Crystal;
+         }
+      }
+   }
+   
+   if(GatePassed==1) {
+      for(Clover = 1; Clover <=CLOVERS; Clover ++) {
+         // Loop crystals
+         for(Crystal = 0; Crystal < CRYSTALS; Crystal++) {
+            if(Clover!=GateClover || Crystal!=GateCrystal) {
+               if(Hits[Clover-1][Crystal][0] == 1) {
+                  TimeDiff = TimeToTrigs[Clover-1][Crystal][0] - TimeToTrigs[GateClover-1][GateCrystal][0] + 500;
+                  hGatedEnergyTimeToTrig->Fill(Energies[Clover-1][Crystal][0], TimeDiff);
+               }
+            } 
+         }
+      }
+   }
+   
+   TempEn[0] = 0.0; TempEn[1] = 0.0;
+   TempTime[0] = 0; TempTime[1] = 0;
+   i = 0; Success = 0;
+   // 3D energy vs energy vs timetotrig diff
+   if(CrystalFold == 2) {
+      for(Clover = 1; Clover <=CLOVERS; Clover ++) {
+         for(Crystal = 0; Crystal < CRYSTALS; Crystal++) {
+            if(Hits[Clover-1][Crystal][0] == 1) {
+               TempEn[i] = Energies[Clover-1][Crystal][0];
+               TempTime[i] = TimeToTrigs[Clover-1][Crystal][0];
+               i +=1;
+            }
+            if(i==2) {
+               Success = 1;
+               //cout << "Success!" << endl;
+               break;
+            }
+         }
+         if(i==2) {
+            break;
+         }
+      }
+   
+   }
+   if(Success == 1) {
+      //cout << "Values: " << TempEn[0] << " " << TempEn[1] << " " << TempTime[0]-TempTime[1] << endl;
+      float a = TempEn[0];
+      float b = TempEn[1];
+      float c = TempTime[0]-TempTime[1] + 500;
+      //cout << "Values: " << a << " " << b << " " << c << endl;
+      //hEnergyEnergyTimeToTrig->Fill(TempEn[0],TempEn[1],TempTime[0]-TempTime[1]);
+      hEnergyEnergyTimeToTrig->Fill(a,b,c);
+   }
    
    
 }
@@ -181,6 +292,7 @@ int InitGeTiming() {
          hEn[Clover - 1][Crystal][Seg] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
       }
    }
+   
    // Timing
    for (Clover = 1; Clover <= CLOVERS; Clover++) {
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
@@ -207,6 +319,15 @@ int InitGeTiming() {
          hSegSegTime[Clover-1][Crystal] = new TH1F(name, title, 1000, 0, 1000);
       }
    }
+   // Matrices
+   sprintf(name, "Gated En vs Time2Trig");
+   sprintf(title, "Gated Energy vs Time To Trigger");
+   hGatedEnergyTimeToTrig = new TH2F(name, title, 1024, 0, EN_SPECTRA_MAX, 1000, 0, 1000);
+   sprintf(name, "En vs En vs Time2Trig");
+   sprintf(title, "Energy vs Energy vs Time To Trigger");
+   hEnergyEnergyTimeToTrig = new TH3F(name, title, 512, 0, EN_SPECTRA_MAX, 512, 0, EN_SPECTRA_MAX, 100, 200, 800);
+
+   return 0;
 
 }
 
@@ -225,12 +346,14 @@ void FinalGeTiming() {
          }
       }
    }
+   
    dSegSegTime->cd();
    for (Clover = 1; Clover <= CLOVERS; Clover++) {
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
          hSegSegTime[Clover-1][Crystal] -> Write();
       }
    }
+   
    dTimeToTrig->cd();
    for (Clover = 1; Clover <= CLOVERS; Clover++) {
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
@@ -239,6 +362,11 @@ void FinalGeTiming() {
          }
       }
    }
+   
+   outfile->cd();
+   hGatedEnergyTimeToTrig->Write();
+   hEnergyEnergyTimeToTrig->Write();
+   
    outfile->Close();
 }
 

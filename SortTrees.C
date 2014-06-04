@@ -1,5 +1,5 @@
 //To compile:
-// g++ SortTrees.C CoincEff.C Calib.C PropXtalk.C CalibTools.C Options.C Utils.C -I$GRSISYS/include --std=c++0x -o SortTrees $GRSISYS/libraries/TigFormat/libFormat.so $GRSISYS/libraries/libCalManager.so $GRSISYS/libraries/libRootIOManager.so -O0 `root-config --cflags --libs` -lTreePlayer -lSpectrum -lgsl -lgslcblas -g
+// g++ SortTrees.C CoincEff.C Calib.C PropXtalk.C GeTiming.C CalibTools.C Options.C Utils.C -I$GRSISYS/include --std=c++0x -o SortTrees $GRSISYS/libraries/TigFormat/libFormat.so $GRSISYS/libraries/libCalManager.so $GRSISYS/libraries/libRootIOManager.so -O0 `root-config --cflags --libs` -lTreePlayer -lSpectrum -lgsl -lgslcblas -g
 //To run:
 // ./Sort -f InFile1 [InFile2...] [-e (energy Calibration File)] [-w (Wave calibration file)] [-s (Source)]
 // --------------------------------------------------------------------------------
