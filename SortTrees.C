@@ -228,8 +228,8 @@ int main(int argc, char **argv)
          }
          LastTreeNum = TreeNum;
       } else {
-         continue;              // This works in conjuncion with the line below "i += (NumTreeEntries - 10);"
-         // if i still falls in the same tree, then it is incremented without sorting until the next tree
+         continue;              // This works in conjuncion with the line below "ChainEvent += (NumTreeEntries - 10);"
+         // if ChainEvent still falls in the same tree, then it is incremented without sorting until the next tree
       }
 
       TTree *Tree = Chain->GetTree();
@@ -325,8 +325,9 @@ int main(int argc, char **argv)
       }
 
       Branch->DropBaskets("all");       // Clear cache before next tree    
+      
       //i += (nEntries - 10);
-      TreeNum += (NumTreeEntries - 10); // This skips i to almost the end of the tree, any remaining entries
+      ChainEvent += (NumTreeEntries - 10); // This skips i to almost the end of the tree, any remaining entries
       // on this tree will be skipped by "if(TreeNum != LastTreeNum" condition above
    }
 
