@@ -78,6 +78,13 @@ GAUS_SIGMA_MIN
 MIN_FIT_COUNTS
 500
 
+# Values for GeTiming Sort
+GE_TIMING_GATE_CENTRE
+121.8
+
+GE_TIMING_GATE_WIDTH
+5.0
+
 # reference efficiency values at 1332.5keV 
 
 SIM_CLOVER_AB_EFF

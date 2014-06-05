@@ -101,6 +101,7 @@ int LoadDefaultSettings()
    Config.HighEffMode = 0;
 
    // Options for Calib() and CalibOffline()
+   //---------------------------------------
    // What to do
    Config.CalEnergy = 1;        // Calibrate charge spectra?
    Config.CalWave = 1;          // Calibrate wave spectra?
@@ -124,7 +125,6 @@ int LoadDefaultSettings()
    Config.TimeBins = 20;
    Config.TimeBinSize = Config.MaxTime / Config.TimeBins;
    Config.FitTempSpectra = 1;
-   
    // Plots
    Config.PlotFits = 0;
    Config.PlotCalib = 0;
@@ -149,7 +149,6 @@ int LoadDefaultSettings()
    Config.FitWidth_keV = 15;       // Width of region either side of peak to be fitted
    Config.FitBackground = 1;      // 1 = yes, 0 = no.  Should be best to use this all the time but left option there just in case.
    Config.BackWidth_keV = 5;      // Width at each side of fit region to be used as background estimate
-   
    // Initial values for custom fit functions
    Config.EnergySigmaZero = 0.45;
    Config.EnergySigma1MeV = 0.45; 
@@ -159,31 +158,32 @@ int LoadDefaultSettings()
    Config.GausHeightMin  = 10.0;
    Config.GausCSPDMax    = 50.0;
    Config.GausSigmaMin   = 250.0;
-   
    // Manual peak select options
-   
    memset(&Config.ManualPeakSelect, 0, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
    Config.ManualPeakCorrection = 1;
 
    // Options for CoincEff()
+   //-------------------------
    Config.EffOut = "CoincEffOut.root";
    Config.EffTxtOut = "CoincEffOut.txt";
-
    Config.EffSimRefFileName = "SimEffRef.txt";
    Config.EffExpRefFileName = "ExpEffRef.txt";
-
    Config.OutputEff = 1;
    // Plots
    Config.PlotEff = 1;
 
    // Options for PropXtakl()
+   //---------------------------
    Config.PropOut = "PropXTalkOut.root";
    
-   
    // Options for GeTiming
+   //------------------------
    // Output
    Config.GeTimingOut = "GeTimingOut.root";
-
+   Config.GeTimingGateCentre = 121.8;
+   Config.GeTimingGateWidth = 5.0;
+   
+   
    return 0;
 }
 
@@ -573,6 +573,7 @@ int ReadConfigFile(std::string filename)
       }
       
       // Reference Values for comparison with measured efficiencies
+      // -----------------------------------------------------------
       if (strcmp(Line.c_str(), "SIM_CLOVER_AB_EFF") == 0) {
          if(ReadCloverRef(&File, &Config.Sim_Clover_AB_Eff) > 0) {
             cout << "SIM_CLOVER_AB_EFF reference loaded";
@@ -606,7 +607,8 @@ int ReadConfigFile(std::string filename)
          }
       }
       
-      // Reference values for resolutions
+      // Reference values for energy resolutions
+      // ---------------------------------------
       if (strcmp(Line.c_str(), "CRYSTAL_FHWM_1332") == 0) {
          if(ReadCrystalRef(&File, &Config.Crystal_FWHM_1332) > 0) {
             cout << "CRYSTAL_FHWM_1332 reference loaded";
@@ -617,6 +619,7 @@ int ReadConfigFile(std::string filename)
       }
       
       // Physics/DAQ Settings
+      //----------------------
       if (strcmp(Line.c_str(), "INTEGRATION")==0) {
          getline(File,Line);
          if(sscanf(Line.c_str(), "%d", &ValI) == 1) {
@@ -686,7 +689,6 @@ int ReadConfigFile(std::string filename)
          else {Other += 1;}
          continue;
       }
-      // Peak Search
       // Peak Search stuff
       if (strcmp(Line.c_str(), "EN_SEARCH_THRESH")==0) {
          getline(File,Line);
@@ -843,11 +845,32 @@ int ReadConfigFile(std::string filename)
          continue;
       }
       
+      // GeTiming Stuff
+      //----------------
+      if (strcmp(Line.c_str(), "GE_TIMING_GATE_CENTRE")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%f", &ValF) == 1) {
+            Config.GeTimingGateCentre = ValF;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }      
+      if (strcmp(Line.c_str(), "GE_TIMING_GATE_WIDTH")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%f", &ValF) == 1) {
+            Config.GeTimingGateWidth = ValF;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      } 
+      
+      // Other
+      //-------
       if (strcmp(Line.c_str(), "")!=0) {
          cout << "WARNING: Unable to idenify configuration item: " << Line.c_str() << " skipping..." << endl;
       }
-      
-      // Other
       Other += 1;
       
    }

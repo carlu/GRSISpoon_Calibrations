@@ -197,6 +197,8 @@ struct RunConfig {              // this struct will hold all information
    // GeTiming()
    // Output
    std::string GeTimingOut;
+   float GeTimingGateCentre;
+   float GeTimingGateWidth;
 };
 
 // --------------------------------------------------------
