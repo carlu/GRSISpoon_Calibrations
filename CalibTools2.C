@@ -52,8 +52,8 @@ class GlobalChi2:public ROOT::Math::FitMethodFunction {
 
 public:
    GlobalChi2(int dim, int npoints,
-              std::vector < ROOT::Math::FitMethodFunction > &fPeaks):ROOT::Math::FitMethodFunction(dim, npoints) {
-   }
+              std::vector < ROOT::Math::FitMethodFunction > &fPeaks):ROOT::Math::FitMethodFunction(dim, npoints),
+              fChi2_Peaks(&fPeaks) {}
   
    
 private:
@@ -120,7 +120,10 @@ int FitGammaSpectrumGlobalMulti(TH1F * Histo, HistoFit * Fit, HistoCal * Cal, Fi
 
       // Create Chi2Functions from WrappedMultiTF1s and BinData
       ROOT::Fit::Chi2Function Chi2fPeaks(Data, wfPeak);
-      vChi2fPeaks.push_back(Chi2fPeaks);
+      
+      // The foloowing line causes great pain on SLinux systems, something "non-static reference member" something something
+      // Need to understand and fix before final implementation of this function goes ahead. 
+      //vChi2fPeaks.push_back(Chi2fPeaks);
 
    }
 
