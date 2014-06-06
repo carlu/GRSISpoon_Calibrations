@@ -105,6 +105,7 @@ int LoadDefaultSettings()
    // What to do
    Config.CalEnergy = 1;        // Calibrate charge spectra?
    Config.CalWave = 1;          // Calibrate wave spectra?
+   Config.Cal2D = 1;            // Create 2D seg-core charge matrices
    Config.CalReport = 1;        // Generate report on fits etc
    Config.CalFile = 0;          // Generate .cal file as used by GRSISpoon 
    memset(&Config.CalList, 1, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
@@ -664,6 +665,15 @@ int ReadConfigFile(std::string filename)
       }
       // Charge spectra properties
       if (strcmp(Line.c_str(), "CHARGE_BINS")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%d", &ValI) == 1) {
+            Config.ChargeBins = ValI;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
+      if (strcmp(Line.c_str(), "CHARGE_BINS2D")==0) {
          getline(File,Line);
          if(sscanf(Line.c_str(), "%d", &ValI) == 1) {
             Config.ChargeBins = ValI;

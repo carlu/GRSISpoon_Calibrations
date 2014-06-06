@@ -137,17 +137,19 @@ int InitCalib()
             hWaveCharge[Clover - 1][Crystal][Seg] = new TH1F(name, title, Config.ChargeBins, 0, Config.WaveChargeMax);
          }
          // and 2D charge spectra for low stat seg cal
-         dCharge2D->cd();
-         for (Seg = 1; Seg <= SEGS; Seg++) {
-            sprintf(name, "TIG%02d%cP%02dx Chg Mat", Clover, Num2Col(Crystal), Seg);
-            sprintf(title, "TIG%02d%cP%02dx-TIG%02d%cN00a Charge Matrix  (arb)", Clover, Num2Col(Crystal), Seg, Clover, Num2Col(Crystal));
-            hCoreSegCharge[Clover-1][Crystal][Seg-1] = new TH2F(name, title, Config.ChargeBins2D, 0, Config.ChargeMax,  Config.ChargeBins2D, 0, Config.ChargeMax);
-         }
-         dWaveCharge2D->cd();
-         for (Seg = 1; Seg <= SEGS; Seg++) {
-            sprintf(name, "TIG%02d%cP%02dx WaveChg Mat", Clover, Num2Col(Crystal), Seg);
-            sprintf(title, "TIG%02d%cP%02dx-TIG%02d%cN00a Wave Charge Matrix  (arb)", Clover, Num2Col(Crystal), Seg, Clover, Num2Col(Crystal));
-            hCoreSegWaveCharge[Clover-1][Crystal][Seg-1] = new TH2F(name, title, Config.ChargeBins2D, 0, Config.WaveChargeMax,  Config.ChargeBins2D, 0, Config.WaveChargeMax);
+         if(Config.Cal2D==1) {
+            dCharge2D->cd();
+            for (Seg = 1; Seg <= SEGS; Seg++) {
+               sprintf(name, "TIG%02d%cP%02dx Chg Mat", Clover, Num2Col(Crystal), Seg);
+               sprintf(title, "TIG%02d%cP%02dx-TIG%02d%cN00a Charge Matrix  (arb)", Clover, Num2Col(Crystal), Seg, Clover, Num2Col(Crystal));
+               hCoreSegCharge[Clover-1][Crystal][Seg-1] = new TH2F(name, title, Config.ChargeBins2D, 0, Config.ChargeMax,  Config.ChargeBins2D, 0, Config.ChargeMax);
+            }
+            dWaveCharge2D->cd();
+            for (Seg = 1; Seg <= SEGS; Seg++) {
+               sprintf(name, "TIG%02d%cP%02dx WaveChg Mat", Clover, Num2Col(Crystal), Seg);
+               sprintf(title, "TIG%02d%cP%02dx-TIG%02d%cN00a Wave Charge Matrix  (arb)", Clover, Num2Col(Crystal), Seg, Clover, Num2Col(Crystal));
+               hCoreSegWaveCharge[Clover-1][Crystal][Seg-1] = new TH2F(name, title, Config.ChargeBins2D, 0, Config.WaveChargeMax,  Config.ChargeBins2D, 0, Config.WaveChargeMax);
+            }
          }
       }
    }
@@ -164,7 +166,7 @@ int InitCalib()
    }
    // Check one source only given
    if (Config.SourceNumCore.size() != 1) {
-      cout << "Only one source should be given for calibration of TTree as the sort will sum all input files." << endl;
+      cout << "Exactly one source should be specified for calibration of TTree (sort will sum all input files)." << endl;
       return 1;
    }
 
@@ -419,19 +421,21 @@ int Calib(std::vector < TTigFragment > &ev)
    }
    
    // Now loop hits and increment seg charge - core charge 2D spectra
-   for (Clover = 1; Clover <= CLOVERS; Clover++) {
-      for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
-         if(Hits[Clover-1][Crystal][0] == 1) {
-            for(Seg=1;Seg<=SEGS;Seg++) {
-               if(Hits[Clover-1][Crystal][Seg] == 1) {
-                  hCoreSegCharge[Clover-1][Crystal][Seg-1]->Fill(Charges[Clover-1][Crystal][0],Charges[Clover-1][Crystal][Seg]);
-                  hCoreSegWaveCharge[Clover-1][Crystal][Seg-1]->Fill(WaveCharges[Clover-1][Crystal][0],WaveCharges[Clover-1][Crystal][Seg]);
+   if(Config.Cal2D) {
+      for (Clover = 1; Clover <= CLOVERS; Clover++) {
+         for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
+            if(Hits[Clover-1][Crystal][0] == 1) {
+               for(Seg=1;Seg<=SEGS;Seg++) {
+                  if(Hits[Clover-1][Crystal][Seg] == 1) {
+                     hCoreSegCharge[Clover-1][Crystal][Seg-1]->Fill(Charges[Clover-1][Crystal][0],Charges[Clover-1][Crystal][Seg]);
+                     hCoreSegWaveCharge[Clover-1][Crystal][Seg-1]->Fill(WaveCharges[Clover-1][Crystal][0],WaveCharges[Clover-1][Crystal][Seg]);
+                  }
                }
-            }
-         }     
+            }     
+         }
       }
    }
-
+   
    return 0;
 }
 
@@ -454,7 +458,7 @@ void FinalCalib()
             hCharge[Clover - 1][Crystal][Seg]->Write();
             dWaveCharge->cd();
             hWaveCharge[Clover - 1][Crystal][Seg]->Write();
-            if(Seg<SEGS) {
+            if(Config.Cal2D && Seg<SEGS) {
                dCharge2D->cd();
                hCoreSegCharge[Clover - 1][Crystal][Seg]->Write();
                dWaveCharge2D->cd();

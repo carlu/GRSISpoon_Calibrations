@@ -105,10 +105,11 @@ struct RunConfig {              // this struct will hold all information
    // Physics settings for individual functions
    // ------------------------------------------
 
-   // Calib() and CalibOffline()
+   // SortTrees:Calib() and SortHistos:CalibrateFiles() 
    // What to do
    bool CalEnergy;              // fit charge spectra
    bool CalWave;                // fit wave-charge spectra
+   bool Cal2D;                  // create 2D core-seg energy matrices for low stat seg calibraiton
    bool CalReport;              // write full report on peak fitting as well as list of gains
    bool CalFile;                // produce a .cal file, readable by GRSISpoon
    bool CalList[CLOVERS][CRYSTALS][SEGS + 2];   // mask to determine which channels CalibSpectra() should run on

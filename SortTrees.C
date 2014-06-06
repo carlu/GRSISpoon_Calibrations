@@ -98,6 +98,10 @@ void FinalGeTiming();
 
 int main(int argc, char **argv)
 {
+   // Timing
+   TStopwatch StopWatch;
+   StopWatch.Start();
+
    // Variables, Constants, etc
    int i;
    unsigned int ChainEvent, TreeEvent;
@@ -115,10 +119,6 @@ int main(int argc, char **argv)
 
    // create root environment for interacting with plots etc
    App = new TApplication("Output", 0, NULL);
-
-   // Timing
-   TStopwatch StopWatch;
-   StopWatch.Start();
 
    // Load any alternate calibration information 
    if (Config.HaveAltEnergyCalibration) {
@@ -185,6 +185,10 @@ int main(int argc, char **argv)
       }
    }
    
+   if(Config.PrintBasic) {
+      cout << "Initialisation completed in " << StopWatch.RealTime() << " seconds." << endl << endl;
+      StopWatch.Continue();
+   }
 
    TChain *Chain = new TChain("FragmentTree");
 
