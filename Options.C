@@ -118,6 +118,7 @@ int LoadDefaultSettings()
    Config.WriteFits = 1;
    // Charge spectra
    Config.ChargeBins = 16384;
+   Config.ChargeBins2D = 1024;
    Config.ChargeMax = 1500000;
    Config.WaveChargeMax = 16384;
    // Gain drift/time dependent stuff

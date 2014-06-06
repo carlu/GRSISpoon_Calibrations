@@ -35,33 +35,42 @@ using namespace std;
 #include "Utils.h"
 
 // File pointers:
+// ---------------
 static TFile *outfile = 0;
-static TDirectory *dCharge, *dWaveCharge, *dTemp, *dOther = { 0 };
+static TDirectory *dCharge, *dCharge2D, *dWaveCharge, *dWaveCharge2D, *dTemp, *dOther = { 0 };
 
+// ROOT Stuff
+//-------------
 extern TApplication *App;
-
 TCanvas *cWave1;
 
+// Run settings
+extern RunConfig Config;
+
 // Spectra Pointers:
-static TH1F *hCharge[CLOVERS][CRYSTALS][SEGS + 2] = { };        // charge from FPGA
-static TH1F *hWaveCharge[CLOVERS][CRYSTALS][SEGS + 2] = { };    // charge from waveform
-
+// ----------------
+// Charge
+static TH1F *hCharge[CLOVERS][CRYSTALS][SEGS + 2] = {0 };        // charge from FPGA
+static TH1F *hWaveCharge[CLOVERS][CRYSTALS][SEGS + 2] = {0 };    // charge from waveform
+static TH1F *hCrystalChargeTemp[CLOVERS][CRYSTALS] = {0 };       // Only doing these guys for the cores
+// 2D Charge
+static TH2F *hCoreSegCharge[CLOVERS][CRYSTALS][SEGS] = {0};      // 2D matrix of core charge vs seg charge for low stat seg cal
+static TH2F *hCoreSegWaveCharge[CLOVERS][CRYSTALS][SEGS] = {0};
+// Calibration 
+static TH1F *hCrystalGain[CLOVERS][CRYSTALS] = {0 };    // Histos for recording calibration vs time
+static TH1F *hCrystalOffset[CLOVERS][CRYSTALS] = {0 };
+// Other
 static TH1F *hMidasTime = 0;
-static TH1F *hCrystalChargeTemp[CLOVERS][CRYSTALS] = { };       // Only doing these guys for the cores
-static TH1F *hCrystalGain[CLOVERS][CRYSTALS] = { };
-static TH1F *hCrystalOffset[CLOVERS][CRYSTALS] = { };
-
 static TH1F *WaveHist = 0;
 
-// Functions called from main:   
+// Functions
+//-------------- 
+// called from outside this file:   
 int InitCalib();
 int Calib(std::vector < TTigFragment > &ev);
 void FinalCalib();
-// Functions called from here:
+// called from here:
 void ResetTempSpectra();
-
-// Storing run settings
-extern RunConfig Config;
 
 int InitCalib()
 {
@@ -70,7 +79,9 @@ int InitCalib()
    outfile = new TFile(tempstring.c_str(), "RECREATE");
 
    dCharge = outfile->mkdir("Charge");
+   dCharge2D = outfile->mkdir("Charge2D");
    dWaveCharge = outfile->mkdir("WaveCharge");
+   dWaveCharge2D = outfile->mkdir("WaveCharge2D");
    dTemp = outfile->mkdir("Temp");
    dOther = outfile->mkdir("Other");
 
@@ -125,6 +136,19 @@ int InitCalib()
             sprintf(title, "TIG%02d%cP%02dx Waveform Charge (arb)", Clover, Num2Col(Crystal), Seg);
             hWaveCharge[Clover - 1][Crystal][Seg] = new TH1F(name, title, Config.ChargeBins, 0, Config.WaveChargeMax);
          }
+         // and 2D charge spectra for low stat seg cal
+         dCharge2D->cd();
+         for (Seg = 1; Seg <= SEGS; Seg++) {
+            sprintf(name, "TIG%02d%cP%02dx Chg Mat", Clover, Num2Col(Crystal), Seg);
+            sprintf(title, "TIG%02d%cP%02dx-TIG%02d%cN00a Charge Matrix  (arb)", Clover, Num2Col(Crystal), Seg, Clover, Num2Col(Crystal));
+            hCoreSegCharge[Clover-1][Crystal][Seg-1] = new TH2F(name, title, Config.ChargeBins2D, 0, Config.ChargeMax,  Config.ChargeBins2D, 0, Config.ChargeMax);
+         }
+         dWaveCharge2D->cd();
+         for (Seg = 1; Seg <= SEGS; Seg++) {
+            sprintf(name, "TIG%02d%cP%02dx WaveChg Mat", Clover, Num2Col(Crystal), Seg);
+            sprintf(title, "TIG%02d%cP%02dx-TIG%02d%cN00a Wave Charge Matrix  (arb)", Clover, Num2Col(Crystal), Seg, Clover, Num2Col(Crystal));
+            hCoreSegWaveCharge[Clover-1][Crystal][Seg-1] = new TH2F(name, title, Config.ChargeBins2D, 0, Config.WaveChargeMax,  Config.ChargeBins2D, 0, Config.WaveChargeMax);
+         }
       }
    }
    // Time stamp histo
@@ -172,7 +196,7 @@ int Calib(std::vector < TTigFragment > &ev)
    unsigned int Frag;
    unsigned int Samp, Length;
    int Chan;
-   int Crystal, Clover;
+   int Crystal, Clover, Seg;
    int FitSuccess, CalibSuccess;
    std::string name;
 
@@ -188,6 +212,10 @@ int Calib(std::vector < TTigFragment > &ev)
    float TB = 0.0;
 
    float WaveCharge = 0.0;
+   
+   bool Hits[CLOVERS][CRYSTALS][SEGS+2] = {0};
+   int Charges[CLOVERS][CRYSTALS][SEGS+2] = {0};
+   float WaveCharges[CLOVERS][CRYSTALS][SEGS+2] = {0.0};
 
    if (DEBUG) {
       cout << "--------- New Event ---------" << endl;
@@ -243,10 +271,9 @@ int Calib(std::vector < TTigFragment > &ev)
          // Calcualte wave energy
          Length = ev[Frag].wavebuffer.size();
          if (Length > Config.WaveInitialSamples + Config.WaveFinalSamples) {
-            //cout << name;// << endl;
-            //cout << " samples: " << Length << endl;  
+
             WaveCharge = CalcWaveCharge(ev[Frag].wavebuffer);
-            //cout << "Charge: " << WaveCharge << endl;
+
             if (PLOT_WAVE) {
                cWave1->cd();
                for (Samp = 0; Samp < Length; Samp++) {
@@ -279,6 +306,9 @@ int Calib(std::vector < TTigFragment > &ev)
                   hCharge[Clover - 1][Crystal][0]->Fill(ev[Frag].Charge);
                   hWaveCharge[Clover - 1][Crystal][0]->Fill(WaveCharge);
                   hCrystalChargeTemp[Clover - 1][Crystal]->Fill(ev[Frag].Charge);
+                  Hits[Clover - 1][Crystal][0] = 1;
+                  Charges[Clover - 1][Crystal][0] = ev[Frag].Charge;
+                  WaveCharges[Clover - 1][Crystal][0] = WaveCharge;
                }
             } else {
                if (Chan == 9) {
@@ -295,6 +325,9 @@ int Calib(std::vector < TTigFragment > &ev)
                      }
                      hCharge[Clover - 1][Crystal][9]->Fill(ev[Frag].Charge);
                      hWaveCharge[Clover - 1][Crystal][9]->Fill(WaveCharge);
+                     Hits[Clover - 1][Crystal][9] = 1;
+                     Charges[Clover - 1][Crystal][9] = ev[Frag].Charge;
+                     WaveCharges[Clover - 1][Crystal][9] = WaveCharge;
                   }
                }
             }
@@ -303,6 +336,9 @@ int Calib(std::vector < TTigFragment > &ev)
                if (ev[Frag].Charge > 0) {
                   hCharge[Clover - 1][Crystal][mnemonic.segment]->Fill(ev[Frag].Charge);        // Fill segment spectra
                   hWaveCharge[Clover - 1][Crystal][mnemonic.segment]->Fill(WaveCharge);
+                  Hits[Clover - 1][Crystal][mnemonic.segment] = 1;
+                  Charges[Clover - 1][Crystal][mnemonic.segment] = ev[Frag].Charge;
+                  WaveCharges[Clover - 1][Crystal][mnemonic.segment] = WaveCharge;
                }
             }
          }
@@ -381,6 +417,20 @@ int Calib(std::vector < TTigFragment > &ev)
 
       }
    }
+   
+   // Now loop hits and increment seg charge - core charge 2D spectra
+   for (Clover = 1; Clover <= CLOVERS; Clover++) {
+      for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
+         if(Hits[Clover-1][Crystal][0] == 1) {
+            for(Seg=1;Seg<=SEGS;Seg++) {
+               if(Hits[Clover-1][Crystal][Seg] == 1) {
+                  hCoreSegCharge[Clover-1][Crystal][Seg-1]->Fill(Charges[Clover-1][Crystal][0],Charges[Clover-1][Crystal][Seg]);
+                  hCoreSegWaveCharge[Clover-1][Crystal][Seg-1]->Fill(WaveCharges[Clover-1][Crystal][0],WaveCharges[Clover-1][Crystal][Seg]);
+               }
+            }
+         }     
+      }
+   }
 
    return 0;
 }
@@ -404,6 +454,12 @@ void FinalCalib()
             hCharge[Clover - 1][Crystal][Seg]->Write();
             dWaveCharge->cd();
             hWaveCharge[Clover - 1][Crystal][Seg]->Write();
+            if(Seg<SEGS) {
+               dCharge2D->cd();
+               hCoreSegCharge[Clover - 1][Crystal][Seg]->Write();
+               dWaveCharge2D->cd();
+               hCoreSegWaveCharge[Clover - 1][Crystal][Seg]->Write();
+            }
          }
          dTemp->cd();
          hCrystalChargeTemp[Clover - 1][Crystal]->Write();

@@ -126,6 +126,7 @@ struct RunConfig {              // this struct will hold all information
    bool FitTempSpectra;  // should the temporary charge spectra be fitted for gain drift check
    // Charge spectra
    int ChargeBins;
+   int ChargeBins2D;
    float ChargeMax;
    float WaveChargeMax;
    // What to plot
