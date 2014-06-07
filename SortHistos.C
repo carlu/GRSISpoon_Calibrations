@@ -40,6 +40,10 @@ TApplication *App;              // Pointer to root environment for plotting etc
 
 int main(int argc, char **argv)
 {
+   // Timing
+   TStopwatch StopWatch;
+   StopWatch.Start();
+
    // Set default and read custom options
    LoadDefaultSettings();
    if (ReadCommandLineSettings(argc, argv) < 0) {
@@ -52,10 +56,6 @@ int main(int argc, char **argv)
    // create root environment for interacting with plots etc
    App = new TApplication("Output", 0, NULL);
 
-   // Timing
-   TStopwatch StopWatch;
-   StopWatch.Start();
-
    // Check what we are supposed to be doing call function
    if (Config.RunSpecCal == 1 || Config.RunSpecCal2) {
       if (CalibrateFiles() > 0) {
@@ -67,5 +67,10 @@ int main(int argc, char **argv)
    if (Config.RunSpecEff == 1) {
       cout << "Relative efficiency fitting not yet implemented." << endl;
    }
+   
+   if(Config.PrintBasic) {
+      cout << "SortHistos completed in " << StopWatch.RealTime() << " seconds." << endl;
+   }
+   
    return 0;
 }

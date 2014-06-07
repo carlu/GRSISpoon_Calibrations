@@ -300,7 +300,6 @@ int Calib(std::vector < TTigFragment > &ev)
                   }
                }
                if (ev[Frag].Charge > 0) {
-                  // Increment raw charge spectra
                   if (DEBUG) {
                      cout << "A: Filling " << Clover
                          << ", " << Crystal << ", 0, " << mnemonic.
@@ -312,7 +311,6 @@ int Calib(std::vector < TTigFragment > &ev)
                   hCrystalChargeTemp[Clover - 1][Crystal]->Fill(ev[Frag].Charge);
                   // Store information for use at end of event
                   Hits[Clover - 1][Crystal][0] = 1;
-                  CloverSegFold[Clover-1] += 1;
                   Charges[Clover - 1][Crystal][0] = ev[Frag].Charge;
                   WaveCharges[Clover - 1][Crystal][0] = WaveCharge;
                }
@@ -324,13 +322,14 @@ int Calib(std::vector < TTigFragment > &ev)
                      }
                   }
                   if (ev[Frag].Charge > 0) {
-                     // Increment raw charge spectra
                      if (DEBUG) {
                         cout << "B: Filling " << Clover << ", " << Crystal << ", 0, " << mnemonic.outputsensor <<
                             " with charge = " << ev[Frag].Charge << endl;
                      }
+                     // Fi histograms
                      hCharge[Clover - 1][Crystal][9]->Fill(ev[Frag].Charge);
                      hWaveCharge[Clover - 1][Crystal][9]->Fill(WaveCharge);
+                     // Store info for end of event
                      Hits[Clover - 1][Crystal][9] = 1;
                      Charges[Clover - 1][Crystal][9] = ev[Frag].Charge;
                      WaveCharges[Clover - 1][Crystal][9] = WaveCharge;
@@ -340,11 +339,15 @@ int Calib(std::vector < TTigFragment > &ev)
          } else {
             if (mnemonic.segment < 9) {
                if (ev[Frag].Charge > 0) {
+                  // Fill histograms
                   hCharge[Clover - 1][Crystal][mnemonic.segment]->Fill(ev[Frag].Charge);        // Fill segment spectra
                   hWaveCharge[Clover - 1][Crystal][mnemonic.segment]->Fill(WaveCharge);
+                  // Store info for end of event
                   Hits[Clover - 1][Crystal][mnemonic.segment] = 1;
                   Charges[Clover - 1][Crystal][mnemonic.segment] = ev[Frag].Charge;
                   WaveCharges[Clover - 1][Crystal][mnemonic.segment] = WaveCharge;
+                  // Count segment fold
+                  CloverSegFold[Clover-1] += 1;
                }
             }
          }
