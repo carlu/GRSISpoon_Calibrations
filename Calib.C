@@ -216,6 +216,7 @@ int Calib(std::vector < TTigFragment > &ev)
    float WaveCharge = 0.0;
    
    bool Hits[CLOVERS][CRYSTALS][SEGS+2] = {0};
+   int CloverSegFold[CLOVERS] = {0};
    int Charges[CLOVERS][CRYSTALS][SEGS+2] = {0};
    float WaveCharges[CLOVERS][CRYSTALS][SEGS+2] = {0.0};
 
@@ -305,10 +306,13 @@ int Calib(std::vector < TTigFragment > &ev)
                          << ", " << Crystal << ", 0, " << mnemonic.
                          outputsensor << " with charge = " << ev[Frag].Charge << endl;
                   }
+                  // Increment histograms
                   hCharge[Clover - 1][Crystal][0]->Fill(ev[Frag].Charge);
                   hWaveCharge[Clover - 1][Crystal][0]->Fill(WaveCharge);
                   hCrystalChargeTemp[Clover - 1][Crystal]->Fill(ev[Frag].Charge);
+                  // Store information for use at end of event
                   Hits[Clover - 1][Crystal][0] = 1;
+                  CloverSegFold[Clover-1] += 1;
                   Charges[Clover - 1][Crystal][0] = ev[Frag].Charge;
                   WaveCharges[Clover - 1][Crystal][0] = WaveCharge;
                }
@@ -424,7 +428,10 @@ int Calib(std::vector < TTigFragment > &ev)
    if(Config.Cal2D) {
       for (Clover = 1; Clover <= CLOVERS; Clover++) {
          for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
-            if(Hits[Clover-1][Crystal][0] == 1) {
+            // Check if hit and also if this is the only hit in clover.
+            //    (Could do this on a per crystal basis to get more stats but enforcing 1seg hit per clover
+            //       means we will certainly not have any problems with crosstalk).
+            if(Hits[Clover-1][Crystal][0] == 1 && CloverSegFold[Clover-1] == 1) {
                for(Seg=1;Seg<=SEGS;Seg++) {
                   if(Hits[Clover-1][Crystal][Seg] == 1) {
                      hCoreSegCharge[Clover-1][Crystal][Seg-1]->Fill(Charges[Clover-1][Crystal][0],Charges[Clover-1][Crystal][Seg]);
