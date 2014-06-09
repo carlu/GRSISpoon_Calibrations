@@ -37,7 +37,6 @@ using namespace std;
 #include "SortTrees.h"
 #include "Calib.h"
 #include "CalibTools.h"
-#include "CalibTools2.h"
 #include "Utils.h"
 
 extern TApplication *App;
@@ -483,18 +482,13 @@ int FitHistoFile(TFile * file, int FileType, int FileNum, MasterFitMap * FitMap,
                      cout << "------------------------------------------------------------------------" << endl << endl;
                   }
 
-
                   // Initialise FitSettings and HistoFit               
                   HistoFit Fit;
                   HistoCal Cal;
 
                   // Perform fit
-                  if(Config.RunSpecCal2 == 1) {
-                     FitSuccess = FitGammaSpectrumGlobal(Histo, &Fit, &Cal, Settings);
-                  }
-                  else {
-                     FitSuccess = FitGammaSpectrum(Histo, &Fit, &Cal, Settings);
-                  }
+                  FitSuccess = FitGammaSpectrum(Histo, &Fit, &Cal, Settings);
+
                   // Write fit results to map
                   // First add all fitted lines to ChannelFit map
                   ChanFits.clear();
@@ -561,12 +555,8 @@ int FitHistoFile(TFile * file, int FileType, int FileNum, MasterFitMap * FitMap,
                   HistoFit WaveFit;
                   HistoCal WaveCal;
                   
-                  if(Config.RunSpecCal2 == 1) {
-                     FitSuccess = FitGammaSpectrumGlobal(Histo, &WaveFit, &WaveCal, Settings);
-                  }
-                  else {
-                     FitSuccess = FitGammaSpectrum(Histo, &WaveFit, &WaveCal, Settings);
-                  }
+                  FitSuccess = FitGammaSpectrum(Histo, &WaveFit, &WaveCal, Settings);
+
                   // Write fit results to map
                   // First add all fitted lines to ChannelFit map
                   ChanFits.clear();
