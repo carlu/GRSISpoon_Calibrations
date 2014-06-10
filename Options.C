@@ -73,24 +73,25 @@ int LoadDefaultSettings()
    };
    // Push source lines to vector of vectors.
    // This is horrible.  Need to find another way to initialise these vectors.
+   // These values are overwritten if alternatives are given in Config.txt
    vector < float >SourceTemp;
    for (int i = 0; i < 2; i++) {
-      SourceTemp.push_back(Sources[0][i]);
+      SourceTemp.push_back(Sources[SOURCE_60CO][i]);
    }
    Config.Sources.push_back(SourceTemp);
    SourceTemp.clear();
    for (int i = 0; i < 10; i++) {
-      SourceTemp.push_back(Sources[1][i]);
+      SourceTemp.push_back(Sources[SOURCE_152EU_FRONT][i]);
    }
    Config.Sources.push_back(SourceTemp);
    SourceTemp.clear();
    for (int i = 0; i < 9; i++) {
-      SourceTemp.push_back(Sources[2][i]);
+      SourceTemp.push_back(Sources[SOURCE_152EU_BACK][i]);
    }
    Config.Sources.push_back(SourceTemp);
    SourceTemp.clear();
    for (int i = 0; i < 5; i++) {
-      SourceTemp.push_back(Sources[3][i]);
+      SourceTemp.push_back(Sources[SOURCE_133BA][i]);
    }
    Config.Sources.push_back(SourceTemp);
 
@@ -309,21 +310,21 @@ int ReadCommandLineSettings(int argc, char **argv)
          while (strncmp(argv[i + 1], "-", 1) > 0) {     // loop files 
             test = 0;
             if (strncmp(argv[i + 1], "60Co", 4) == 0 || strncmp(argv[i + 1], "Co60", 4) == 0 || strncmp(argv[i + 1], "60co", 4) == 0 || strncmp(argv[i + 1], "co60", 4) == 0) { // is it 60Co
-               Config.SourceNumCore.push_back(0);
-               Config.SourceNumFront.push_back(0);
-               Config.SourceNumBack.push_back(0);
+               Config.SourceNumCore.push_back(SOURCE_60CO);
+               Config.SourceNumFront.push_back(SOURCE_60CO);
+               Config.SourceNumBack.push_back(SOURCE_60CO);
                test = 1;
             }
             if (strncmp(argv[i + 1], "152Eu", 5) == 0 || strncmp(argv[i + 1], "Eu152", 5) == 0 || strncmp(argv[i + 1], "152eu", 5) == 0 || strncmp(argv[i + 1], "eu152", 5) == 0) {     // or is it 152Eu
-               Config.SourceNumCore.push_back(1);
-               Config.SourceNumFront.push_back(1);
-               Config.SourceNumBack.push_back(2);
+               Config.SourceNumCore.push_back(SOURCE_152EU_FRONT);
+               Config.SourceNumFront.push_back(SOURCE_152EU_FRONT);
+               Config.SourceNumBack.push_back(SOURCE_152EU_BACK);
                test = 1;
             }
             if (strncmp(argv[i + 1], "133Ba", 5) == 0 || strncmp(argv[i + 1], "Ba133", 5) == 0 || strncmp(argv[i + 1], "133ba", 5) == 0 || strncmp(argv[i + 1], "ba133", 5) == 0) {     // or is it 133Ba
-               Config.SourceNumCore.push_back(3);
-               Config.SourceNumFront.push_back(3);
-               Config.SourceNumBack.push_back(3);
+               Config.SourceNumCore.push_back(SOURCE_133BA);
+               Config.SourceNumFront.push_back(SOURCE_133BA);
+               Config.SourceNumBack.push_back(SOURCE_133BA);
                test = 1;
             }
             if (test == 0) {    // or is it somethimng else
@@ -554,11 +555,17 @@ int ReadConfigFile(std::string filename)
    // Variables
    std::ifstream File;
    std::string Line;
+   std::string SubLine;
+   int StringPos;
    unsigned int Items = 0;       // count of lines in config file 
    unsigned int Comments = 0;    //   "      comments       "
    unsigned int Other = 0;
    float ValF;
    int ValI;
+   int NumRead;
+   int Item;
+   float FloatList[20];
+   
    
    // See if file can be opened.
    File.open(filename,std::ifstream::in);
@@ -622,6 +629,7 @@ int ReadConfigFile(std::string filename)
       
       // Physics/DAQ Settings
       //----------------------
+      // Integration used in FPGA charge evaluation
       if (strcmp(Line.c_str(), "INTEGRATION")==0) {
          getline(File,Line);
          if(sscanf(Line.c_str(), "%d", &ValI) == 1) {
@@ -631,7 +639,84 @@ int ReadConfigFile(std::string filename)
          else {Other += 1;}
          continue;
       }
-      
+      // Source Specification
+      //------------------------
+      // 60Co
+      if (strcmp(Line.c_str(), "60CO")==0) {
+         getline(File,Line);
+         Config.Sources.at(SOURCE_60CO).clear();  // New data so clear default
+         while(sscanf(Line.c_str(),"%f",&ValF)==1) {  // Fails when next item is not a float
+            Config.Sources.at(SOURCE_60CO).push_back(ValF);
+            StringPos = Line.find(" ");
+            Line = Line.substr(StringPos+1,Line.size());
+            if(StringPos == -1) {  // No more spaces (this was last item)
+               getline(File,Line); // Line pointing to last item, this advances it to first item on next line
+               break;
+            }
+         }
+         cout << "60CO Source data loaded (" << Config.Sources.at(SOURCE_60CO).size() << " lines):" << endl;
+         for(Item=0;Item<Config.Sources.at(SOURCE_60CO).size();Item++) {
+            cout << Config.Sources.at(SOURCE_60CO).at(Item) << " ";
+         }
+         cout << endl;
+      }
+      // 152 Eu front segments
+      if (strcmp(Line.c_str(), "152EU FRONT")==0) {
+         getline(File,Line);
+         Config.Sources.at(SOURCE_152EU_FRONT).clear();  // New data so clear default
+         while(sscanf(Line.c_str(),"%f",&ValF)==1) {  // Fails when next item is not a float
+            Config.Sources.at(SOURCE_152EU_FRONT).push_back(ValF);
+            StringPos = Line.find(" ");
+            Line = Line.substr(StringPos+1,Line.size());
+            if(StringPos == -1) {  // No more spaces (this was last item)
+               getline(File,Line); // Line pointing to last item, this advances it to first item on next line
+               break;
+            }
+         }
+         cout << "152EU (front) Source data loaded (" << Config.Sources.at(SOURCE_152EU_FRONT).size() << " lines):" << endl;
+         for(Item=0;Item<Config.Sources.at(SOURCE_152EU_FRONT).size();Item++) {
+            cout << Config.Sources.at(SOURCE_152EU_FRONT).at(Item) << " ";
+         }
+         cout << endl;
+      }
+      // 152Eu back segments
+      if (strcmp(Line.c_str(), "152EU BACK")==0) {
+         getline(File,Line);
+         Config.Sources.at(SOURCE_152EU_BACK).clear();  // New data so clear default
+         while(sscanf(Line.c_str(),"%f",&ValF)==1) {  // Fails when next item is not a float
+            Config.Sources.at(SOURCE_152EU_BACK).push_back(ValF);
+            StringPos = Line.find(" ");
+            Line = Line.substr(StringPos+1,Line.size());
+            if(StringPos == -1) {  // No more spaces (this was last item)
+               getline(File,Line); // Line pointing to last item, this advances it to first item on next line
+               break;
+            }
+         }
+         cout << "152EU (back) Source data loaded (" << Config.Sources.at(SOURCE_152EU_BACK).size() << " lines):" << endl;
+         for(Item=0;Item<Config.Sources.at(SOURCE_152EU_BACK).size();Item++) {
+            cout << Config.Sources.at(SOURCE_152EU_BACK).at(Item) << " ";
+         }
+         cout << endl;
+      }
+      // 133Ba
+      if (strcmp(Line.c_str(), "133BA")==0) {
+         getline(File,Line);
+         Config.Sources.at(SOURCE_133BA).clear();  // New data so clear default
+         while(sscanf(Line.c_str(),"%f",&ValF)==1) {  // Fails when next item is not a float
+            Config.Sources.at(SOURCE_133BA).push_back(ValF);
+            StringPos = Line.find(" ");
+            Line = Line.substr(StringPos+1,Line.size());
+            if(StringPos == -1) {  // No more spaces (this was last item)
+               getline(File,Line); // Line pointing to last item, this advances it to first item on next line
+               break;
+            }
+         }
+         cout << "133Ba Source data loaded (" << Config.Sources.at(SOURCE_133BA).size() << " lines):" << endl;
+         for(Item=0;Item<Config.Sources.at(SOURCE_133BA).size();Item++) {
+            cout << Config.Sources.at(SOURCE_133BA).at(Item) << " ";
+         }
+         cout << endl;
+      }
       // Calibration/fit parameters
       // ----------------------------
       // Fit temporary spectra during --cal run for gain drift check?

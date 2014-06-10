@@ -27,6 +27,12 @@
 //Other stuff
 #define CHAR_BUFFER_SIZE 1024
 
+// Item numbers for source records
+#define SOURCE_60CO 0 
+#define SOURCE_152EU_FRONT 1
+#define SOURCE_152EU_BACK 2
+#define SOURCE_133BA 3
+
 // Information for calib and eff
 // --------------------------------------------
 

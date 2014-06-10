@@ -13,6 +13,20 @@
 INTEGRATION
 125
 
+# Source Specification
+# First two lines in list will be used for peak search, rest will be fitted afterwards
+60CO
+1173.237 1332.501
+
+152EU FRONT
+121.7817 1408.006 244.6975 344.2785 411.116 778.9040 964.079 1112.074 867.378 1299.14 
+
+152EU BACK
+344.2785 1408.006 244.6975 411.116 778.9040 964.079 1112.074 867.378 1299.14
+
+133BA
+276.398 356.017 80.9971 302.853 383.851
+
 # Parameters for Calibration and fitting functions
 MAX_TIME
 36000.0
