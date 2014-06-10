@@ -226,6 +226,7 @@ int ReadCommandLineSettings(int argc, char **argv)
    bool test;
    bool RunConfGiven = 0;       // used to record if required operation has been specified.  
    bool ConfigFileLoaded = 0;
+   int Clover, Crystal, Seg;
 
    if (argc < 3) {
       cout << "No input file provided!" << endl << endl;
@@ -469,6 +470,34 @@ int ReadCommandLineSettings(int argc, char **argv)
             cout << "Need to specify (Clover) (Crystal) (Seg) with \"-d\" option." << endl;
             return -1;
          } else {
+            // If this option selected, clear detector list
+            // Only do this once in case multiple detectors specified
+            if (Config.CalListProvided == 0) {
+               Config.CalListProvided = 1;
+               memset(&Config.CalList, 0, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
+            }
+            // If keyword cores used..
+            if (strncmp(argv[i + 1],"cores",4) == 0 || strncmp(argv[i + 1],"Cores",4) ==0 ) {
+               for(Clover=1;Clover<=CLOVERS;Clover++) {
+                  for(Crystal=0;Crystal<CRYSTALS;Crystal++) {
+                     Config.CalList[Clover-1][Crystal][0] = 1;
+                     Config.CalList[Clover-1][Crystal][9] = 1;
+                  }
+               }
+               continue;
+            }
+            // If keyword segs used...
+            if (strncmp(argv[i + 1],"segs",3) == 0 || strncmp(argv[i + 1],"Segs",3) ==0 ) {
+               for(Clover=1;Clover<=CLOVERS;Clover++) {
+                  for(Crystal=0;Crystal<CRYSTALS;Crystal++) {
+                     for(Seg=1;Seg<SEGS+1;Seg++) {
+                        Config.CalList[Clover-1][Crystal][Seg] = 1;
+                     }
+                  }
+               }
+               continue;
+            }
+            // else, expect a list of three integers to specify a clover,crystal,seg
             n = 0;
             while (strncmp(argv[i + 1], "-", 1) > 0) {
                FitList[n] = atoi(argv[++i]);
@@ -484,10 +513,6 @@ int ReadCommandLineSettings(int argc, char **argv)
                   cout << "Need to specify (Clover) (Crystal) (Seg) with \"-d\" option." << endl;
                   return -1;
                }
-            }
-            if (Config.CalListProvided == 0) {
-               Config.CalListProvided = 1;
-               memset(&Config.CalList, 0, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
             }
             Config.CalList[FitList[0] - 1][FitList[1]][FitList[2]] = 1;
          }
@@ -564,8 +589,6 @@ int ReadConfigFile(std::string filename)
    int ValI;
    int NumRead;
    int Item;
-   float FloatList[20];
-   
    
    // See if file can be opened.
    File.open(filename,std::ifstream::in);
