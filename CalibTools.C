@@ -147,17 +147,18 @@ int CalibrateFiles()
    QuadHist->GetXaxis()->SetTitle("keV/ch^2");
 
    // Initialise TCanvas's
-   if (Config.RunSpecCal == 1) {
+   if (Config.ManualPeakCorrection == 1 || Config.PlotCalib == 1) {
       cCalib1 = new TCanvas("cCalib1", "Fit", 800, 600);        // Canvas for spectrum plots
 
       cCalib1a = new TCanvas("cCalib1a", "Calibration", 800, 600);      // Canvas for spectrum plots
       cCalib1a->Divide(1, 2);
-
+   }
+   if (Config.PlotCalibSummary == 1) {
       cCalib2 = new TCanvas("cCalib2", "Calibration Summary", 800, 600);        // Canvas for gain plots and histograms
       cCalib2->Divide(2, 3);
       cCalib2->Update();
 
-      cCalib1->cd();
+      //cCalib1->cd();
    }
    // loop input files
    for (FileNum = 0; FileNum < Config.files.size(); FileNum++) {
@@ -367,33 +368,37 @@ int CalibrateFiles()
    }
 
    if (Config.PlotCalibSummary) {
-      //cCalib2->cd();
+      cCalib2->Divide(2, 3);
       cCalib2->cd(1);
       OffsetPlot->Draw();
       cCalib2->Modified();
       cCalib2->Update();
-      //App->Run();
+      //App->Run(1);
       cCalib2->cd(2);
       OffsetHist->Draw();
       cCalib2->Modified();
       cCalib2->Update();
+      //App->Run(1);
       cCalib2->cd(3);
       GainPlot->Draw();
       cCalib2->Modified();
       cCalib2->Update();
+      //App->Run(1);
       cCalib2->cd(4);
       GainHist->Draw();
       cCalib2->Modified();
       cCalib2->Update();
+      //App->Run(1);
       cCalib2->cd(5);
       QuadPlot->Draw();
       cCalib2->Modified();
       cCalib2->Update();
+      //App->Run(1);
       cCalib2->cd(6);
       QuadHist->Draw();
       cCalib2->Modified();
       cCalib2->Update();
-      App->Run();
+      App->Run(1);
    }
 
    if (Config.CalWave) {
@@ -713,6 +718,7 @@ int FitGammaSpectrum(TH1F * Histo, HistoFit * Fit, HistoCal * Cal, FitSettings S
          }
 
          //gSystem->ProcessEvents();
+         cCalib1->cd(1);
          Histo->Draw();
          cCalib1->Update();
          App->Run(1);
@@ -1275,7 +1281,7 @@ int ConfigureEnergyFit(int Clover, int Crystal, int Seg, int FileType, int FileN
    Settings->SigmaEstZero =Config.EnergySigmaZero;
    Settings->SigmaEst1MeV = Config.EnergySigma1MeV;
    Settings->FitZero = Config.FitZero;
-   Settings->BackupPeakSelect = 0;
+   Settings->BackupPeakSelect = Config.ManualPeakCorrection;
    Settings->TempFit = 0;
    Settings->GainEst = Config.EnGainEst;
 
@@ -1319,6 +1325,7 @@ int ConfigureWaveEnFit(int Clover, int Crystal, int Seg, int FileType, int FileN
    // Check if Manual peak select should be active
    if (Config.ManualPeakSelect[Clover - 1][Crystal][Seg]) {
       Settings->PeakSelect = 1;
+      Settings->PlotOn = 1;
    } else {
       Settings->PeakSelect = 0;
    }
@@ -1330,7 +1337,7 @@ int ConfigureWaveEnFit(int Clover, int Crystal, int Seg, int FileType, int FileN
    Settings->SigmaEstZero = Config.WaveSigmaZero;
    Settings->SigmaEst1MeV = Config.WaveSigma1MeV;
    Settings->FitZero = Config.FitZero;
-   Settings->BackupPeakSelect = 0;
+   Settings->BackupPeakSelect = Config.ManualPeakCorrection;
    Settings->TempFit = 0;
    Settings->GainEst = Config.WaveGainEst;
 

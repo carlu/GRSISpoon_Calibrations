@@ -108,18 +108,20 @@ struct RunConfig {              // this struct will hold all information
    // Array mode
    bool HighEffMode;            // 1 if TIGRESS is in high eff mode (11cm), 0 if in high peak/total (14.5cm)
 
-   // Physics settings for individual functions
+   // Settings for individual functions
    // ------------------------------------------
 
    // SortTrees:Calib() and SortHistos:CalibrateFiles() 
    // What to do
    bool CalEnergy;              // fit charge spectra
    bool CalWave;                // fit wave-charge spectra
-   bool Cal2D;                  // create 2D core-seg energy matrices for low stat seg calibraiton
+   bool Cal2D;                  // create 2D core-seg energy matrices for low stat seg calibration
    bool CalReport;              // write full report on peak fitting as well as list of gains
    bool CalFile;                // produce a .cal file, readable by GRSISpoon
    bool CalList[CLOVERS][CRYSTALS][SEGS + 2];   // mask to determine which channels CalibSpectra() should run on
    bool CalListProvided;
+   bool CalOutputBad;           // output to gain file if calibration is bad?
+   bool CalOverwriteBad;           // Overwrite bad calibration values with mean (useful to get bad seg cals roughly right)
    // Output
     std::string CalOut;         // First 8 letters of this should match any file loaded in to offline cal
     std::string CalSpecOut;

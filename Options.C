@@ -111,6 +111,8 @@ int LoadDefaultSettings()
    Config.CalFile = 0;          // Generate .cal file as used by GRSISpoon 
    memset(&Config.CalList, 1, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
    Config.CalListProvided = 0;
+   Config.CalOutputBad = 0;           // output to gain file if calibration is bad?
+   Config.CalOverwriteBad = 1;           // Overwrite bad calibration values with mean (useful to get bad seg cals roughly right)
    // Output
    Config.CalOut = "CalibOut.root";     // Name for Tree calibration output file
    Config.CalName = Config.CalOut.substr(0, Config.CalOut.size() - 5);  // name expected for hist calib input. 
@@ -132,7 +134,7 @@ int LoadDefaultSettings()
    Config.PlotFits = 0;
    Config.PlotCalib = 0;
    Config.PlotResidual = 0;
-   Config.PlotCalibSummary = 0;
+   Config.PlotCalibSummary = 1;
    memset(&Config.CalibPlots, 0, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
    // Peak Search stuff
    Config.EnSearchThresh = 0.055;
