@@ -474,17 +474,17 @@ int InitPropXtalk()
    for (Clover = 1; Clover <= CLOVERS; Clover++) {
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
          Seg = 0;
-         sprintf(name, "TIG%02d%c%02dA Core En", Clover + 1, Colours[Crystal], Seg);
-         sprintf(title, "TIG%02d%c%02dA Core A Energy (keV)", Clover + 1, Colours[Crystal], Seg);
+         sprintf(name, "TIG%02d%c%02dA Core En", Clover , Colours[Crystal], Seg);
+         sprintf(title, "TIG%02d%c%02dA Core A Energy (keV)", Clover, Colours[Crystal], Seg);
          hEn[Clover - 1][Crystal][Seg] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
          for (Seg = 1; Seg <= SEGS; Seg++) {
-            sprintf(name, "TIG%02d%c%02dx Seg En", Clover + 1, Colours[Crystal], Seg);
-            sprintf(title, "TIG%02d%c%02dx Seg Energy (keV)", Clover + 1, Colours[Crystal], Seg);
+            sprintf(name, "TIG%02d%c%02dx Seg En", Clover , Colours[Crystal], Seg);
+            sprintf(title, "TIG%02d%c%02dx Seg Energy (keV)", Clover, Colours[Crystal], Seg);
             hEn[Clover - 1][Crystal][Seg] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
          }
          Seg = SEGS + 1;
-         sprintf(name, "TIG%02d%c%02dB Core En", Clover + 1, Colours[Crystal], 0);
-         sprintf(title, "TIG%02d%c%02dB Core B Energy (keV)", Clover + 1, Colours[Crystal], 0);
+         sprintf(name, "TIG%02d%c%02dB Core En", Clover, Colours[Crystal], 0);
+         sprintf(title, "TIG%02d%c%02dB Core B Energy (keV)", Clover, Colours[Crystal], 0);
          hEn[Clover - 1][Crystal][Seg] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
       }
    }
@@ -496,17 +496,17 @@ int InitPropXtalk()
    for (Clover = 1; Clover <= CLOVERS; Clover++) {
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
          Seg = 0;
-         sprintf(name, "TIG%02d%c%02dA Core WaveEn", Clover + 1, Colours[Crystal], Seg);
-         sprintf(title, "TIG%02d%c%02dA Core A Waveform Energy (keV)", Clover + 1, Colours[Crystal], Seg);
+         sprintf(name, "TIG%02d%c%02dA Core WaveEn", Clover, Colours[Crystal], Seg);
+         sprintf(title, "TIG%02d%c%02dA Core A Waveform Energy (keV)", Clover, Colours[Crystal], Seg);
          hWaveEn[Clover - 1][Crystal][Seg] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
          for (Seg = 1; Seg <= SEGS; Seg++) {
-            sprintf(name, "TIG%02d%c%02dx Seg WaveEn", Clover + 1, Colours[Crystal], Seg);
-            sprintf(title, "TIG%02d%c%02dx Seg Waveform Energy (keV)", Clover + 1, Colours[Crystal], Seg);
+            sprintf(name, "TIG%02d%c%02dx Seg WaveEn", Clover, Colours[Crystal], Seg);
+            sprintf(title, "TIG%02d%c%02dx Seg Waveform Energy (keV)", Clover, Colours[Crystal], Seg);
             hWaveEn[Clover - 1][Crystal][Seg] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
          }
          Seg = SEGS + 1;
-         sprintf(name, "TIG%02d%c%02dB Core WaveEn", Clover + 1, Colours[Crystal], 0);
-         sprintf(title, "TIG%02d%c%02dB Core B Waveform Energy (keV)", Clover + 1, Colours[Crystal], 0);
+         sprintf(name, "TIG%02d%c%02dB Core WaveEn", Clover, Colours[Crystal], 0);
+         sprintf(title, "TIG%02d%c%02dB Core B Waveform Energy (keV)", Clover, Colours[Crystal], 0);
          hWaveEn[Clover - 1][Crystal][Seg] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
       }
    }
@@ -517,15 +517,15 @@ int InitPropXtalk()
    sprintf(title, "TIGRESS Core Sum Energy (keV)");
    hCoreSumTig = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
    for (Clover = 1; Clover <= CLOVERS; Clover++) {
-      sprintf(name, "TIG%02d Core Sum", Clover + 1);
-      sprintf(title, "TIG%02d Core Sum Energy (keV)", Clover + 1);
+      sprintf(name, "TIG%02d Core Sum", Clover);
+      sprintf(title, "TIG%02d Core Sum Energy (keV)", Clover);
       hCoreSumClover[Clover - 1] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
-      sprintf(name, "TIG%02d Seg Sum", Clover + 1);
-      sprintf(title, "TIG%02d Segment Sum Energy (keV)", Clover + 1);
+      sprintf(name, "TIG%02d Seg Sum", Clover);
+      sprintf(title, "TIG%02d Segment Sum Energy (keV)", Clover);
       hSegSumClover[Clover - 1] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
-         sprintf(name, "TIG%02d%c Seg Sum", Clover + 1, Colours[Crystal]);
-         sprintf(title, "TIG%02d%c Segment Sum Energy (keV)", Clover + 1, Colours[Crystal]);
+         sprintf(name, "TIG%02d%c Seg Sum", Clover, Colours[Crystal]);
+         sprintf(title, "TIG%02d%c Segment Sum Energy (keV)", Clover, Colours[Crystal]);
          hSegSumCrystal[Clover - 1][Crystal] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
       }
    }
@@ -535,11 +535,11 @@ int InitPropXtalk()
    sprintf(title, "TIGRESS All Core Add-Back Energy (keV)");
    hCoreAddBackTig = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
    for (Clover = 1; Clover <= CLOVERS; Clover++) {
-      sprintf(name, "TIG%02d Core AB", Clover + 1);
-      sprintf(title, "TIG%02d Core Add-Back Energy (keV)", Clover + 1);
+      sprintf(name, "TIG%02d Core AB", Clover);
+      sprintf(title, "TIG%02d Core Add-Back Energy (keV)", Clover);
       hCoreAddBackClover[Clover - 1] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
-      sprintf(name, "TIG%02d Seg AB", Clover + 1);
-      sprintf(title, "TIG%02d Segment Add-Back Energy (keV)", Clover + 1);
+      sprintf(name, "TIG%02d Seg AB", Clover);
+      sprintf(title, "TIG%02d Segment Add-Back Energy (keV)", Clover);
       hSegAddBackClover[Clover - 1] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
       //Seg AB Crystal???
    }
@@ -555,62 +555,62 @@ int InitPropXtalk()
    sprintf(title, "TIGRESS Segment Fold");
    hSegFoldTig = new TH1F(name, title, FOLD_MAX, 0, FOLD_MAX);
    for (Clover = 1; Clover <= CLOVERS; Clover++) {
-      sprintf(name, "TIG%02d Crys Fold", Clover + 1);
-      sprintf(title, "TIG%02d Crystal Fold", Clover + 1);
+      sprintf(name, "TIG%02d Crys Fold", Clover);
+      sprintf(title, "TIG%02d Crystal Fold", Clover);
       hCrystalFoldClover[Clover - 1] = new TH1F(name, title, FOLD_MAX, 0, FOLD_MAX);
-      sprintf(name, "TIG%02d Seg Fold", Clover + 1);
-      sprintf(title, "TIG%02d Segment Fold", Clover + 1);
+      sprintf(name, "TIG%02d Seg Fold", Clover);
+      sprintf(title, "TIG%02d Segment Fold", Clover);
       hSegFoldClover[Clover - 1] = new TH1F(name, title, FOLD_MAX, 0, FOLD_MAX);
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
-         sprintf(name, "TIG%02d%c Seg Fold", Clover + 1, Colours[Crystal]);
-         sprintf(title, "TIG%02d%c Segment Fold", Clover + 1, Colours[Crystal]);
+         sprintf(name, "TIG%02d%c Seg Fold", Clover, Colours[Crystal]);
+         sprintf(title, "TIG%02d%c Segment Fold", Clover, Colours[Crystal]);
          hSegFoldCrystal[Clover - 1][Crystal] = new TH1F(name, title, FOLD_MAX, 0, FOLD_MAX);
       }
    }
    dOther->cd();
    for (Clover = 1; Clover <= CLOVERS; Clover++) {
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
-         sprintf(name, "TIG%02d%c Core En F1", Clover + 1, Colours[Crystal]);
-         sprintf(title, "TIG%02d%c Core Energy SegFold1 Any Seg (keV)", Clover + 1, Colours[Crystal]);
+         sprintf(name, "TIG%02d%c Core En F1", Clover, Colours[Crystal]);
+         sprintf(title, "TIG%02d%c Core Energy SegFold1 Any Seg (keV)", Clover, Colours[Crystal]);
          hFold1CoreEn[Clover - 1][Crystal][0] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
          for (Seg = 1; Seg <= SEGS; Seg++) {
-            sprintf(name, "TIG%02d%c Core En F1 Seg%02d", Clover + 1, Colours[Crystal], Seg);
-            sprintf(title, "TIG%02d%c Core Energy SegFold1 Segment%02d (keV)", Clover + 1, Colours[Crystal], Seg);
+            sprintf(name, "TIG%02d%c Core En F1 Seg%02d", Clover, Colours[Crystal], Seg);
+            sprintf(title, "TIG%02d%c Core Energy SegFold1 Segment%02d (keV)", Clover, Colours[Crystal], Seg);
             hFold1CoreEn[Clover - 1][Crystal][Seg] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
          }
       }
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
          Fold = 0;
-         sprintf(name, "TIG%02d%c Seg AB", Clover + 1, Colours[Crystal]);
-         sprintf(title, "TIG%02d%c Segment Add-Back Energy Any Fold (keV)", Clover + 1, Colours[Crystal]);
+         sprintf(name, "TIG%02d%c Seg AB", Clover, Colours[Crystal]);
+         sprintf(title, "TIG%02d%c Segment Add-Back Energy Any Fold (keV)", Clover, Colours[Crystal]);
          hSegAddBackCrystalByFold[Clover - 1][Crystal][Fold] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
          for (Fold = 1; Fold < SEGS; Fold++) {
-            sprintf(name, "TIG%02d%c Seg AB F%01d", Clover + 1, Colours[Crystal], Fold);
-            sprintf(title, "TIG%02d%c Segment Add-Back Energy Fold %01d (keV)", Clover + 1, Colours[Crystal], Fold);
+            sprintf(name, "TIG%02d%c Seg AB F%01d", Clover, Colours[Crystal], Fold);
+            sprintf(title, "TIG%02d%c Segment Add-Back Energy Fold %01d (keV)", Clover, Colours[Crystal], Fold);
             hSegAddBackCrystalByFold[Clover - 1][Crystal][Fold] =
                 new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
          }
       }
 
-      sprintf(name, "TIG%02d Seg AB F0", Clover + 1);
-      sprintf(title, "TIG%02d Segment Add-Back Energy Any Fold (keV)", Clover + 1);
+      sprintf(name, "TIG%02d Seg AB F0", Clover);
+      sprintf(title, "TIG%02d Segment Add-Back Energy Any Fold (keV)", Clover);
       hSegAddBackCloverByFold[Clover - 1][0] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
       for (Fold = 1; Fold < SEGS; Fold++) {
-         sprintf(name, "TIG%02d Seg AB F%01d", Clover + 1, Fold);
-         sprintf(title, "TIG%02d Segment Add-Back Energy Fold %01d (keV)", Clover + 1, Fold);
+         sprintf(name, "TIG%02d Seg AB F%01d", Clover, Fold);
+         sprintf(title, "TIG%02d Segment Add-Back Energy Fold %01d (keV)", Clover, Fold);
          hSegAddBackCloverByFold[Clover - 1][Fold] = new TH1F(name, title, EN_SPECTRA_CHANS, 0, EN_SPECTRA_MAX);
       }
    }
 
    // 2D crosstalk matrices 
    for (Clover = 1; Clover <= CLOVERS; Clover++) {
-      sprintf(name, "TIG%02d Xtalk", Clover + 1);
-      sprintf(title, "TIG%02d Fractional Crosstalk", Clover + 1);
+      sprintf(name, "TIG%02d Xtalk", Clover);
+      sprintf(title, "TIG%02d Fractional Crosstalk", Clover);
       hXTalk[Clover - 1] =
           new TH2F(name, title, (CRYSTALS * (SEGS + 2)), 0, (CRYSTALS * (SEGS + 2)), (CRYSTALS * (SEGS + 2)), 0,
                    (CRYSTALS * (SEGS + 2)));
-      printf(name, "TIG%02d XtalkLow", Clover + 1);
-      sprintf(title, "TIG%02d Fractional Crosstalk (Low values)", Clover + 1);
+      printf(name, "TIG%02d XtalkLow", Clover);
+      sprintf(title, "TIG%02d Fractional Crosstalk (Low values)", Clover);
       //hXTalkLow[Clover - 1] =
       //  new TH2F(name, title, (CRYSTALS * (SEGS + 2)), 0, (CRYSTALS * (SEGS + 2)), (CRYSTALS * (SEGS + 2)), 0,
       //         (CRYSTALS * (SEGS + 2)));
