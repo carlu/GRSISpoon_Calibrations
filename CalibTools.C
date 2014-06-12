@@ -56,8 +56,9 @@ ofstream WaveReportOut;
 ofstream CalFileOut;
 
 // Spectra for Calibration
-TH1F *GainPlot, *OffsetPlot, *QuadPlot;
-TH1F *GainHist, *OffsetHist, *QuadHist;
+TH1F *GainPlot, *OffsetPlot, *QuadPlot, *FWHMPlot;
+TH1F *GainHist, *OffsetHist, *QuadHist, *FWHMHist;
+
 
 // Fitting stuff
 std::string FitOptions = ("RQE");
@@ -140,7 +141,6 @@ int CalibrateFiles()
    QuadPlot = new TH1F("Quads", "Quadratic component of all fitted channels", 1001, -0.5, 1000.5);
    QuadPlot->GetYaxis()->SetTitle("keV/ch^2");
    QuadPlot->GetXaxis()->SetTitle("Channel");
-
    GainHist = new TH1F("Gain Histogram", "Histogram of Gain of all fitted channels", 512, 0, 0.5);
    GainHist->GetXaxis()->SetTitle("keV/ch");
    OffsetHist = new TH1F("Offset Histogram", "Histogram of Offset of all fitted channels", 512, -5, 5);
@@ -149,7 +149,9 @@ int CalibrateFiles()
        new TH1F("Quadratic Histogram", "Histogram of Quadratic component of all fitted channels", 512, -0.000001,
                 0.000001);
    QuadHist->GetXaxis()->SetTitle("keV/ch^2");
-
+   
+   
+   
    // Initialise TCanvas's
    if (Config.ManualPeakCorrection == 1 || Config.PlotCalib == 1) {
       cCalib1 = new TCanvas("cCalib1", "Fit", 800, 600);        // Canvas for spectrum plots
@@ -500,12 +502,26 @@ int FitHistoFile(TFile * file, int FileType, int FileNum, MasterFitMap * FitMap,
    }
    // Prepare output root file.
    if (Config.WriteFits) {
+      // Create output file
       tempstring = Config.OutPath + Config.CalSpecOut;
       outfile = TFile::Open(tempstring.c_str(), "RECREATE");
+      // Create folders in outfile
       dCharge = outfile->mkdir("Charge");
       dWaveCharge = outfile->mkdir("WaveCharge");
       dCalibration = outfile->mkdir("Calibration");
       dSummary = outfile->mkdir("Summary");
+      // Create histograms 
+      tempstring = "FWHM of all fitted channels at ";
+      tempstring += Config.Sources.at(Config.SourceNumCore.at(FileNum)).at(1);
+      FWHMPlot = new TH1F("FWHM",tempstring.c_str(), 1001, -0.5, 1000.5);
+      FWHMPlot-> GetYaxis()->SetTitle("FWHM (keV)");
+      FWHMPlot-> GetXaxis()->SetTitle("Channel");
+      tempstring = "FWHM Histogram (";
+      tempstring += Config.Sources.at(Config.SourceNumCore.at(FileNum)).at(1);
+      tempstring += ")";
+      FWHMHist = new TH1F("FWHM Hist",tempstring.c_str(),1000,0.0,20.0);
+      FWHMHist->GetYaxis()->SetTitle("Counts");
+      FWHMHist->GetXaxis()->SetTitle("FWHM (keV)");
    }
    // If we're calibrating the FPGA energy...
    if (Config.CalEnergy) {
@@ -962,7 +978,6 @@ int FitSinglePeak(TH1F * Histo, int Line, float Centre, TF1 * FitRange, FitResul
    Sigma1MeV = (Settings.SigmaEst1MeV * (Centre / Config.Sources[Settings.Source][Line]));
    InitialSigma = SigmaZero + ((Config.Sources[Settings.Source][Line] / 1000.0) * Sigma1MeV);
 
-
    if (Config.PrintVerbose) {
       cout << "Fitting line " << Line << " Min: " << Min << " Max: " << Max << endl;
    }
@@ -1005,7 +1020,6 @@ int FitSinglePeak(TH1F * Histo, int Line, float Centre, TF1 * FitRange, FitResul
    }
 
    Histo->Fit(FitRange, Opts.c_str());
-   //Histo->Fit(FitRange,"R,Q");
 
    FitRes->Energy = Config.Sources[Settings.Source][Line];
    FitRes->Const = FitRange->GetParameter(0);
@@ -1033,8 +1047,6 @@ int FitSinglePeak(TH1F * Histo, int Line, float Centre, TF1 * FitRange, FitResul
       cCalib1->cd();
       Histo->Draw();
       cCalib1->Update();
-      //App->Run(1);
-      //App->Run();
    }
 
    return 1;
@@ -1047,7 +1059,6 @@ int FitSinglePeak(TH1F * Histo, int Line, float Centre, TF1 * FitRange, FitResul
 // Calibrate a channel
 int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings, HistoFit * Fit, HistoCal * Cal)
 {
-
    // This function should copy the operation of the old CalibrateGammaSpectrum() in CalibTools.C
    // However it should be altered to use maps and vectors rather than arrays.
    int i;
