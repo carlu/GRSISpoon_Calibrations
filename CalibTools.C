@@ -149,9 +149,7 @@ int CalibrateFiles()
        new TH1F("Quadratic Histogram", "Histogram of Quadratic component of all fitted channels", 512, -0.000001,
                 0.000001);
    QuadHist->GetXaxis()->SetTitle("keV/ch^2");
-   
-   
-   
+
    // Initialise TCanvas's
    if (Config.ManualPeakCorrection == 1 || Config.PlotCalib == 1) {
       cCalib1 = new TCanvas("cCalib1", "Fit", 800, 600);        // Canvas for spectrum plots
@@ -206,7 +204,6 @@ int CalibrateFiles()
          }
          continue;
       }
-
       // Now fit the histos in file
       FitHistoFile(file, FileType, FileNum, &FitMap, &WaveFitMap);
    }
@@ -254,23 +251,7 @@ int CalibrateFiles()
                   cout << "Calibration of : " << Settings.HistName << " failed!" << endl;
                }
                // Fill histograms of calibration values
-               switch (Crystal) {       // Calculate channel number (old TIGRESS DAQ numbering)
-               case 0:
-                  ItemNum = ((Clover - 1) * 60) + Seg;
-                  break;
-               case 1:
-                  ItemNum = ((Clover - 1) * 60) + 20 + Seg;
-                  break;
-               case 2:
-                  ItemNum = ((Clover - 1) * 60) + 30 + Seg;
-                  break;
-               case 3:
-                  ItemNum = ((Clover - 1) * 60) + 50 + Seg;
-                  break;
-               default:
-                  ItemNum = 1000;
-                  break;
-               }
+               ItemNum = GetDaqItemNum(Clover,Crystal,Seg);
                
                if (CalibSuccess == 0) {
                   if (Cal.LinesUsed > 2) {
@@ -378,7 +359,6 @@ int CalibrateFiles()
                else{
                   CalibSuccess == 1;  // Fail if less than two fit points available
                }
-               
 
                // Check for failure
                if (CalibSuccess > 0 && Config.PrintVerbose==1) {
@@ -470,14 +450,15 @@ int CalibrateFiles()
 // Two loops, one for FPGA energy, one for Wave energy as they require different fit settings.
 int FitHistoFile(TFile * file, int FileType, int FileNum, MasterFitMap * FitMap, MasterFitMap * WaveFitMap)
 {
-
    int Clover = 0;
    int Crystal = 0;
    int Seg = 0;
+   int ItemNum = 0;
+   float FWHM = 0.0;
    unsigned int Line;
 
    int FitSuccess = 0;
-
+   char CharBuf[CHAR_BUFFER_SIZE];
    std::string tempstring;
    std::string HistName;
    std::string OutputName;
@@ -485,7 +466,7 @@ int FitHistoFile(TFile * file, int FileType, int FileNum, MasterFitMap * FitMap,
    std::vector < int >ChanVector;       // vector to store (Clover,Crystal,Seg) for use as map key
    ChanVector.push_back(0);
    ChanVector.push_back(0);
-   ChanVector.push_back(0);     // populate chanvector with zeroes.
+   ChanVector.push_back(0);     // populate chanvector with zeros.
    ChannelFitMap ChanFits;
 
    // ROOT objects
@@ -511,15 +492,12 @@ int FitHistoFile(TFile * file, int FileType, int FileNum, MasterFitMap * FitMap,
       dCalibration = outfile->mkdir("Calibration");
       dSummary = outfile->mkdir("Summary");
       // Create histograms 
-      tempstring = "FWHM of all fitted channels at ";
-      tempstring += Config.Sources.at(Config.SourceNumCore.at(FileNum)).at(1);
-      FWHMPlot = new TH1F("FWHM",tempstring.c_str(), 1001, -0.5, 1000.5);
-      FWHMPlot-> GetYaxis()->SetTitle("FWHM (keV)");
-      FWHMPlot-> GetXaxis()->SetTitle("Channel");
-      tempstring = "FWHM Histogram (";
-      tempstring += Config.Sources.at(Config.SourceNumCore.at(FileNum)).at(1);
-      tempstring += ")";
-      FWHMHist = new TH1F("FWHM Hist",tempstring.c_str(),1000,0.0,20.0);
+      snprintf(CharBuf,CHAR_BUFFER_SIZE,"FWHM of all fitted channels at %02f keV.",Config.Sources.at(Config.SourceNumCore.at(FileNum)).at(1));
+      FWHMPlot = new TH1F("FWHM",CharBuf, 1001, -0.5, 1000.5);
+      FWHMPlot->GetYaxis()->SetTitle("FWHM (keV)");
+      FWHMPlot->GetXaxis()->SetTitle("Channel");
+      snprintf(CharBuf,CHAR_BUFFER_SIZE,"FWHM of fitted channels at %02f keV.",Config.Sources.at(Config.SourceNumCore.at(FileNum)).at(1));
+      FWHMHist = new TH1F("FWHM Hist",CharBuf,1000,0.0,20.0);
       FWHMHist->GetYaxis()->SetTitle("Counts");
       FWHMHist->GetXaxis()->SetTitle("FWHM (keV)");
    }
@@ -582,6 +560,15 @@ int FitHistoFile(TFile * file, int FileType, int FileNum, MasterFitMap * FitMap,
                      dCharge->cd();
                      Histo->Write();
                   }
+                  // Fill FWHM plot/histo
+                  if(Line==2 && Config.WriteFits==1) {
+                     FWHM  = (Fit.PeakFits.at(1).Sigma * 2.35);  // FWHM in chans
+                     FWHM *= (Config.Sources.at(Config.SourceNumCore.at(FileNum)).at(1)/Fit.PeakFits.at(1).Mean);  // in keV
+                     ItemNum = GetDaqItemNum(Clover,Crystal,Seg);
+                     FWHMPlot->SetBinContent(ItemNum+1,FWHM);
+                     FWHMHist->Fill(FWHM);
+                  }
+                  
                } else {
                   if (Config.PrintBasic) {
                      cout << endl << "Hist " << HistName << " failed to load." << endl;
@@ -589,6 +576,11 @@ int FitHistoFile(TFile * file, int FileType, int FileNum, MasterFitMap * FitMap,
                }
             }
          }
+      }
+      if(Config.WriteFits==1) {
+         dSummary->cd();
+         FWHMPlot->Write();
+         FWHMHist->Write();
       }
    }
    // Now run the fit for the waveform spectrum if required
@@ -598,7 +590,6 @@ int FitHistoFile(TFile * file, int FileType, int FileNum, MasterFitMap * FitMap,
             cout << "-------------------" << endl << "Now fitting Wave Energy Spectra" << endl << "-------------------"
                 << endl;
          }
-
       }
       for (Clover = 1; Clover <= CLOVERS; Clover++) {
          for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
@@ -700,6 +691,7 @@ int FitGammaSpectrum(TH1F * Histo, HistoFit * Fit, HistoCal * Cal, FitSettings S
    // Fitting stuff
    std::string FitOptions = ("RQEM");
    // R=restrict to function range, Q=quiet, L=log likelihood method, E=improved err estimation, + add fit instead of replace
+
 
    if (Histo) {
       Integral = Histo->Integral();
@@ -901,7 +893,6 @@ int FitGammaSpectrum(TH1F * Histo, HistoFit * Fit, HistoCal * Cal, FitSettings S
          //-------------------------------------------------------------//
          if (Config.Sources[Settings.Source].size() > 2) {
             for (Line = 2; Line < Config.Sources[Settings.Source].size(); Line++) {
-
                if (Config.PrintVerbose) {
                   cout << "Line: " << Line << " (Energy = " << Config.Sources[Settings.Source][Line] << " keV)" << endl;
                   cout << "-------------------------------------------------------------" << endl << endl;
@@ -910,8 +901,6 @@ int FitGammaSpectrum(TH1F * Histo, HistoFit * Fit, HistoCal * Cal, FitSettings S
                FitSinglePeak(Histo, Line, Centre, FitRange[Line], &FitRes[Line], Settings);
 
                // Store fit result for use in calibration                      
-               //memcpy(&Fit->PeakFits[Line], &FitRes[Line], sizeof(FitResult));
-               //Fit->FitSuccess[Line] = 1;
                Fit->PeakFits.push_back(FitRes[Line]);
             }
          }
@@ -1257,7 +1246,7 @@ int ConfigureEnergyFit(int Clover, int Crystal, int Seg, int FileType, int FileN
 {
 
    char CharBuf[CHAR_BUFFER_SIZE];
-   int x;
+   int x, ItemNum;
 
    // Set source and histogram name and output name based on seg number and file type
    // This should be factored out to a separate function
@@ -1288,23 +1277,10 @@ int ConfigureEnergyFit(int Clover, int Crystal, int Seg, int FileType, int FileN
       }
    }
    if (FileType == 2) {
-      switch (Crystal) {
-      case 0:
-         x = 0;
-         break;
-      case 1:
-         x = 20;
-         break;
-      case 2:
-         x = 30;
-         break;
-      case 3:
-         x = 50;
-         break;
-      }
+      ItemNum = GetDaqItemNum(Clover,Crystal,Seg);
       switch (Seg) {
       case 0:
-         snprintf(CharBuf, CHAR_BUFFER_SIZE, "Chrg0%03d", ((Clover - 1) * 60) + x);
+         snprintf(CharBuf, CHAR_BUFFER_SIZE, "Chrg0%03d", ItemNum);
          Settings->HistName = CharBuf;
          Settings->OutputName = CharBuf;
          Settings->OutputName += "\t";
@@ -1313,7 +1289,7 @@ int ConfigureEnergyFit(int Clover, int Crystal, int Seg, int FileType, int FileN
          Settings->Source = Config.SourceNumCore.at(FileNum);
          break;
       case 9:
-         snprintf(CharBuf, CHAR_BUFFER_SIZE, "Chrg0%03d", ((Clover - 1) * 60) + x + 9);
+         snprintf(CharBuf, CHAR_BUFFER_SIZE, "Chrg0%03d", ItemNum);
          Settings->HistName = CharBuf;
          Settings->OutputName = CharBuf;
          Settings->OutputName += "\t";
@@ -1322,7 +1298,7 @@ int ConfigureEnergyFit(int Clover, int Crystal, int Seg, int FileType, int FileN
          Settings->Source = Config.SourceNumCore.at(FileNum);
          break;
       default:
-         snprintf(CharBuf, CHAR_BUFFER_SIZE, "Chrg0%03d", ((Clover - 1) * 60) + x + Seg);
+         snprintf(CharBuf, CHAR_BUFFER_SIZE, "Chrg0%03d", ItemNum);
          Settings->HistName = CharBuf;
          Settings->OutputName = CharBuf;
          Settings->OutputName += "\t";
