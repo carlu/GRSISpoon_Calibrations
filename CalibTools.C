@@ -46,7 +46,7 @@ extern TApplication *App;
 TCanvas *cCalib1, *cCalib1a, *cCalib2, *ctemp;
 // Output file stuff
 TFile *outfile;
-TDirectory *dCharge, *dWaveCharge, *dCalibration = { 0 };
+TDirectory *dCharge, *dWaveCharge, *dCalibration, *dSummary = { 0 };
 
 // output streams 
 ofstream GainOut;
@@ -233,19 +233,23 @@ int CalibrateFiles()
 
                ConfigureEnergyFit(Clover, Crystal, Seg, FileType, FileNum, &Settings);
 
-               if (Config.PrintVerbose) {
-                  cout << endl << "------------------------------------------------------------------------" << endl;
-                  cout << "Calibrating " << Settings.HistName << endl;
-                  cout << "Clover " << Clover << " Crystal " << Crystal << " Seg " << Seg << endl;
-                  cout << "------------------------------------------------------------------------" << endl << endl;
+               // Calibrate if enough lines available...
+               if(FitMap[ChanVector].size()>1 || (FitMap[ChanVector].size()==1 && Settings.FitZero==1)) {
+                  CalibSuccess = CalibrateChannel(FitMap[ChanVector], Settings, &Fit, &Cal);
+                  if (Config.PrintVerbose) {
+                     cout << endl << "------------------------------------------------------------------------" << endl;
+                     cout << "Calibrating " << Settings.HistName << endl;
+                     cout << "Clover " << Clover << " Crystal " << Crystal << " Seg " << Seg << endl;
+                     cout << "------------------------------------------------------------------------" << endl << endl;
+                  }
+               }
+               else{
+                  CalibSuccess = 1;  // Fail if less than two fit points available
                }
 
-               CalibSuccess = CalibrateChannel(FitMap[ChanVector], Settings, &Fit, &Cal);
-
                // Check for failure
-               if (CalibSuccess > 0 && Config.PrintBasic == 1) {
+               if (CalibSuccess > 0 && Config.PrintVerbose==1) {
                   cout << "Calibration of : " << Settings.HistName << " failed!" << endl;
-                  return 1;
                }
                // Fill histograms of calibration values
                switch (Crystal) {       // Calculate channel number (old TIGRESS DAQ numbering)
@@ -265,14 +269,26 @@ int CalibrateFiles()
                   ItemNum = 1000;
                   break;
                }
-               GainPlot->SetBinContent(ItemNum + 1, Cal.QuadGainFit[1]);        // ItemNum+1 to skip bin 0 which is underflow
-               OffsetPlot->SetBinContent(ItemNum + 1, Cal.QuadGainFit[0]);
-               QuadPlot->SetBinContent(ItemNum + 1, Cal.QuadGainFit[2]);
-
-               GainHist->Fill(Cal.QuadGainFit[1]);
-               OffsetHist->Fill(Cal.QuadGainFit[0]);
-               QuadHist->Fill(Cal.QuadGainFit[2]);
-
+               
+               if (CalibSuccess == 0) {
+                  if (Cal.LinesUsed > 2) {
+                     OffsetPlot->SetBinContent(ItemNum + 1, Cal.QuadGainFit[0]);  // ItemNum+1 to skip bin 0 which is underflow
+                     GainPlot->SetBinContent(ItemNum + 1, Cal.QuadGainFit[1]);        
+                     QuadPlot->SetBinContent(ItemNum + 1, Cal.QuadGainFit[2]);
+                     OffsetHist->Fill(Cal.QuadGainFit[0]);
+                     GainHist->Fill(Cal.QuadGainFit[1]);
+                     QuadHist->Fill(Cal.QuadGainFit[2]);
+                  }
+                  else {
+                     OffsetPlot->SetBinContent(ItemNum + 1, Cal.LinGainFit[0]);  // ItemNum+1 to skip bin 0 which is underflow
+                     GainPlot->SetBinContent(ItemNum + 1, Cal.LinGainFit[1]);        
+                     QuadPlot->SetBinContent(ItemNum + 1, 0.0);
+                     OffsetHist->Fill(Cal.LinGainFit[0]);
+                     GainHist->Fill(Cal.LinGainFit[1]);
+                     QuadHist->Fill(0.0);
+                  }
+               }
+               
                // Now print reports on results of fits and calibration.
                if (Cal.LinesUsed > 1 && CalibSuccess == 0) {  // If we have more than one line and calibration reported success
                   if (Cal.LinesUsed < 3 || Config.ForceLinear) {  
@@ -294,7 +310,7 @@ int CalibrateFiles()
                   }
                }
                // Write full calibration report
-               if (Cal.LinesUsed > 1 && CalibSuccess == 0) {
+               if (CalibSuccess == 0) {
                   CalibrationReport(&Fit, &Cal, ReportOut, Settings.OutputName, Settings);
                } else {
                   ReportOut << endl << "------------------------------------------" << endl << Settings.
@@ -308,7 +324,6 @@ int CalibrateFiles()
             }
          }
       }
-
    }
 
    if (Config.CalEnergy) {
@@ -317,7 +332,16 @@ int CalibrateFiles()
          ReportOut.close();
       }
    }
-
+   
+   if (Config.WriteFits) {
+      dSummary->cd();
+      GainPlot->Write();
+      OffsetPlot->Write();
+      QuadPlot->Write();
+      GainHist->Write();
+      OffsetHist->Write();
+      QuadHist->Write();
+   }
 
    if (Config.CalWave) {
       FitSettings Settings;
@@ -339,19 +363,24 @@ int CalibrateFiles()
 
                ConfigureWaveEnFit(Clover, Crystal, Seg, FileType, FileNum, &Settings);
 
-               if (Config.PrintVerbose) {
-                  cout << endl << "------------------------------------------------------------------------" << endl;
-                  cout << "Calibrating " << Settings.HistName << endl;
-                  cout << "Clover " << Clover << " Crystal " << Crystal << " Seg " << Seg << endl;
-                  cout << "------------------------------------------------------------------------" << endl << endl;
+               // Calibrate if enough lines available...
+               if(WaveFitMap[ChanVector].size()>1 || (WaveFitMap[ChanVector].size()==1 && Settings.FitZero)) {
+                  CalibSuccess = CalibrateChannel(WaveFitMap[ChanVector], Settings, &Fit, &Cal);
+                  if (Config.PrintVerbose) {
+                     cout << endl << "------------------------------------------------------------------------" << endl;
+                     cout << "Calibrating " << Settings.HistName << endl;
+                     cout << "Clover " << Clover << " Crystal " << Crystal << " Seg " << Seg << endl;
+                     cout << "------------------------------------------------------------------------" << endl << endl;
+                  }
                }
-
-               CalibSuccess = CalibrateChannel(WaveFitMap[ChanVector], Settings, &Fit, &Cal);
+               else{
+                  CalibSuccess == 1;  // Fail if less than two fit points available
+               }
+               
 
                // Check for failure
-               if (CalibSuccess > 0) {
+               if (CalibSuccess > 0 && Config.PrintVerbose==1) {
                   cout << "Calibration of : " << Settings.HistName << " failed!" << endl;
-                  return 1;
                }
                // Now print reports on results of fits and calibration.
                if (Cal.LinesUsed > 1 && CalibSuccess == 0) {
@@ -374,7 +403,7 @@ int CalibrateFiles()
                   }
                }
                // Write full calibration report
-               if (Cal.LinesUsed > 1 && CalibSuccess == 0) {
+               if (CalibSuccess == 0) {
                   CalibrationReport(&Fit, &Cal, WaveReportOut, Settings.OutputName, Settings);
                } else {
                   WaveReportOut << endl << "------------------------------------------" << endl << Settings.
@@ -476,6 +505,7 @@ int FitHistoFile(TFile * file, int FileType, int FileNum, MasterFitMap * FitMap,
       dCharge = outfile->mkdir("Charge");
       dWaveCharge = outfile->mkdir("WaveCharge");
       dCalibration = outfile->mkdir("Calibration");
+      dSummary = outfile->mkdir("Summary");
    }
    // If we're calibrating the FPGA energy...
    if (Config.CalEnergy) {
