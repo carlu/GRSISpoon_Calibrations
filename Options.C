@@ -111,7 +111,7 @@ int LoadDefaultSettings()
    Config.CalFile = 0;          // Generate .cal file as used by GRSISpoon 
    memset(&Config.CalList, 1, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
    Config.CalListProvided = 0;
-   Config.CalOutputBad = 0;           // output to gain file if calibration is bad?
+   Config.CalOutputBad = 1;           // output to gain file if calibration is bad?
    Config.CalOverwriteBad = 1;           // Overwrite bad calibration values with mean (useful to get bad seg cals roughly right)
    // Output
    Config.CalOut = "CalibOut.root";     // Name for Tree calibration output file
@@ -143,8 +143,8 @@ int LoadDefaultSettings()
    Config.WaveSearchSigma = 20;
    // Energy/ch fitting 
    // Estimate of gain for input of fit
-   Config.EnGainEst = 0.16;
-   Config.WaveGainEst = 0.6;
+   Config.TIGGainEst = 0.1603;  // from average of several TIGRESS HPGe calibrations
+   Config.TIGWaveGainEst = 0.6;
    // Extra calibration point at 0 ch = 0 keV
    Config.FitZero = 0;
    Config.ZeroErr = 0.01;
@@ -847,19 +847,19 @@ int ReadConfigFile(std::string filename)
          else {Other += 1;}
          continue;
       }
-      if (strcmp(Line.c_str(), "EN_GAIN_EST")==0) {
+      if (strcmp(Line.c_str(), "TIG_GAIN_EST")==0) {
          getline(File,Line);
          if(sscanf(Line.c_str(), "%f", &ValF) == 1) {
-            Config.EnGainEst = ValF;
+            Config.TIGGainEst = ValF;
             Items += 1;
          }
          else {Other += 1;}
          continue;
       }
-      if (strcmp(Line.c_str(), "WAVE_GAIN_EST")==0) {
+      if (strcmp(Line.c_str(), "TIG_WAVE_GAIN_EST")==0) {
          getline(File,Line);
          if(sscanf(Line.c_str(), "%f", &ValF) == 1) {
-            Config.WaveGainEst = ValF;
+            Config.TIGWaveGainEst = ValF;
             Items += 1;
          }
          else {Other += 1;}

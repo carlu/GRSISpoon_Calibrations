@@ -152,8 +152,8 @@ struct RunConfig {              // this struct will hold all information
    float WaveSearchSigma;
    // Energy/ch fitting 
    // Estimate of gain for input of fit
-   float EnGainEst;
-   float WaveGainEst;
+   float TIGGainEst;
+   float TIGWaveGainEst;
    // Extra calibration point at 0 ch = 0 keV
    // Peak Fitting
    unsigned int MinFitCounts;  // Minimum counts in whole spectrum for fit to be attempted

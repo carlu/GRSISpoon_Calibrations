@@ -28,6 +28,7 @@ using namespace std;
 #include <TGraphErrors.h>
 #include <TSystem.h>
 #include <TFolder.h>
+#include <TRandom3.h>
 
 // TriScope libraries
 //#include "TTigFragment.h"
@@ -62,6 +63,9 @@ TH1F *GainHist, *OffsetHist, *QuadHist;
 std::string FitOptions = ("RQE");
    // R=restrict to function range, Q=quiet, L=log likelihood method, E=improved err estimation, + add fit instead of replace
 std::string Opts;
+
+// Rand for gain matching
+static TRandom3 rand1;
 
 // ------------------------------------------------
 // Functions for managing calibration in SortHistos
@@ -149,6 +153,8 @@ int CalibrateFiles()
    // Initialise TCanvas's
    if (Config.ManualPeakCorrection == 1 || Config.PlotCalib == 1) {
       cCalib1 = new TCanvas("cCalib1", "Fit", 800, 600);        // Canvas for spectrum plots
+      
+      cCalib1->cd();
 
       cCalib1a = new TCanvas("cCalib1a", "Calibration", 800, 600);      // Canvas for spectrum plots
       cCalib1a->Divide(1, 2);
@@ -157,8 +163,6 @@ int CalibrateFiles()
       cCalib2 = new TCanvas("cCalib2", "Calibration Summary", 800, 600);        // Canvas for gain plots and histograms
       cCalib2->Divide(2, 3);
       cCalib2->Update();
-
-      //cCalib1->cd();
    }
    // loop input files
    for (FileNum = 0; FileNum < Config.files.size(); FileNum++) {
@@ -239,7 +243,7 @@ int CalibrateFiles()
                CalibSuccess = CalibrateChannel(FitMap[ChanVector], Settings, &Fit, &Cal);
 
                // Check for failure
-               if (CalibSuccess > 0) {
+               if (CalibSuccess > 0 && Config.PrintBasic == 1) {
                   cout << "Calibration of : " << Settings.HistName << " failed!" << endl;
                   return 1;
                }
@@ -270,16 +274,24 @@ int CalibrateFiles()
                QuadHist->Fill(Cal.QuadGainFit[2]);
 
                // Now print reports on results of fits and calibration.
-               if (Cal.LinesUsed > 1 && CalibSuccess == 0) {
-                  if (Cal.LinesUsed < 3 || Config.ForceLinear) {
+               if (Cal.LinesUsed > 1 && CalibSuccess == 0) {  // If we have more than one line and calibration reported success
+                  if (Cal.LinesUsed < 3 || Config.ForceLinear) {  
                      GainOut << Settings.OutputName << ":\t" << Cal.LinGainFit[0];
                      GainOut << "\t" << Cal.LinGainFit[1] << endl;
                   } else {
                      GainOut << Settings.OutputName << ":\t" << Cal.QuadGainFit[0] << "\t";
                      GainOut << Cal.QuadGainFit[1] << "\t" << Cal.QuadGainFit[2] << endl;
                   }
-               } else {
-                  //GainOut << HistName << " Fail!!!" << endl;
+               } else {   // If cal fails
+                  if(Config.CalOutputBad==1) {  // And we want output for bad channels
+                     if(Config.CalOverwriteBad == 1) {  // either output mean value
+                        GainOut << Settings.OutputName << ":\t0.0\t" << Config.TIGGainEst;
+                        GainOut << "\t0.0" << endl;
+                     }
+                     else {  // or output fail message
+                        GainOut << Settings.OutputName << " Fail!!!" << endl;
+                     }
+                  }
                }
                // Write full calibration report
                if (Cal.LinesUsed > 1 && CalibSuccess == 0) {
@@ -350,8 +362,16 @@ int CalibrateFiles()
                      WaveOut << Settings.OutputName << ":\t" << Cal.QuadGainFit[0] << "\t";
                      WaveOut << Cal.QuadGainFit[1] << "\t" << Cal.QuadGainFit[2] << endl;
                   }
-               } else {
-                  //WaveOut << HistName << " Fail!!!" << endl;
+               } else {  // If cal fails
+                  if(Config.CalOutputBad==1) {  // And we want output from failure
+                     if(Config.CalOverwriteBad == 1) {  // Use a mean value
+                        WaveOut << Settings.OutputName << ":\t0.0\t" << Config.TIGWaveGainEst;
+                        WaveOut << "\t0.0" << endl;
+                     }
+                     else {  // Or write a fail message
+                        WaveOut << Settings.OutputName << " Fail!!!" << endl;
+                     }
+                  }
                }
                // Write full calibration report
                if (Cal.LinesUsed > 1 && CalibSuccess == 0) {
@@ -1004,6 +1024,7 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings, HistoFit * Fit, H
    int LinesUsed;
    bool TestsPassed;
    std::string Name;
+   int Trials = 0;
    float Energy = 0.0;
    // Would like the following to be vectors but can't get the TGraphErrors to work 
    float Energies[MAX_TOTAL_LINES], dEnergies[MAX_TOTAL_LINES];
@@ -1114,6 +1135,17 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings, HistoFit * Fit, H
    Opts = FitOptions;
    if (LinesUsed > 1) {
       CalibPlot.Fit(CalibFitLin, Opts.c_str());
+      // I'm not particulary happy with this bit.  Sometimes the fit fails and exits with the initial estimates
+      // still set.  In that case this bit randomises the initial gain estimate (+/- 0.05) and tries again
+      // Trials limited to 5 so as to not get stuck in a loop. 
+      if(CalibFitQuad->GetParameter(0) == 0.0 && CalibFitQuad->GetParameter(1) == Settings.GainEst) {
+         Trials = 0;
+         while(CalibFitQuad->GetParameter(1) == Settings.GainEst && Trials < 5) {
+            CalibFitLin->SetParameter(1, (Settings.GainEst+((rand1.Uniform()-0.5)/10)));
+            CalibPlot.Fit(CalibFitLin, Opts.c_str());
+            Trials += 1;
+         }
+      }
       Cal->LinGainFit[0] = CalibFitLin->GetParameter(0);
       Cal->dLinGainFit[0] = CalibFitLin->GetParError(0);
       Cal->LinGainFit[1] = CalibFitLin->GetParameter(1);
@@ -1123,6 +1155,18 @@ int CalibrateChannel(ChannelFitMap Fits, FitSettings Settings, HistoFit * Fit, H
    Opts += "+";
    if (LinesUsed > 2) {
       CalibPlot.Fit(CalibFitQuad, Opts.c_str());
+      
+      // I'm not particulary happy with this bit.  Sometimes the fit fails and exits with the initial estimates
+      // still set.  In that case this bit randomises the initial gain estimate (+/- 0.05) and tries again
+      // Trials limited to 5 so as to not get stuck in a loop. 
+      if(CalibFitQuad->GetParameter(0) == 0.0 && CalibFitQuad->GetParameter(1) == Settings.GainEst && CalibFitQuad->GetParameter(2) == 0.0) {
+         Trials = 0;
+         while(CalibFitQuad->GetParameter(1) == Settings.GainEst && Trials < 5) {
+            CalibFitQuad->SetParameter(1, (Settings.GainEst+((rand1.Uniform()-0.5)/10)));
+            CalibPlot.Fit(CalibFitQuad, Opts.c_str());
+            Trials += 1;
+         }
+      }
       Cal->QuadGainFit[0] = CalibFitQuad->GetParameter(0);
       Cal->dQuadGainFit[0] = CalibFitQuad->GetParError(0);
       Cal->QuadGainFit[1] = CalibFitQuad->GetParameter(1);
@@ -1283,7 +1327,7 @@ int ConfigureEnergyFit(int Clover, int Crystal, int Seg, int FileType, int FileN
    Settings->FitZero = Config.FitZero;
    Settings->BackupPeakSelect = Config.ManualPeakCorrection;
    Settings->TempFit = 0;
-   Settings->GainEst = Config.EnGainEst;
+   Settings->GainEst = Config.TIGGainEst;
 
    return 0;
 }
@@ -1339,7 +1383,7 @@ int ConfigureWaveEnFit(int Clover, int Crystal, int Seg, int FileType, int FileN
    Settings->FitZero = Config.FitZero;
    Settings->BackupPeakSelect = Config.ManualPeakCorrection;
    Settings->TempFit = 0;
-   Settings->GainEst = Config.WaveGainEst;
+   Settings->GainEst = Config.TIGWaveGainEst;
 
    return 0;
 }
