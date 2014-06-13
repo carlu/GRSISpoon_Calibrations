@@ -99,6 +99,7 @@ struct RunConfig {              // this struct will hold all information
    unsigned int Integration;
    // source Information
     std::vector < std::vector < float >>Sources;
+    std::vector < std::string > SourceNames;
     std::vector < int >SourceNumCore;
     std::vector < int >SourceNumFront;
     std::vector < int >SourceNumBack;

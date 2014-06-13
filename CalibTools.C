@@ -484,7 +484,14 @@ int FitHistoFile(TFile * file, int FileType, int FileNum, MasterFitMap * FitMap,
    // Prepare output root file.
    if (Config.WriteFits) {
       // Create output file
-      tempstring = Config.OutPath + Config.CalSpecOut;
+      if(Config.files.size()==1) {
+         tempstring = Config.OutPath + Config.CalSpecOut + ".root";
+      }
+      else {
+         tempstring = Config.OutPath + Config.CalSpecOut + "_";
+         tempstring += Config.SourceNames.at(Config.SourceNumCore.at(FileNum));
+         tempstring += ".root";
+      }
       outfile = TFile::Open(tempstring.c_str(), "RECREATE");
       // Create folders in outfile
       dCharge = outfile->mkdir("Charge");
@@ -1311,8 +1318,6 @@ int ConfigureEnergyFit(int Clover, int Crystal, int Seg, int FileType, int FileN
          }
          break;
       }
-
-
    }
    // Check if plot should be active for this channel
    Settings->PlotOn = 0;

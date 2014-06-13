@@ -94,7 +94,12 @@ int LoadDefaultSettings()
       SourceTemp.push_back(Sources[SOURCE_133BA][i]);
    }
    Config.Sources.push_back(SourceTemp);
-
+   // Store source names
+   Config.SourceNames.push_back("60Co");
+   Config.SourceNames.push_back("152Eu");
+   Config.SourceNames.push_back("152Eu");
+   Config.SourceNames.push_back("133Ba");
+   
    // Energy thresholds
    Config.EnergyThresh = 5;     // keV
    Config.ChargeThresh = 100;
@@ -118,7 +123,7 @@ int LoadDefaultSettings()
    Config.CalName = Config.CalOut.substr(0, Config.CalOut.size() - 5);  // name expected for hist calib input. 
       // .root stripped because run number may exist 
    Config.AnaName = "his";
-   Config.CalSpecOut = "CalibSpecOut.root";
+   Config.CalSpecOut = "CalibSpecOut";
    Config.WriteFits = 1;
    // Charge spectra
    Config.ChargeBins = 16384;

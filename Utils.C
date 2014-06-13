@@ -173,7 +173,6 @@ float CalcWaveCharge(std::vector < int >wavebuffer)
 
 // This function returns the "traditional" TIGRESS DAQ channel number for a given Cl,Cr,Seg
 int GetDaqItemNum(int Clover,int Crystal,int Seg) {
-
    int ItemNum = -1;
    switch (Crystal) {       // Calculate channel number (old TIGRESS DAQ numbering)
    case 0:
@@ -192,9 +191,7 @@ int GetDaqItemNum(int Clover,int Crystal,int Seg) {
       ItemNum = 10000;
       break;
    }
-   
    return ItemNum;
-
 }
 
 
