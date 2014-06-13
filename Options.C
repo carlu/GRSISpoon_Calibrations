@@ -764,6 +764,7 @@ int ReadConfigFile(std::string filename)
          getline(File,Line);
          if(sscanf(Line.c_str(), "%f", &ValF) == 1) {
             Config.MaxTime = ValF;
+            Config.TimeBinSize = Config.MaxTime / Config.TimeBins;  // Recalculate bin size
             Items += 1;
          }
          else {Other += 1;}
@@ -773,6 +774,7 @@ int ReadConfigFile(std::string filename)
          getline(File,Line);
          if(sscanf(Line.c_str(), "%d", &ValI) == 1) {
             Config.TimeBins = ValI;
+            Config.TimeBinSize = Config.MaxTime / Config.TimeBins;
             Items += 1;
          }
          else {Other += 1;}

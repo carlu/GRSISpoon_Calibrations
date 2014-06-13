@@ -1,4 +1,4 @@
-// To  compile: g++ SortHistos.C CalibTools.C Options.C Utils.C -I$GRSISYS/include --std=c++0x -o SortHistos  -O0 `root-config --cflags --libs`  -lSpectrum -g
+// To  compile: g++ SortHistos.C HistCalib.C Options.C Utils.C -I$GRSISYS/include --std=c++0x -o SortHistos  -O0 `root-config --cflags --libs`  -lSpectrum -g
 using namespace std;
 // C/C++ libraries:
 #include <iostream>
@@ -33,7 +33,7 @@ using namespace std;
 #include "Options.h"
 #include "SortTrees.h"
 #include "Calib.h"
-#include "CalibTools.h"
+#include "HistCalib.h"
 #include "Utils.h"
 
 TApplication *App;              // Pointer to root environment for plotting etc

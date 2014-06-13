@@ -31,7 +31,7 @@ using namespace std;
 #include "Options.h"
 #include "SortTrees.h"
 #include "Calib.h"
-#include "CalibTools.h"
+#include "HistCalib.h"
 #include "Utils.h"
 
 // File pointers:

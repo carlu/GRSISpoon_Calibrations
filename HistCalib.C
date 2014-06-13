@@ -37,7 +37,7 @@ using namespace std;
 #include "Options.h"
 #include "SortTrees.h"
 #include "Calib.h"
-#include "CalibTools.h"
+#include "HistCalib.h"
 #include "Utils.h"
 
 extern TApplication *App;
@@ -711,7 +711,7 @@ int FitGammaSpectrum(TH1F * Histo, HistoFit * Fit, HistoCal * Cal, FitSettings S
    }
    if (Integral > Config.MinFitCounts) {
 
-      if (Settings.PlotOn || Settings.PeakSelect || Settings.BackupPeakSelect) {
+      if (!Settings.TempFit && (Settings.PlotOn || Settings.PeakSelect || Settings.BackupPeakSelect)) {
          cCalib1->cd(1);
          cCalib1->Modified();
          cCalib1->Update();
@@ -761,7 +761,7 @@ int FitGammaSpectrum(TH1F * Histo, HistoFit * Fit, HistoCal * Cal, FitSettings S
       }
 
       // Plot spectrum 
-      if (Settings.PlotOn || Settings.PeakSelect || (PeakFound == 0 && Settings.BackupPeakSelect)) {
+      if (!Settings.TempFit &&(Settings.PlotOn || Settings.PeakSelect || (PeakFound == 0 && Settings.BackupPeakSelect))) {
          cCalib1->cd(1);
          Histo->Draw();
          //cCalib1->Modified();
