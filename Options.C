@@ -29,7 +29,7 @@ int LoadDefaultSettings()
    // Which parts of code to run
    Config.RunCalibration = 0;
    Config.RunSpecCal = 0;
-   Config.RunSpecCal2 = 0;
+   Config.RunSegCoreCorrelation = 0;
    Config.RunEfficiency = 0;
    Config.RunSpecEff = 0;
    Config.RunPropCrosstalk = 0;
@@ -536,12 +536,12 @@ int ReadCommandLineSettings(int argc, char **argv)
             RunConfGiven = 1;
          }
          // offline calibration
-         if (strncmp(argv[i], "--calspec2", 10) == 0) {
-            Config.RunSpecCal2 = 1;
-         }
-         // offline calibration
          if (strncmp(argv[i], "--calspec", 7) == 0) {
             Config.RunSpecCal = 1;
+         }
+         // Seg Calibration from core correlation
+         if (strncmp(argv[i], "--calsegcore",8) == 0) {
+            Config.RunSegCoreCorrelation = 1;
          }
          // calibration
          if (strncmp(argv[i], "--cal", 5) == 0) {

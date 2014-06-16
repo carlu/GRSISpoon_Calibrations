@@ -34,6 +34,7 @@ using namespace std;
 #include "SortTrees.h"
 #include "Calib.h"
 #include "HistCalib.h"
+#include "2DHistCalib.h"
 #include "Utils.h"
 
 TApplication *App;              // Pointer to root environment for plotting etc
@@ -56,11 +57,18 @@ int main(int argc, char **argv)
    // create root environment for interacting with plots etc
    App = new TApplication("Output", 0, NULL);
 
-   // Check what we are supposed to be doing call function
-   if (Config.RunSpecCal == 1 || Config.RunSpecCal2) {
+   // Check what we are supposed to be doing, call function
+   if (Config.RunSpecCal == 1) {
       if (CalibrateFiles() > 0) {
          cout << "CalibrateFiles() failed." << endl;
          return 1;
+      }
+   }
+
+   if(Config.RunSegCoreCorrelation == 1) {
+      if (CorrelateSegsCores()> 0) {
+         cout << "CorrelateCoresSegs() failed." << endl;
+         return 1; 
       }
    }
 
