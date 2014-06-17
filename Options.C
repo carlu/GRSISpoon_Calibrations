@@ -793,7 +793,7 @@ int ReadConfigFile(std::string filename)
       if (strcmp(Line.c_str(), "CHARGE_BINS2D")==0) {
          getline(File,Line);
          if(sscanf(Line.c_str(), "%d", &ValI) == 1) {
-            Config.ChargeBins = ValI;
+            Config.ChargeBins2D = ValI;
             Items += 1;
          }
          else {Other += 1;}
