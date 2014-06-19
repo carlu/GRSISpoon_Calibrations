@@ -64,6 +64,8 @@ static TH1F *hMidasTime = 0;
 static TH1F *hWaveHist = 0;
 static TH1F *hWaveChgCrystalFold = 0;
 static TH1F *hChgCrystalFold = 0;
+static TH1F *hChgSegFold = 0;
+static TH1F *hWaveChgSegFold = 0;
 static TH2F *hWaveChargeTest[CLOVERS] = {0};
 
 // Functions
@@ -183,6 +185,12 @@ int InitCalib()
    sprintf(name, "Crystal Fold (Wave Chg)");
    sprintf(title, "Crystal Fold (calculated from wave charge)");
    hWaveChgCrystalFold = new TH1F(name, title, Config.FoldMax, 0, Config.FoldMax);
+   sprintf(name, "Seg Fold (Chg)");
+   sprintf(title, "Segment Fold (calculated from charge)");
+   hChgSegFold = new TH1F(name, title, Config.FoldMax, 0, Config.FoldMax);
+   sprintf(name, "Seg Fold (Wave Chg)");
+   sprintf(title, "Segment Fold (calculated from wave charge)");
+   hWaveChgSegFold = new TH1F(name, title, Config.FoldMax, 0, Config.FoldMax);
 
    if (PLOT_WAVE) {
       sprintf(name, "Wavetemp");
@@ -239,6 +247,11 @@ int Calib(std::vector < TTigFragment > &ev)
    float TB = 0.0;
 
    float WaveCharge = 0.0;
+   
+   int ChgCrystalFold = 0;
+   int WaveChgCrystalFold = 0;
+   int ChgSegFold = 0;
+   int WaveChgSegFold = 0;
    
    bool Hits[CLOVERS][CRYSTALS][SEGS+2] = {0};
    bool WaveHits[CLOVERS][CRYSTALS][SEGS+2] = {0};
@@ -339,9 +352,11 @@ int Calib(std::vector < TTigFragment > &ev)
                   // Hit records
                   if(TestChargeHit(float(ev[Frag].Charge),Config.Integration,Config.ChargeThresh)) {
                      Hits[Clover - 1][Crystal][0] = 1;
+                     ChgCrystalFold += 1;
                   }
                   if(TestChargeHit(WaveCharge,1,Config.ChargeThresh)) {
                      WaveHits[Clover - 1][Crystal][0] = 1;
+                     WaveChgCrystalFold += 1;
                   }
                   // charge records
                   Charges[Clover - 1][Crystal][0] = ev[Frag].Charge;
@@ -392,11 +407,13 @@ int Calib(std::vector < TTigFragment > &ev)
                   // Hit records
                   if(TestChargeHit(float(ev[Frag].Charge),Config.Integration,Config.ChargeThresh)) {
                      Hits[Clover - 1][Crystal][mnemonic.segment] = 1;
+                     ChgSegFold += 1;
                   }
                   if(TestChargeHit(WaveCharge,1,Config.ChargeThresh)) {
                      WaveHits[Clover - 1][Crystal][mnemonic.segment] = 1;
                      // Count segment fold
                      CloverSegFold[Clover-1] += 1;
+                     WaveChgSegFold += 1;
                   }
                   // charge records
                   Charges[Clover - 1][Crystal][mnemonic.segment] = ev[Frag].Charge;
@@ -481,6 +498,12 @@ int Calib(std::vector < TTigFragment > &ev)
       }
    }
    
+   // Increment Fold histos
+   hChgCrystalFold->Fill(ChgCrystalFold);
+   hWaveChgCrystalFold->Fill(WaveChgCrystalFold);
+   hChgSegFold->Fill(ChgSegFold);
+   hWaveChgSegFold->Fill(WaveChgSegFold);
+   
    // Now loop hits and increment seg charge - core charge 2D spectra
    if(Config.Cal2D) {
       for (Clover = 1; Clover <= CLOVERS; Clover++) {
@@ -507,42 +530,60 @@ int Calib(std::vector < TTigFragment > &ev)
 
 void FinalCalib()
 {
-
    int Clover = 0;
    int Crystal = 0;
    int Seg = 0;
    string HistName;
-
-   // Write spectra to file
+   // Set titles and write spectra to file
    outfile->cd();
    for (Clover = 1; Clover <= CLOVERS; Clover++) {
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
          for (Seg = 0; Seg <= SEGS + 1; Seg++) {
             dCharge->cd();
+            hCharge[Clover - 1][Crystal][Seg]->GetXaxis()->SetTitle("FPGA Charge");
             hCharge[Clover - 1][Crystal][Seg]->Write();
             dWaveCharge->cd();
+            hWaveCharge[Clover - 1][Crystal][Seg]->GetXaxis()->SetTitle("Wave Charge");
             hWaveCharge[Clover - 1][Crystal][Seg]->Write();
             if(Config.Cal2D && Seg<SEGS) {
                dCharge2D->cd();
+               hCoreSegCharge[Clover-1][Crystal][Seg]->GetXaxis()->SetTitle("Core Charge");
+               hCoreSegCharge[Clover-1][Crystal][Seg]->GetYaxis()->SetTitle("Seg Charge");
                hCoreSegCharge[Clover - 1][Crystal][Seg]->Write();
                dWaveCharge2D->cd();
+               hCoreSegWaveCharge[Clover-1][Crystal][Seg]->GetXaxis()->SetTitle("Core Wave Charge");
+               hCoreSegWaveCharge[Clover-1][Crystal][Seg]->GetYaxis()->SetTitle("Seg Wave Charge");
                hCoreSegWaveCharge[Clover - 1][Crystal][Seg]->Write();
             }
          }
          dTemp->cd();
+         hCrystalChargeTemp[Clover - 1][Crystal]->GetXaxis()->SetTitle("FPGA Charge");
          hCrystalChargeTemp[Clover - 1][Crystal]->Write();
          dOther->cd();
+         hCrystalGain[Clover - 1][Crystal]->GetXaxis()->SetTitle("Time");
+         hCrystalGain[Clover - 1][Crystal]->GetYaxis()->SetTitle("Gain (keV/ch)");
          hCrystalGain[Clover - 1][Crystal]->Write();
+         hCrystalOffset[Clover - 1][Crystal]->GetXaxis()->SetTitle("MIDAS Time (s)");
+         hCrystalOffset[Clover - 1][Crystal]->GetYaxis()->SetTitle("Offset (keV)");
          hCrystalOffset[Clover - 1][Crystal]->Write();
       }
-      dTest->cd();
       if(Config.CalCheck2D==1) {
+         dTest->cd();
+         hWaveChargeTest[Clover-1]->GetXaxis()->SetTitle("FPGA Charge / Config.Integration");
+         hWaveChargeTest[Clover-1]->GetYaxis()->SetTitle("Waveform Charge");
          hWaveChargeTest[Clover-1]->Write();
       }
    }
+   dOther->cd();
    hMidasTime->Write();
+   hChgCrystalFold->GetXaxis()->SetTitle("Array Crystal Fold (From FPGA Charge)");
    hChgCrystalFold->Write();
+   hWaveChgCrystalFold->GetXaxis()->SetTitle("Array Crystal Fold (From Wave Charge)");
    hWaveChgCrystalFold->Write();
+   hChgSegFold->GetXaxis()->SetTitle("Array Segment Fold (From FPGA Charge)");
+   hChgSegFold->Write();
+   hWaveChgSegFold->GetXaxis()->SetTitle("Array Segment Fold (From Wave Charge)");
+   hWaveChgSegFold->Write();
    outfile->Close();
 }
 
