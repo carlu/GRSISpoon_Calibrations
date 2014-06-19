@@ -20,12 +20,15 @@
 #define CLOVERS  16
 #define CRYSTALS  4
 #define SEGS      8
-#define INTEGRATION 125         // Integration factor applied to charge values
+#define INTEGRATION 500  // Integration factor applied to charge values (K)
+#define DISPERSION 4     // Dispersion applied to charge before histo incremented
 // Constants
 #define PI 3.14159265359
 
 //Other stuff
 #define CHAR_BUFFER_SIZE 1024
+
+#define FOLD_MAX 128
 
 // Item numbers for source records
 #define SOURCE_60CO 0 
@@ -97,6 +100,11 @@ struct RunConfig {              // this struct will hold all information
    unsigned int WaveFinalSamples;
    // integration in charge evaluation
    unsigned int Integration;
+   // Dispersion used in charge evaluation
+      // This is the dispersion stored in odb and used in charge evaluation/analyser spectra
+      // not to be confused with dispersion in histogram calibration codes which is derived from max/bins
+      // this one is needed to get the correct correspondance between wave charge and fpga/tig10 charge
+   unsigned int Dispersion;
    // source Information
     std::vector < std::vector < float >>Sources;
     std::vector < std::string > SourceNames;
@@ -139,6 +147,8 @@ struct RunConfig {              // this struct will hold all information
    int ChargeBins2D;
    float ChargeMax;
    float WaveChargeMax;
+   // Other spectra
+   int FoldMax;
    // What to plot
    bool PlotFits;
    bool CalibPlots[CLOVERS][CRYSTALS][SEGS + 2];        // records if fits should be plotted for each channel

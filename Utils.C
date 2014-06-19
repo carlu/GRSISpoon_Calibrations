@@ -194,5 +194,12 @@ int GetDaqItemNum(int Clover,int Crystal,int Seg) {
    return ItemNum;
 }
 
-
+int TestChargeHit(float Charge, int Integration, int Threshold) {
+   if(Charge/Integration >= Threshold) {
+      return 1;
+   }
+   else {
+      return 0;
+   }
+}
 

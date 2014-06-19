@@ -61,7 +61,10 @@ static TH1F *hCrystalGain[CLOVERS][CRYSTALS] = {0 };    // Histos for recording 
 static TH1F *hCrystalOffset[CLOVERS][CRYSTALS] = {0 };
 // Other
 static TH1F *hMidasTime = 0;
-static TH1F *WaveHist = 0;
+static TH1F *hWaveHist = 0;
+static TH1F *hWaveChgCrystalFold = 0;
+static TH1F *hChgCrystalFold = 0;
+static TH2F *hWaveChargeTest = 0;
 
 // Functions
 //-------------- 
@@ -85,8 +88,9 @@ int InitCalib()
    dTemp = outfile->mkdir("Temp");
    dOther = outfile->mkdir("Other");
 
-   char name[512], title[512];
+   char name[CHAR_BUFFER_SIZE], title[CHAR_BUFFER_SIZE];
    int Clover, Crystal, Seg;
+   int Scale;
 
    if (PLOT_WAVE) {
       cWave1 = new TCanvas();
@@ -159,10 +163,28 @@ int InitCalib()
    sprintf(title, "Midas Timestamps (s)");
    hMidasTime = new TH1F(name, title, Config.TimeBins, 0, Config.MaxTime);
 
+   // Other histograms
+   dOther->cd();
+   sprintf(name, "Crystal Fold (Chg)");
+   sprintf(title, "Crystal Fold (calculated from charge)");
+   hChgCrystalFold = new TH1F(name, title, Config.FoldMax, 0, Config.FoldMax);
+   sprintf(name, "Crystal Fold (Wave Chg)");
+   sprintf(title, "Crystal Fold (calculated from wave charge)");
+   hWaveChgCrystalFold = new TH1F(name, title, Config.FoldMax, 0, Config.FoldMax);
+
+   // Wave charge /charge test istogram
+      // This spectrum used to check if integration/dispersion are set correct
+      // should be a y~=x line, if it is not then something is set wrong and charge thresh will be 
+      // different if calculated from waveform or from evaluated energy
+   sprintf(name, "Wave Charge Test");
+   sprintf(title, "Wave Charge Test");
+   Scale = Config.Integration / Config.Dispersion;
+   hWaveChargeTest = new TH2F(name, title, Config.ChargeBins2D, 0, Config.ChargeMax/Scale, Config.ChargeBins2D, 0, Config.ChargeMax/Scale);
+
    if (PLOT_WAVE) {
       sprintf(name, "Wavetemp");
       sprintf(title, "Temporary wave histogram");
-      WaveHist = new TH1F(name, title, Config.WaveformSamples, 0, Config.WaveformSamples);
+      hWaveHist = new TH1F(name, title, Config.WaveformSamples, 0, Config.WaveformSamples);
    }
    // Check one source only given
    if (Config.SourceNumCore.size() != 1) {
@@ -216,6 +238,7 @@ int Calib(std::vector < TTigFragment > &ev)
    float WaveCharge = 0.0;
    
    bool Hits[CLOVERS][CRYSTALS][SEGS+2] = {0};
+   bool WaveHits[CLOVERS][CRYSTALS][SEGS+2] = {0};
    int CloverSegFold[CLOVERS] = {0};
    int Charges[CLOVERS][CRYSTALS][SEGS+2] = {0};
    float WaveCharges[CLOVERS][CRYSTALS][SEGS+2] = {0.0};
@@ -280,10 +303,10 @@ int Calib(std::vector < TTigFragment > &ev)
             if (PLOT_WAVE) {
                cWave1->cd();
                for (Samp = 0; Samp < Length; Samp++) {
-                  WaveHist->SetBinContent(Samp, ev[Frag].wavebuffer.at(Samp));
+                  hWaveHist->SetBinContent(Samp, ev[Frag].wavebuffer.at(Samp));
                }
 
-               WaveHist->Draw();
+               hWaveHist->Draw();
                cWave1->Modified();
                cWave1->Update();
                App->Run(1);
@@ -310,9 +333,21 @@ int Calib(std::vector < TTigFragment > &ev)
                   hWaveCharge[Clover - 1][Crystal][0]->Fill(WaveCharge);
                   hCrystalChargeTemp[Clover - 1][Crystal]->Fill(ev[Frag].Charge);
                   // Store information for use at end of event
-                  Hits[Clover - 1][Crystal][0] = 1;
+                  // Hit records
+                  if(TestChargeHit(float(ev[Frag].Charge),Config.Integration,Config.ChargeThresh)) {
+                     Hits[Clover - 1][Crystal][0] = 1;
+                  }
+                  if(TestChargeHit(WaveCharge,1,Config.ChargeThresh)) {
+                     WaveHits[Clover - 1][Crystal][0] = 1;
+                  }
+                  // charge records
                   Charges[Clover - 1][Crystal][0] = ev[Frag].Charge;
                   WaveCharges[Clover - 1][Crystal][0] = WaveCharge;
+                  
+                  // Increment charge wave charge test
+                  if(Clover==1 && Crystal==1) {
+                     hWaveChargeTest->Fill(ev[Frag].Charge/Config.Integration,WaveCharge);
+                  }
                }
             } else {
                if (Chan == 9) {
@@ -326,13 +361,21 @@ int Calib(std::vector < TTigFragment > &ev)
                         cout << "B: Filling " << Clover << ", " << Crystal << ", 0, " << mnemonic.outputsensor <<
                             " with charge = " << ev[Frag].Charge << endl;
                      }
-                     // Fi histograms
+                     // Fill histograms
                      hCharge[Clover - 1][Crystal][9]->Fill(ev[Frag].Charge);
                      hWaveCharge[Clover - 1][Crystal][9]->Fill(WaveCharge);
-                     // Store info for end of event
-                     Hits[Clover - 1][Crystal][9] = 1;
+                     // Store information for use at end of event
+                     // Hit records
+                     if(TestChargeHit(float(ev[Frag].Charge),Config.Integration,Config.ChargeThresh)) {
+                        Hits[Clover - 1][Crystal][9] = 1;
+                     }
+                     if(TestChargeHit(WaveCharge,1,Config.ChargeThresh)) {
+                        WaveHits[Clover - 1][Crystal][9] = 1;
+                     }
+                     // charge records
                      Charges[Clover - 1][Crystal][9] = ev[Frag].Charge;
                      WaveCharges[Clover - 1][Crystal][9] = WaveCharge;
+                     
                   }
                }
             }
@@ -342,12 +385,20 @@ int Calib(std::vector < TTigFragment > &ev)
                   // Fill histograms
                   hCharge[Clover - 1][Crystal][mnemonic.segment]->Fill(ev[Frag].Charge);        // Fill segment spectra
                   hWaveCharge[Clover - 1][Crystal][mnemonic.segment]->Fill(WaveCharge);
-                  // Store info for end of event
-                  Hits[Clover - 1][Crystal][mnemonic.segment] = 1;
+                  // Store information for use at end of event
+                  // Hit records
+                  if(TestChargeHit(float(ev[Frag].Charge),Config.Integration,Config.ChargeThresh)) {
+                     Hits[Clover - 1][Crystal][mnemonic.segment] = 1;
+                  }
+                  if(TestChargeHit(WaveCharge,1,Config.ChargeThresh)) {
+                     WaveHits[Clover - 1][Crystal][mnemonic.segment] = 1;
+                     // Count segment fold
+                     CloverSegFold[Clover-1] += 1;
+                  }
+                  // charge records
                   Charges[Clover - 1][Crystal][mnemonic.segment] = ev[Frag].Charge;
                   WaveCharges[Clover - 1][Crystal][mnemonic.segment] = WaveCharge;
-                  // Count segment fold
-                  CloverSegFold[Clover-1] += 1;
+                  
                }
             }
          }
@@ -434,9 +485,9 @@ int Calib(std::vector < TTigFragment > &ev)
             // Check if hit and also if this is the only hit in clover.
             //    (Could do this on a per crystal basis to get more stats but enforcing 1seg hit per clover
             //       means we will certainly not have any problems with crosstalk).
-            if(Hits[Clover-1][Crystal][0] == 1 && CloverSegFold[Clover-1] == 1) {
+            if(Hits[Clover-1][Crystal][0] == 1 && CloverSegFold[Clover-1] == 1 ) {
                for(Seg=1;Seg<=SEGS;Seg++) {
-                  if(Hits[Clover-1][Crystal][Seg] == 1) {
+                  if(Hits[Clover-1][Crystal][Seg] == 1 && WaveHits[Clover-1][Crystal][Seg] == 1) {
                      hCoreSegCharge[Clover-1][Crystal][Seg-1]->Fill(Charges[Clover-1][Crystal][0],Charges[Clover-1][Crystal][Seg]);
                      hCoreSegWaveCharge[Clover-1][Crystal][Seg-1]->Fill(WaveCharges[Clover-1][Crystal][0],WaveCharges[Clover-1][Crystal][Seg]);
                   }
@@ -483,6 +534,9 @@ void FinalCalib()
       }
    }
    hMidasTime->Write();
+   hWaveChargeTest->Write();
+   hChgCrystalFold->Write();
+   hWaveChgCrystalFold->Write();
    outfile->Close();
 }
 

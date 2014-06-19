@@ -10,8 +10,11 @@
 # EXP_CRYSTAL_EFF
 
 # Physics/DAQ Settings
-INTEGRATION
-125
+INTEGRATION  
+500
+
+DISPERSION
+4
 
 # Source Specification
 # First two lines in list will be used for peak search, rest will be fitted afterwards

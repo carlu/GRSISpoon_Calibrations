@@ -64,6 +64,7 @@ int LoadDefaultSettings()
    Config.WaveFinalSamples = 65;
    // Charge evaluation
    Config.Integration = INTEGRATION;
+   Config.Dispersion = DISPERSION;
    // Source information
    float Sources[4][10] = {
       {1173.237, 1332.501},     // 60Co
@@ -130,6 +131,8 @@ int LoadDefaultSettings()
    Config.ChargeBins2D = 1024;
    Config.ChargeMax = 1500000;
    Config.WaveChargeMax = 16384;
+   // Other Spectra
+   Config.FoldMax = 128;
    // Gain drift/time dependent stuff
    Config.MaxTime = 36000.0;
    Config.TimeBins = 20;
@@ -344,9 +347,6 @@ int ReadCommandLineSettings(int argc, char **argv)
                break;           // break if at last item in arg list
             }
          }
-
-
-
 
       }
       // Maximum number of events to process
@@ -664,6 +664,19 @@ int ReadConfigFile(std::string filename)
          getline(File,Line);
          if(sscanf(Line.c_str(), "%d", &ValI) == 1) {
             Config.Integration = ValI;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
+      // Dispersion used in charge evaluation
+      // This is the dispersion stored in odb and used in charge evaluation/analyser spectra
+      // not to be confused with dispersion in histogram calibration codes which is derived from max/bins
+      // this one is needed to get the correct correspondance between wave charge and fpga/tig10 charge
+      if (strcmp(Line.c_str(), "DISPERSION")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%d", &ValI) == 1) {
+            Config.Dispersion = ValI;
             Items += 1;
          }
          else {Other += 1;}

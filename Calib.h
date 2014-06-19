@@ -1,10 +1,6 @@
 // General options
 #define DEBUG 0                 // PRint Debugging messages to screen
 
-// Charge spectra stuff
-//#define INTEGRATION 125 // Integration factor applied to charge values
-      // This definition moved to main.h
-
 #define MAX_LINES 12            // Maximum number of lines for any source
 #define MAX_TOTAL_LINES 25      // maximum number of gamma lines to be fitted across all source
 

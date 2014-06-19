@@ -15,3 +15,5 @@ float CalibrateEnergy(int Charge, std::vector < float >Coefficients);
 // Waveform energy
 float CalcWaveCharge(std::vector < int >wavebuffer);
 float CalibrateWaveEnergy(float Charge, std::vector < float >Coefficients);
+// Hit evaluation
+int TestChargeHit(float Charge, int Integration, int Threshold);

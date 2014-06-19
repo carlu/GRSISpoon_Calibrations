@@ -739,15 +739,11 @@ int FitGammaSpectrum(TH1F * Histo, HistoFit * Fit, HistoCal * Cal, FitSettings S
                if (Peak1 != Peak2) {
                   Ratio = PeakPositions[Peak1] / PeakPositions[Peak2];
                   Diff = fabs(Ratio - IdealRatio) / IdealRatio;
-                  //cout << "Calc Gain: " << En2 /
-                  //  PeakPositions[Peak2] << " Ratio: " << Ratio << " Diff: " << Diff << " Best: " << BestDiff << endl;
                   if (Diff < BestDiff) {        // best match so far
-                     //if( (En2/(PeakPositions[Peak2]/Integration)) > MIN_GAIN && (En2/(PeakPositions[Peak2]/Integration)) < MAX_GAIN) { // Gain is sensible
                      BestDiff = Diff;
                      BestPeak1 = Peak1;
                      BestPeak2 = Peak2;
                      PeakFound = 1;
-                     //}
                   }
                }
             }
@@ -1334,7 +1330,7 @@ int ConfigureEnergyFit(int Clover, int Crystal, int Seg, int FileType, int FileN
    }
 
    if (FileType == 1) {
-      Settings->Integration = INTEGRATION;
+      Settings->Integration = Config.Integration / Config.Dispersion;
       Settings->Dispersion = float (Config.ChargeBins) / float (Config.ChargeMax);
    }
    if (FileType == 2) {         // histogram file from analyser

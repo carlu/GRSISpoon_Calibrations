@@ -547,24 +547,24 @@ int InitPropXtalk()
    dFold->cd();
    sprintf(name, "TIG Clover Fold");
    sprintf(title, "TIGRESS Clover Fold");
-   hCloverFoldTig = new TH1F(name, title, FOLD_MAX, 0, FOLD_MAX);
+   hCloverFoldTig = new TH1F(name, title, Config.FoldMax, 0, Config.FoldMax);
    sprintf(name, "TIG Crys Fold");
    sprintf(title, "TIGRESS Crystal Fold");
-   hCrystalFoldTig = new TH1F(name, title, FOLD_MAX, 0, FOLD_MAX);
+   hCrystalFoldTig = new TH1F(name, title, Config.FoldMax, 0, Config.FoldMax);
    sprintf(name, "TIG Seg Fold");
    sprintf(title, "TIGRESS Segment Fold");
-   hSegFoldTig = new TH1F(name, title, FOLD_MAX, 0, FOLD_MAX);
+   hSegFoldTig = new TH1F(name, title, Config.FoldMax, 0, Config.FoldMax);
    for (Clover = 1; Clover <= CLOVERS; Clover++) {
       sprintf(name, "TIG%02d Crys Fold", Clover);
       sprintf(title, "TIG%02d Crystal Fold", Clover);
-      hCrystalFoldClover[Clover - 1] = new TH1F(name, title, FOLD_MAX, 0, FOLD_MAX);
+      hCrystalFoldClover[Clover - 1] = new TH1F(name, title, Config.FoldMax, 0, Config.FoldMax);
       sprintf(name, "TIG%02d Seg Fold", Clover);
       sprintf(title, "TIG%02d Segment Fold", Clover);
-      hSegFoldClover[Clover - 1] = new TH1F(name, title, FOLD_MAX, 0, FOLD_MAX);
+      hSegFoldClover[Clover - 1] = new TH1F(name, title, Config.FoldMax, 0, Config.FoldMax);
       for (Crystal = 0; Crystal < CRYSTALS; Crystal++) {
          sprintf(name, "TIG%02d%c Seg Fold", Clover, Colours[Crystal]);
          sprintf(title, "TIG%02d%c Segment Fold", Clover, Colours[Crystal]);
-         hSegFoldCrystal[Clover - 1][Crystal] = new TH1F(name, title, FOLD_MAX, 0, FOLD_MAX);
+         hSegFoldCrystal[Clover - 1][Crystal] = new TH1F(name, title, Config.FoldMax, 0, Config.FoldMax);
       }
    }
    dOther->cd();
