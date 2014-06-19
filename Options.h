@@ -125,6 +125,7 @@ struct RunConfig {              // this struct will hold all information
    bool CalEnergy;              // fit charge spectra
    bool CalWave;                // fit wave-charge spectra
    bool Cal2D;                  // create 2D core-seg energy matrices for low stat seg calibration
+   bool CalCheck2D;              // create 2D spectra for comparing wave charge and fpga evaluated charge
    bool CalReport;              // write full report on peak fitting as well as list of gains
    bool CalFile;                // produce a .cal file, readable by GRSISpoon
    bool CalList[CLOVERS][CRYSTALS][SEGS + 2];   // mask to determine which channels CalibSpectra() should run on

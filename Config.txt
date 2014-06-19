@@ -16,6 +16,13 @@ INTEGRATION
 DISPERSION
 4
 
+# Hit Detection
+CHARGE_THRESH
+100
+
+ENERGY_THRESH
+5.0
+
 # Source Specification
 # First two lines in list will be used for peak search, rest will be fitted afterwards
 60CO

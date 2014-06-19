@@ -113,6 +113,7 @@ int LoadDefaultSettings()
    Config.CalEnergy = 1;        // Calibrate charge spectra?
    Config.CalWave = 1;          // Calibrate wave spectra?
    Config.Cal2D = 1;            // Create 2D seg-core charge matrices
+   Config.CalCheck2D = 1;       // create 2D spectra for comparing wave charge and fpga evaluated charge
    Config.CalReport = 1;        // Generate report on fits etc
    Config.CalFile = 0;          // Generate .cal file as used by GRSISpoon 
    memset(&Config.CalList, 1, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
@@ -682,6 +683,27 @@ int ReadConfigFile(std::string filename)
          else {Other += 1;}
          continue;
       }
+      // Hit Detection
+      // ----------------------
+      if (strcmp(Line.c_str(), "CHARGE_THRESH")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%d", &ValI) == 1) {
+            Config.ChargeThresh = ValI;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
+      if (strcmp(Line.c_str(), "ENERGY_THRESH")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%f", &ValF) == 1) {
+            Config.EnergyThresh = ValF;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
+      
       // Source Specification
       //------------------------
       // 60Co

@@ -37,7 +37,7 @@ using namespace std;
 // File pointers:
 // ---------------
 static TFile *outfile = 0;
-static TDirectory *dCharge, *dCharge2D, *dWaveCharge, *dWaveCharge2D, *dTemp, *dOther = { 0 };
+static TDirectory *dCharge, *dCharge2D, *dWaveCharge, *dWaveCharge2D, *dTemp, *dOther, *dTest = { 0 };
 
 // ROOT Stuff
 //-------------
@@ -64,7 +64,7 @@ static TH1F *hMidasTime = 0;
 static TH1F *hWaveHist = 0;
 static TH1F *hWaveChgCrystalFold = 0;
 static TH1F *hChgCrystalFold = 0;
-static TH2F *hWaveChargeTest = 0;
+static TH2F *hWaveChargeTest[CLOVERS] = {0};
 
 // Functions
 //-------------- 
@@ -87,6 +87,7 @@ int InitCalib()
    dWaveCharge2D = outfile->mkdir("WaveCharge2D");
    dTemp = outfile->mkdir("Temp");
    dOther = outfile->mkdir("Other");
+   dTest = outfile->mkdir("Test");
 
    char name[CHAR_BUFFER_SIZE], title[CHAR_BUFFER_SIZE];
    int Clover, Crystal, Seg;
@@ -156,6 +157,17 @@ int InitCalib()
             }
          }
       }
+      // Wave charge /charge test istogram
+      // This spectrum used to check if integration/dispersion are set correct and/or if the wave and fpga energies match as they should
+      // should be a y~=x line, if it is not then something is set wrong and charge thresh will be 
+      // different if calculated from waveform or from evaluated energy
+      if(Config.CalCheck2D==1) {
+         dTest->cd();
+         sprintf(name, "Wave Charge Test TIG%02d",Clover);
+         sprintf(title, "Wave Charge Test TIG%02d",Clover);
+         Scale = Config.Integration / Config.Dispersion;
+         hWaveChargeTest[Clover-1] = new TH2F(name, title, Config.ChargeBins2D, 0, Config.ChargeMax/Scale, Config.ChargeBins2D, 0, Config.ChargeMax/Scale);
+      }
    }
    // Time stamp histo
    dOther->cd();
@@ -171,15 +183,6 @@ int InitCalib()
    sprintf(name, "Crystal Fold (Wave Chg)");
    sprintf(title, "Crystal Fold (calculated from wave charge)");
    hWaveChgCrystalFold = new TH1F(name, title, Config.FoldMax, 0, Config.FoldMax);
-
-   // Wave charge /charge test istogram
-      // This spectrum used to check if integration/dispersion are set correct
-      // should be a y~=x line, if it is not then something is set wrong and charge thresh will be 
-      // different if calculated from waveform or from evaluated energy
-   sprintf(name, "Wave Charge Test");
-   sprintf(title, "Wave Charge Test");
-   Scale = Config.Integration / Config.Dispersion;
-   hWaveChargeTest = new TH2F(name, title, Config.ChargeBins2D, 0, Config.ChargeMax/Scale, Config.ChargeBins2D, 0, Config.ChargeMax/Scale);
 
    if (PLOT_WAVE) {
       sprintf(name, "Wavetemp");
@@ -345,8 +348,8 @@ int Calib(std::vector < TTigFragment > &ev)
                   WaveCharges[Clover - 1][Crystal][0] = WaveCharge;
                   
                   // Increment charge wave charge test
-                  if(Clover==1 && Crystal==1) {
-                     hWaveChargeTest->Fill(ev[Frag].Charge/Config.Integration,WaveCharge);
+                  if(Config.CalCheck2D==1 && Crystal==1) {
+                     hWaveChargeTest[Clover-1]->Fill(ev[Frag].Charge/Config.Integration,WaveCharge);
                   }
                }
             } else {
@@ -532,9 +535,12 @@ void FinalCalib()
          hCrystalGain[Clover - 1][Crystal]->Write();
          hCrystalOffset[Clover - 1][Crystal]->Write();
       }
+      dTest->cd();
+      if(Config.CalCheck2D==1) {
+         hWaveChargeTest[Clover-1]->Write();
+      }
    }
    hMidasTime->Write();
-   hWaveChargeTest->Write();
    hChgCrystalFold->Write();
    hWaveChgCrystalFold->Write();
    outfile->Close();
