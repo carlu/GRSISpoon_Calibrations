@@ -41,7 +41,7 @@ extern TApplication *App;
 TCanvas *cCalib = NULL;
 
 
-int CorrelateSegsCores() {
+int SegCoreCalib() {
    
    // Variables, Constants, etc
    int Clover = 0;
@@ -87,6 +87,12 @@ int CorrelateSegsCores() {
                cCalib->cd();
                Histo->Draw("colz");
                App->Run(1);
+               
+               //TGraph *Graph = (TGraph*) gPad->GetPrimitive("Graph");
+               //Graph->ResetBit(kCanDelete);
+               //Graph->Draw();
+               //App->Run(1);
+               
             }
             
          }

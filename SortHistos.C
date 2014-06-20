@@ -34,7 +34,7 @@ using namespace std;
 #include "SortTrees.h"
 #include "Calib.h"
 #include "HistCalib.h"
-#include "2DHistCalib.h"
+#include "SegCoreCalib.h"
 #include "Utils.h"
 
 TApplication *App;              // Pointer to root environment for plotting etc
@@ -66,7 +66,7 @@ int main(int argc, char **argv)
    }
 
    if(Config.RunSegCoreCorrelation == 1) {
-      if (CorrelateSegsCores()> 0) {
+      if (SegCoreCalib() > 0) {
          cout << "CorrelateCoresSegs() failed." << endl;
          return 1; 
       }
