@@ -32,7 +32,7 @@ using namespace std;
 #include "SortTrees.h"
 #include "Calib.h"
 #include "HistCalib.h"
-#include "2DHistCalib.h"
+#include "SegCoreCalib.h"
 #include "Utils.h"
 
 extern TApplication *App;
