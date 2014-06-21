@@ -1123,6 +1123,7 @@ void PrintHelp()
    cout <<
        "\thisX.root assumes no wave spectra and format ChrgXXXX names with numbers according to TIGRESS DAQ analyser convention"
        << endl << endl;
+   cout << "[--calsegcore] - Calibration of segments by correlation with core.  Expects input file produced by --cal." << endl << endl;
    cout << "[-z] - Include an additional point at 0ch = 0keV in any calibrations." << endl << endl;
    cout <<
        "[-q] - Quiet mode.  [-v] - Verbose mode.  Default prints progress through run and configuration.  Quiet doesn't.  Verbose also prints other stuff"
@@ -1135,7 +1136,7 @@ void PrintHelp()
        "[-d (Clover) (Crystal) (Seg)] - Selects a particular (d)etection element to fit.  Defaults to all. Affect --calspec only"
        << endl << endl;
    cout <<
-       "[-mp (Clover) (Crystal) (Seg)] - Manually selects calibration peaks for a particular (d)etection element to   Defaults to all."
+       "[-mp (Clover) (Crystal) (Seg)] - Manually selects calibration Peaks for a particular detection element to   Defaults to all."
        << endl << endl;
    cout << "[-vr (VRam in Mb)] - Specify in Mb what should be passed to Tree->SetMaxVirtualSize()." << endl;
    cout << "\tOnly effects SortTrees, not SortHistos." << endl;

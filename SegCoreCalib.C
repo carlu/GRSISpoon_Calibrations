@@ -26,6 +26,7 @@ using namespace std;
 #include <TSystem.h>
 #include <TFolder.h>
 #include <TRandom3.h>
+#include <TProfile.h>
 
 // My libraries
 #include "Options.h"
@@ -49,8 +50,10 @@ int SegCoreCalib() {
    int Seg = 0;
    std::string Filename;
    TFile *File = NULL;
+   std::string tempstring;
    char CharBuf[CHAR_BUFFER_SIZE];
-   TH1F *Histo = NULL;
+   TH2F *Histo = NULL;
+   ofstream SegCoreCalOut;
    // Check inputs/configuration
    if(Config.files.size() != 1) {
       cout << "One file expected for seg calibration by seg-core correlation." << endl;
@@ -72,6 +75,10 @@ int SegCoreCalib() {
       return 1;
    }
    
+   // Output file
+   tempstring = Config.OutPath + "SegCoreCalOut.txt";
+   SegCoreCalOut.open(tempstring.c_str());
+   
    // Set up TCanvas
    cCalib = new TCanvas("cCalib", "2D Calib", 800, 600);
       
@@ -82,16 +89,56 @@ int SegCoreCalib() {
             Histo = NULL;
             snprintf(CharBuf,CHAR_BUFFER_SIZE,"TIG%02d%cP%02dx Chg Mat",Clover,Num2Col(Crystal),Seg);
             cout << CharBuf << endl;
-            Histo = (TH1F*) File->FindObjectAny(CharBuf);
+            Histo = (TH2F*) File->FindObjectAny(CharBuf);
             if(Histo) {
                cCalib->cd();
-               Histo->Draw("colz");
+               
+               // -------------------------------------------------------------------------
+               // Now to fit matrices and extract transform from core to seg calibration.
+               // Two strategies for this seem apparant from the ROOT documentation:
+               //    - Create TProfile of matrix with Histo->ProfileX() then fit that as 1D
+               //    - Draw matrix and then extract TGraph from that with something like:
+               //       TGraph *Graph = (TGraph*) gPad->GetPrimitive("Graph");
+               // So far I have had more look with the first method.  Either way there
+               // are lots of counts (~10%) with SegCharge<CoreCharge so need to get rid
+               // of those first.  Will try using a threshold.
+               // -------------------------------------------------------------------------               
+               
+               //Histo->Draw();
+               
                App->Run(1);
                
-               //TGraph *Graph = (TGraph*) gPad->GetPrimitive("Graph");
-               //Graph->ResetBit(kCanDelete);
-               //Graph->Draw();
-               //App->Run(1);
+               // Subtract background
+               int x,y;
+               float Bgnd = 10.0;
+               float Val = 0.0;
+               for(x=0;x<Histo->GetNbinsX();x++) {
+                  for(y=0;y<Histo->GetNbinsY();y++) {
+                     Val = Histo->GetBinContent(x,y);
+                     if(Val>Bgnd) {
+                        Histo->SetBinContent(x,y,Val-Bgnd);
+                     }
+                     else {
+                        Histo->SetBinContent(x,y,0.0);
+                     }
+                  }
+               }
+               
+               //Histo->Draw();
+               
+               App->Run(1);
+               
+               TProfile *profx = Histo->ProfileX();
+               
+               profx->Fit("pol2");
+               
+               //for(Param=0;Param<2;Param++){
+                 // SegCoreCalOut << CharBuf << " " << 
+               //}
+               
+               //profx->Draw();
+               
+               App->Run(1);
                
             }
             
@@ -99,7 +146,7 @@ int SegCoreCalib() {
       }
    }
    
-   
+   SegCoreCalOut.close();
    File->Close();
 
    return 0;
