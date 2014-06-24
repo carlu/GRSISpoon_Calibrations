@@ -106,6 +106,9 @@ int LoadDefaultSettings()
    Config.ChargeThresh = 100;
    // Array mode
    Config.HighEffMode = 0;
+   
+   // Event output file
+   Config.EventOut = "EventOut.root";
 
    // Options for Calib() and CalibOffline()
    //---------------------------------------

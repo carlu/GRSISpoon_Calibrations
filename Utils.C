@@ -12,6 +12,13 @@ using namespace std;
 
 // ROOT libaries
 #include <TRandom3.h>
+#include <TFile.h>
+#include <TCanvas.h>
+#include <TFolder.h>
+#include <TH1F.h>
+
+// GRSISpoon libraries
+#include "TTigFragment.h"
 
 // Other libraries
 #include "SortTrees.h"
@@ -202,4 +209,56 @@ int TestChargeHit(float Charge, int Integration, int Threshold) {
       return 0;
    }
 }
+
+// Save current event to root file for inspection later.
+// This is useful for debugging unusual/rare events, put a gate on something
+// then call this funtion to write the event out for inspection after the sort has finished.
+int SaveEvent(std::vector < TTigFragment > &ev, std::string Message) {
+   
+   static TFile *EventOut = NULL;
+   static TCanvas *cEvent = NULL;
+   TDirectory *Dir = NULL;
+   std::string EventOutName = Config.OutPath + Config.EventOut;
+   char SpecName[CHAR_BUFFER_SIZE];
+   char SpecTitle[CHAR_BUFFER_SIZE];
+   char FragInfo[CHAR_BUFFER_SIZE];
+   unsigned int Frag, Samp;
+   TH1F *hWaveHist;
+   
+   // If not done already, create output file.
+   if(EventOut == NULL) {
+      EventOut = new TFile(EventOutName.c_str(), "RECREATE");
+   }
+   
+   // Create folder for this event with message as title
+   Dir = EventOut->mkdir(Message.c_str());
+   Dir->cd();
+   
+   // Loop fragments in event
+   for(Frag=0; Frag<ev.size(); Frag++) {
+      
+      // Create histogram for waveform
+      // Name
+      strncpy(SpecName, ev[Frag].ChannelName.c_str(),CHAR_BUFFER_SIZE);
+      strncat(SpecName, " Wave",CHAR_BUFFER_SIZE);
+      // Title
+      strncpy(SpecTitle, ev[Frag].ChannelName.c_str(),CHAR_BUFFER_SIZE);
+      strncat(SpecTitle, "Waveform ",CHAR_BUFFER_SIZE);
+      // Add some other info to title
+      sprintf(FragInfo, "(Q: %d, T2T: %d)", ev[Frag].Charge, ev[Frag].TimeToTrig);
+      strncat(SpecTitle,FragInfo,CHAR_BUFFER_SIZE);
+      // create
+      hWaveHist = new TH1F(SpecName, SpecTitle, ev[Frag].wavebuffer.size(), 0, ev[Frag].wavebuffer.size());
+      
+      // Fill histo with wave samples
+      for(Samp=0; Samp<ev[Frag].wavebuffer.size(); Samp++) {
+         hWaveHist->SetBinContent(Samp,ev[Frag].wavebuffer.at(Samp));
+      }
+      // Write
+      hWaveHist->Write();
+   }
+   return 0;
+}
+
+
 

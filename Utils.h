@@ -1,5 +1,9 @@
 // Utility functions for GRSISpoon Calibration sorts
 
+// GRSISpoon libraries
+#include "TTigFragment.h"
+#include <vector>
+
 // --------------------------------------------------------
 // Functions:
 // --------------------------------------------------------
@@ -17,3 +21,5 @@ float CalcWaveCharge(std::vector < int >wavebuffer);
 float CalibrateWaveEnergy(float Charge, std::vector < float >Coefficients);
 // Hit evaluation
 int TestChargeHit(float Charge, int Integration, int Threshold);
+// Save events
+int SaveEvent(std::vector < TTigFragment > &ev, std::string Message);
