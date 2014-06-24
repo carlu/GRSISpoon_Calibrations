@@ -177,7 +177,7 @@ int LoadDefaultSettings()
    Config.GausSigmaMin   = 250.0;
    // Manual peak select options
    memset(&Config.ManualPeakSelect, 0, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
-   Config.ManualPeakCorrection = 1;
+   Config.ManualPeakCorrection = 0;
 
    // Options for CoincEff()
    //-------------------------
