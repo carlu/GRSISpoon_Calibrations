@@ -206,6 +206,11 @@ int CalibrateFiles()
       }
       // Now fit the histos in file
       FitHistoFile(file, FileType, FileNum, &FitMap, &WaveFitMap);
+      
+      // If fits are being written AND this is not the last file, close outpur file
+      if (Config.WriteFits && FileNum < (Config.files.size()-1)) {
+         outfile->Close();
+      }
    }
 
    // Now iterate over FitMap/WaveFitMap and perform calibrations
@@ -397,6 +402,10 @@ int CalibrateFiles()
          }
       }
    }
+   
+   if (Config.WriteFits && FileNum < (Config.files.size()-1)) {
+      outfile->Close();
+   }
 
    if (Config.PlotCalibSummary) {
       cCalib2->Divide(2, 3);
@@ -437,10 +446,6 @@ int CalibrateFiles()
       if (Config.CalReport) {
          WaveReportOut.close();
       }
-   }
-
-   if (Config.WriteFits) {
-      outfile->Close();
    }
 
    return 0;
@@ -654,7 +659,7 @@ int FitHistoFile(TFile * file, int FileType, int FileNum, MasterFitMap * FitMap,
       }
 
    }
-
+   
    return 0;
 }
 
