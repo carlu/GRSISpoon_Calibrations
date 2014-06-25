@@ -514,8 +514,8 @@ int Calib(std::vector < TTigFragment > &ev)
             if(Hits[Clover-1][Crystal][0] == 1 && CloverSegFold[Clover-1] == 1 ) {
                for(Seg=1;Seg<=SEGS;Seg++) {
                   if(Hits[Clover-1][Crystal][Seg] == 1 && WaveHits[Clover-1][Crystal][Seg] == 1) {
-                     hCoreSegCharge[Clover-1][Crystal][Seg-1]->Fill(Charges[Clover-1][Crystal][0],Charges[Clover-1][Crystal][Seg]);
-                     hCoreSegWaveCharge[Clover-1][Crystal][Seg-1]->Fill(WaveCharges[Clover-1][Crystal][0],WaveCharges[Clover-1][Crystal][Seg]);
+                     hCoreSegCharge[Clover-1][Crystal][Seg-1]->Fill(Charges[Clover-1][Crystal][Seg],Charges[Clover-1][Crystal][0]);
+                     hCoreSegWaveCharge[Clover-1][Crystal][Seg-1]->Fill(WaveCharges[Clover-1][Crystal][Seg],WaveCharges[Clover-1][Crystal][0]);
                   }
                }
             }     
@@ -547,12 +547,12 @@ void FinalCalib()
             hWaveCharge[Clover - 1][Crystal][Seg]->Write();
             if(Config.Cal2D && Seg<SEGS) {
                dCharge2D->cd();
-               hCoreSegCharge[Clover-1][Crystal][Seg]->GetXaxis()->SetTitle("Core Charge");
-               hCoreSegCharge[Clover-1][Crystal][Seg]->GetYaxis()->SetTitle("Seg Charge");
+               hCoreSegCharge[Clover-1][Crystal][Seg]->GetXaxis()->SetTitle("Seg Charge");
+               hCoreSegCharge[Clover-1][Crystal][Seg]->GetYaxis()->SetTitle("Core Charge");
                hCoreSegCharge[Clover - 1][Crystal][Seg]->Write();
                dWaveCharge2D->cd();
-               hCoreSegWaveCharge[Clover-1][Crystal][Seg]->GetXaxis()->SetTitle("Core Wave Charge");
-               hCoreSegWaveCharge[Clover-1][Crystal][Seg]->GetYaxis()->SetTitle("Seg Wave Charge");
+               hCoreSegWaveCharge[Clover-1][Crystal][Seg]->GetXaxis()->SetTitle("Seg Wave Charge");
+               hCoreSegWaveCharge[Clover-1][Crystal][Seg]->GetYaxis()->SetTitle("Core Wave Charge");
                hCoreSegWaveCharge[Clover - 1][Crystal][Seg]->Write();
             }
          }

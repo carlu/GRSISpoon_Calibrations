@@ -104,7 +104,7 @@ int SegCoreCalib() {
                // of those first.  Will try using a threshold.
                // -------------------------------------------------------------------------               
                
-               //Histo->Draw();
+               Histo->Draw();
                
                App->Run(1);
                
@@ -124,7 +124,7 @@ int SegCoreCalib() {
                   }
                }
                
-               //Histo->Draw();
+               Histo->Draw();
                
                App->Run(1);
                
@@ -132,11 +132,14 @@ int SegCoreCalib() {
                
                profx->Fit("pol2");
                
-               //for(Param=0;Param<2;Param++){
-                 // SegCoreCalOut << CharBuf << " " << 
-               //}
                
-               //profx->Draw();
+               SegCoreCalOut << CharBuf << " " << endl;
+               /*for(Param=0;Param<2;Param++){
+                  SegCoreCalOut << 
+               }*/
+               
+               
+               profx->Draw();
                
                App->Run(1);
                
