@@ -48,12 +48,17 @@ int SegCoreCalib() {
    int Clover = 0;
    int Crystal = 0;
    int Seg = 0;
+   int Param;
    std::string Filename;
    TFile *File = NULL;
    std::string tempstring;
    char CharBuf[CHAR_BUFFER_SIZE];
    TH2F *Histo = NULL;
    ofstream SegCoreCalOut;
+   // Fitting stuff
+   std::string FitOptions = ("RQE");
+      // R=restrict to function range, Q=quiet, L=log likelihood method, E=improved err estimation, + add fit instead of replace
+   
    // Check inputs/configuration
    if(Config.files.size() != 1) {
       cout << "One file expected for seg calibration by seg-core correlation." << endl;
@@ -91,7 +96,7 @@ int SegCoreCalib() {
             cout << CharBuf << endl;
             Histo = (TH2F*) File->FindObjectAny(CharBuf);
             if(Histo) {
-               cCalib->cd();
+               //cCalib->cd();
                
                // -------------------------------------------------------------------------
                // Now to fit matrices and extract transform from core to seg calibration.
@@ -104,13 +109,15 @@ int SegCoreCalib() {
                // of those first.  Will try using a threshold.
                // -------------------------------------------------------------------------               
                
-               Histo->Draw();
+               // skip if stats too low
+               cout << "Counts: " << Histo->Integral() << endl;
+               if(Histo->Integral() < Config.MinFitCounts) {
+                  continue;
+               }
                
-               App->Run(1);
-               
-               // Subtract background
+               // Subtract background to remove values with Eseg < Ecore
                int x,y;
-               float Bgnd = 10.0;
+               float Bgnd = 10.0; // If sticking with this method, this value should be found from matrix not hard coded.
                float Val = 0.0;
                for(x=0;x<Histo->GetNbinsX();x++) {
                   for(y=0;y<Histo->GetNbinsY();y++) {
@@ -124,24 +131,27 @@ int SegCoreCalib() {
                   }
                }
                
-               Histo->Draw();
-               
-               App->Run(1);
-               
-               TProfile *profx = Histo->ProfileX();
-               
-               profx->Fit("pol2");
                
                
-               SegCoreCalOut << CharBuf << " " << endl;
-               /*for(Param=0;Param<2;Param++){
-                  SegCoreCalOut << 
-               }*/
+               //Histo->Draw();
+               
+               //App->Run(1);
+               
+               TProfile *ProfX = Histo->ProfileX();
+               
+               ProfX->Fit("pol2");
+               TF1 *ProfileFit = (TF1*) ProfX->GetFunction("pol2");
+               
+               SegCoreCalOut << CharBuf << " ";
+               for(Param=0;Param<3;Param++){
+                  SegCoreCalOut << ProfileFit->GetParameter(Param) << " ";
+               }
+               SegCoreCalOut << endl;
                
                
-               profx->Draw();
+               //profx->Draw();
                
-               App->Run(1);
+               //App->Run(1);
                
             }
             
