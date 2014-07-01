@@ -41,7 +41,6 @@ extern TApplication *App;
 // globals
 TCanvas *cCalib = NULL;
 
-
 int SegCoreCalib() {
    
    // Variables, Constants, etc
@@ -112,7 +111,7 @@ int SegCoreCalib() {
                // skip if stats too low
                cout << "Counts: " << Histo->Integral() << endl;
                if(Histo->Integral() < Config.MinFitCounts) {
-                  continue;
+                  //continue;
                }
                
                // Subtract background to remove values with Eseg < Ecore
@@ -132,16 +131,27 @@ int SegCoreCalib() {
                }
                
                
-               
-               //Histo->Draw();
-               
+               if(Clover==2 && Crystal ==0 && Seg==7) {
+                  Histo->Draw();
+                  App->Run(1);
+               }
                //App->Run(1);
                
                TProfile *ProfX = Histo->ProfileX();
                
-               ProfX->Fit("pol2");
+               bool FitTest = ProfX->Fit("pol2");
+               
+               if(FitTest>0) {
+                  if(Config.PrintBasic) {
+                     cout << "Fit of TProfile failed." << endl;
+                  }
+                  SegCoreCalOut << CharBuf << " Fit of TProfile failed!" << endl;
+                  continue;
+               }
+               
                TF1 *ProfileFit = (TF1*) ProfX->GetFunction("pol2");
                
+               // Now generate output               
                SegCoreCalOut << CharBuf << " ";
                for(Param=0;Param<3;Param++){
                   SegCoreCalOut << ProfileFit->GetParameter(Param) << " ";

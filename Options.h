@@ -123,7 +123,8 @@ struct RunConfig {              // this struct will hold all information
    // Settings for individual functions
    // ------------------------------------------
 
-   // SortTrees:Calib() and SortHistos:CalibrateFiles() 
+   // SortTrees:Calib.C and SortHistos:HistCalib.C & SegCoreCalib.C 
+   //----------------------------------------------------------------
    // What to do
    bool CalEnergy;              // fit charge spectra
    bool CalWave;                // fit wave-charge spectra
@@ -195,8 +196,13 @@ struct RunConfig {              // this struct will hold all information
    bool ManualPeakCorrection;   // Manual peak selection if auto fails
    // Reference 
    ReferenceValueMap Crystal_FWHM_1332;  // # CRYSTAL_FHWM_1332
+   
+   // Additional options for SegCoreCalib.C
+   // --------------------------------------
+   int SegCoreFitOrder; // 0= gain only, 1=gain+offset, 2=gain+offset+quad
 
    // CoincEff()
+   //-----------
    // What to plot
    bool PlotEff;
    bool OutputEff;
@@ -215,11 +221,13 @@ struct RunConfig {              // this struct will hold all information
     std::string EffExpRefFileName;
 
    // PropXtalk()
+   //--------------
    // Output
     std::string PropOut;
     std::string PropTxtOut;
     
    // GeTiming()
+   //-----------
    // Output
    std::string GeTimingOut;
    float GeTimingGateCentre;

@@ -110,7 +110,7 @@ int LoadDefaultSettings()
    // Event output file
    Config.EventOut = "EventOut.root";
 
-   // Options for Calib() and CalibOffline()
+   // Options for Calib.C and HistCalib.C
    //---------------------------------------
    // What to do
    Config.CalEnergy = 1;        // Calibrate charge spectra?
@@ -178,6 +178,10 @@ int LoadDefaultSettings()
    // Manual peak select options
    memset(&Config.ManualPeakSelect, 0, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
    Config.ManualPeakCorrection = 0;
+
+   // Additional options for SegCoreCalib.C
+   // --------------------------------------
+   Config.SegCoreFitOrder = 2; // 0= gain only, 1=gain+offset, 2=gain+offset+quad
 
    // Options for CoincEff()
    //-------------------------
