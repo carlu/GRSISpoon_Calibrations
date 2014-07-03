@@ -181,7 +181,7 @@ int LoadDefaultSettings()
 
    // Additional options for SegCoreCalib.C
    // --------------------------------------
-   Config.SegCoreFitOrder = 2; // 0= gain only, 1=gain+offset, 2=gain+offset+quad
+   Config.SegCoreFitOrder = 0; // 0= gain only, 1=gain+offset, 2=gain+offset+quad
 
    // Options for CoincEff()
    //-------------------------

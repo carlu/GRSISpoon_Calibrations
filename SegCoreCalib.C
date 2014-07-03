@@ -108,6 +108,14 @@ int SegCoreCalib() {
                // of those first.  Will try using a threshold.
                // -------------------------------------------------------------------------               
                
+               // Variables needed here
+               int x,y;
+               float Bgnd;
+               float Val;
+               
+               TF1 *ProfileFit;
+               float Min, Max;
+               
                // skip if stats too low
                cout << "Counts: " << Histo->Integral() << endl;
                if(Histo->Integral() < Config.MinFitCounts) {
@@ -115,9 +123,8 @@ int SegCoreCalib() {
                }
                
                // Subtract background to remove values with Eseg < Ecore
-               int x,y;
-               float Bgnd = 10.0; // If sticking with this method, this value should be found from matrix not hard coded.
-               float Val = 0.0;
+               Bgnd = 10.0; // If sticking with this method, this value should be found from matrix not hard coded.
+               Val = 0.0;
                for(x=0;x<Histo->GetNbinsX();x++) {
                   for(y=0;y<Histo->GetNbinsY();y++) {
                      Val = Histo->GetBinContent(x,y);
@@ -132,15 +139,32 @@ int SegCoreCalib() {
                
                
                if(Clover==2 && Crystal ==0 && Seg==7) {
-                  Histo->Draw();
-                  App->Run(1);
+                  //Histo->Draw();
+                  //App->Run(1);
                }
                //App->Run(1);
                
                TProfile *ProfX = Histo->ProfileX();
                
-               bool FitTest = ProfX->Fit("pol2");
+               Min = ProfX->GetMinimum();
+               Max = ProfX->GetMaximum();
                
+               switch(Config.SegCoreFitOrder) {
+               case 0:
+                  ProfileFit = new TF1("Gain", "x*[0]", Min, Max);
+                  break;
+               case 1:
+                  ProfileFit = new TF1("Pol1", "[0]+(x*[1])", Min, Max);
+                  break;
+               case 2:
+                  ProfileFit = new TF1("Pol2", "[0]+(x*[1])+(x*x*[2])", Min, Max);
+                  break;
+               }
+                 
+               
+               bool FitTest = ProfX->Fit(ProfileFit);
+               
+               // Test fit success
                if(FitTest>0) {
                   if(Config.PrintBasic) {
                      cout << "Fit of TProfile failed." << endl;
@@ -149,15 +173,44 @@ int SegCoreCalib() {
                   continue;
                }
                
-               TF1 *ProfileFit = (TF1*) ProfX->GetFunction("pol2");
-               
-               // Now generate output               
+               // Now generate output of correlation fit        
+               std::vector<float> CorrelationCoeffs;     
                SegCoreCalOut << CharBuf << " ";
-               for(Param=0;Param<3;Param++){
+               for(Param=0;Param<=Config.SegCoreFitOrder;Param++){
                   SegCoreCalOut << ProfileFit->GetParameter(Param) << " ";
+                  CorrelationCoeffs.push_back(ProfileFit->GetParameter(Param));
+                  //SegCoreCalOut << FitRange->GetParameter(Param) << " ";
+               }
+               
+               
+               
+               // Now output effective seg gain coefficients
+               std::vector<float> CoreCoeffs;
+               CoreCoeffs.push_back(0.2);
+               CoreCoeffs.push_back(0.16);
+               CoreCoeffs.push_back(0.000001);
+               std::vector<float> SegCoeffs;
+               
+               switch(Config.SegCoreFitOrder) {
+               case 0:
+                  SegCoeffs.push_back(CoreCoeffs.at(0));
+                  SegCoeffs.push_back(CoreCoeffs.at(1) * CorrelationCoeffs.at(0));
+                  SegCoeffs.push_back(CoreCoeffs.at(2) * pow(CorrelationCoeffs.at(0),2));
+                  break;
+               case 1:
+                  SegCoeffs.push_back(CoreCoeffs.at(0) + (CoreCoeffs.at(1) * CorrelationCoeffs.at(0)) + (CoreCoeffs.at(2)*pow(CorrelationCoeffs.at(0),2)));
+                  SegCoeffs.push_back(CoreCoeffs.at(1) * CorrelationCoeffs.at(1) + (2*CorrelationCoeffs.at(0)*CoreCoeffs.at(1)*CoreCoeffs.at(2))   );
+                  SegCoeffs.push_back(CoreCoeffs.at(2) * pow(CorrelationCoeffs.at(1),2));
+                  break;
+               case 2:
+                  //ProfileFit = new TF1("Pol2", "[0]+(x*[1])+(x*x*[2])", Min, Max);
+                  break;
+               }
+               
+               for(Param=0;Param<SegCoeffs.size();Param++){
+                  SegCoreCalOut << SegCoeffs.at(Param) << " ";
                }
                SegCoreCalOut << endl;
-               
                
                //profx->Draw();
                
