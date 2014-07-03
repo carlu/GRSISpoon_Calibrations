@@ -200,6 +200,7 @@ struct RunConfig {              // this struct will hold all information
    // Additional options for SegCoreCalib.C
    // --------------------------------------
    int SegCoreFitOrder; // 0= gain only, 1=gain+offset, 2=gain+offset+quad
+   bool PlotSegCoreCal;
 
    // CoincEff()
    //-----------

@@ -181,7 +181,8 @@ int LoadDefaultSettings()
 
    // Additional options for SegCoreCalib.C
    // --------------------------------------
-   Config.SegCoreFitOrder = 0; // 0= gain only, 1=gain+offset, 2=gain+offset+quad
+   Config.SegCoreFitOrder = 2; // 0= gain only, 1=gain+offset, 2=gain+offset+quad
+   Config.PlotSegCoreCal = 0;
 
    // Options for CoincEff()
    //-------------------------
@@ -419,8 +420,10 @@ int ReadCommandLineSettings(int argc, char **argv)
             cout << "Plotting all fits." << endl;
             Config.PlotFits = 1;
             memset(&Config.CalibPlots, 1, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
+            Config.PlotSegCoreCal = 1;
          } else {
             Config.PlotFits = 1;
+            Config.PlotSegCoreCal = 1;
             n = 0;
             while (strncmp(argv[i + 1], "-", 1) > 0) {  // loop plot items 
                Plot[n] = atoi(argv[++i]);

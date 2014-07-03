@@ -95,7 +95,6 @@ int SegCoreCalib() {
             cout << CharBuf << endl;
             Histo = (TH2F*) File->FindObjectAny(CharBuf);
             if(Histo) {
-               //cCalib->cd();
                
                // -------------------------------------------------------------------------
                // Now to fit matrices and extract transform from core to seg calibration.
@@ -108,10 +107,17 @@ int SegCoreCalib() {
                // of those first.  Will try using a threshold.
                // -------------------------------------------------------------------------               
                
+               if(Config.PlotSegCoreCal == 1) {
+                  cCalib->cd();
+                  Histo->Draw("colz");
+                  App->Run(1);
+               }
+               
                // Variables needed here
                int x,y;
                float Bgnd;
                float Val;
+               float Int;
                
                TF1 *ProfileFit;
                float Min, Max;
@@ -138,17 +144,24 @@ int SegCoreCalib() {
                }
                
                
-               if(Clover==2 && Crystal ==0 && Seg==7) {
-                  //Histo->Draw();
-                  //App->Run(1);
+               if(Config.PlotSegCoreCal == 1) {
+                  cCalib->cd();
+                  Histo->Draw("colz");
+                  App->Run(1);
                }
-               //App->Run(1);
                
                TProfile *ProfX = Histo->ProfileX();
                
                Min = ProfX->GetMinimum();
                Max = ProfX->GetMaximum();
                
+               if(Config.PlotSegCoreCal == 1) {
+                  cCalib->cd();
+                  ProfX->Draw();
+                  App->Run(1);
+               }
+               
+               // Set function based on required order of Seg-Core correlation
                switch(Config.SegCoreFitOrder) {
                case 0:
                   ProfileFit = new TF1("Gain", "x*[0]", Min, Max);
@@ -191,19 +204,53 @@ int SegCoreCalib() {
                CoreCoeffs.push_back(0.000001);
                std::vector<float> SegCoeffs;
                
+               Int = Config.Integration / Config.Dispersion;
+               
                switch(Config.SegCoreFitOrder) {
-               case 0:
-                  SegCoeffs.push_back(CoreCoeffs.at(0));
-                  SegCoeffs.push_back(CoreCoeffs.at(1) * CorrelationCoeffs.at(0));
-                  SegCoeffs.push_back(CoreCoeffs.at(2) * pow(CorrelationCoeffs.at(0),2));
+               case 0:  // Qcore = k * Qseg
+                  // s0 = c0
+                  Val = CoreCoeffs.at(0);
+                  SegCoeffs.push_back(Val);
+                  // s1 = c1 * k
+                  Val = CoreCoeffs.at(1) * CorrelationCoeffs.at(0);
+                  SegCoeffs.push_back(Val);
+                  // s2 = c2 * k**2
+                  Val = CoreCoeffs.at(2) * pow(CorrelationCoeffs.at(0),2);
+                  SegCoeffs.push_back(Val);
                   break;
-               case 1:
-                  SegCoeffs.push_back(CoreCoeffs.at(0) + (CoreCoeffs.at(1) * CorrelationCoeffs.at(0)) + (CoreCoeffs.at(2)*pow(CorrelationCoeffs.at(0),2)));
-                  SegCoeffs.push_back(CoreCoeffs.at(1) * CorrelationCoeffs.at(1) + (2*CorrelationCoeffs.at(0)*CoreCoeffs.at(1)*CoreCoeffs.at(2))   );
-                  SegCoeffs.push_back(CoreCoeffs.at(2) * pow(CorrelationCoeffs.at(1),2));
+               case 1:  // Qcore = k0 + k1 * Qseg
+                  // s0 = c0 + (C1 * k0 / int) + (c2 * K0**2  / int**2)
+                  Val = CoreCoeffs.at(0) + (CoreCoeffs.at(1) * CorrelationCoeffs.at(0) / Int);
+                  Val += (CoreCoeffs.at(2) * pow(CorrelationCoeffs.at(0),2) / pow(Int,2));        
+                  SegCoeffs.push_back(Val);
+                  // s1 = (c1 * k1) + (2 * c2 * k0 * k1 / int)   
+                  Val = (CoreCoeffs.at(1) * CorrelationCoeffs.at(1));
+                  Val += (2*CorrelationCoeffs.at(0)*CorrelationCoeffs.at(1)*CoreCoeffs.at(2) / Int);  
+                  SegCoeffs.push_back(Val);
+                  // s2 = c2 * k1**2
+                  Val = CoreCoeffs.at(2) * pow(CorrelationCoeffs.at(1),2);
+                  SegCoeffs.push_back(Val);
                   break;
-               case 2:
-                  //ProfileFit = new TF1("Pol2", "[0]+(x*[1])+(x*x*[2])", Min, Max);
+               case 2:  // Qcore = k0 + (k1*Qseg) + (k2 * Qseg**2)
+                  // s0 = c0 + (c1 * k0 /int) + (c2 * K0**2  / int**2)
+                  Val = CoreCoeffs.at(0) + (CoreCoeffs.at(1) * CorrelationCoeffs.at(0) / Int);
+                  Val += (CoreCoeffs.at(2) * pow(CorrelationCoeffs.at(0),2) / pow(Int,2)); 
+                  SegCoeffs.push_back(Val);
+                  // s1 = (c1*k1) + (2 * c2 * k0 * k1 / int) 
+                  Val = (CoreCoeffs.at(1) * CorrelationCoeffs.at(1));
+                  Val += (2.0*CorrelationCoeffs.at(0)*CorrelationCoeffs.at(1)*CoreCoeffs.at(2) / Int);  
+                  SegCoeffs.push_back(Val);
+                  // s2 = (c2 * k1**2) + (c1 * k2 * int) + (2 * c2 * k0 * k2)
+                  Val = CoreCoeffs.at(2) * pow(CorrelationCoeffs.at(1),2);
+                  Val += CoreCoeffs.at(1) * CorrelationCoeffs.at(2) * Int;
+                  Val += 2.0 * CoreCoeffs.at(2) * CorrelationCoeffs.at(0) * CorrelationCoeffs.at(2);
+                  SegCoeffs.push_back(Val);
+                  // s3 = 2 * c2 * k1 * k2 * int
+                  Val = 2.0 * CoreCoeffs.at(2) * CorrelationCoeffs.at(1) * CorrelationCoeffs.at(2) * Int;
+                  SegCoeffs.push_back(Val);
+                  // s4 = c2 * k2**2 * int**2
+                  Val = CoreCoeffs.at(2) * pow(CorrelationCoeffs.at(2),2) * pow(Int,2);
+                  SegCoeffs.push_back(Val);
                   break;
                }
                
@@ -212,9 +259,11 @@ int SegCoreCalib() {
                }
                SegCoreCalOut << endl;
                
-               //profx->Draw();
-               
-               //App->Run(1);
+               if(Config.PlotSegCoreCal == 1) {
+                  cCalib->cd();
+                  ProfX->Draw();
+                  App->Run(1);
+               }
                
             }
             
