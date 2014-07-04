@@ -61,13 +61,6 @@ int TreeFragCount = 0;
 int ChainFragCount = 0;
 int EmptyEventCount = 0;
 
-// Storing alternate Calibration
-vector < string > EnCalibNames;
-vector < vector < float >>EnCalibValues;
-// Waveform calibration
-vector < string > WaveCalibNames;
-vector < vector < float >>WaveCalibValues;
-
 // Functions
 //int LoadDefaultSettings();
 //int ReadCommandLineSettings(int argc, char **argv);
@@ -75,8 +68,8 @@ vector < vector < float >>WaveCalibValues;
 
 void SortTree(const char *fn);
 void IncSpectra();
-int ReadCalibrationFile(std::string filename, vector < string > *EnCalibNames,
-                        vector < vector < float >>*EnCalibValues);
+//int ReadCalibrationFile(std::string filename, vector < string > *EnCalibNames,
+  //                      vector < vector < float >>*EnCalibValues);
 
 void CoincEff(std::vector < TTigFragment > &ev);
 int InitCoincEff();
@@ -123,27 +116,26 @@ int main(int argc, char **argv)
    // Load any alternate calibration information 
    if (Config.HaveAltEnergyCalibration) {
       int NumCal;
-      NumCal = ReadCalibrationFile(Config.EnergyCalibrationFile, &EnCalibNames, &EnCalibValues);
+      NumCal = ReadCalibrationFile(Config.EnergyCalibrationFile, &Config.EnCalibNames, &Config.EnCalibValues);
       if (Config.PrintBasic) {
          cout << "Alternate energy calibratrion values: " << endl;
          for (i = 0; i < NumCal; i++) {
             cout << i;
-            cout << ": " << EnCalibNames.at(i);
-            cout << " " << EnCalibValues.at(i)[0] << " " << EnCalibValues[i][1] << " " << EnCalibValues[i][2] << endl;
+            cout << ": " << Config.EnCalibNames.at(i);
+            cout << " " << Config.EnCalibValues.at(i)[0] << " " << Config.EnCalibValues[i][1] << " " << Config.EnCalibValues[i][2] << endl;
          }
       }
    }
    // Load gain coefficients for waveforms
    if (Config.HaveWaveCalibration) {
       int NumCal;
-      NumCal = ReadCalibrationFile(Config.WaveCalibrationFile, &WaveCalibNames, &WaveCalibValues);
+      NumCal = ReadCalibrationFile(Config.WaveCalibrationFile, &Config.WaveCalibNames, &Config.WaveCalibValues);
       if (Config.PrintBasic) {
          cout << "Wave energy calibratrion values: " << endl;
          for (i = 0; i < NumCal; i++) {
             cout << i;
-            cout << ": " << WaveCalibNames.at(i);
-            cout << " " << WaveCalibValues.at(i)[0] << " " << WaveCalibValues[i][1] << " " << WaveCalibValues[i][2] <<
-                endl;
+            cout << ": " << Config.WaveCalibNames.at(i);
+            cout << " " << Config.WaveCalibValues.at(i)[0] << " " << Config.WaveCalibValues[i][1] << " " << Config.WaveCalibValues[i][2] << endl;
          }
       }
    }

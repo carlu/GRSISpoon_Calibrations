@@ -15,6 +15,7 @@ int Col2Num(char Colour);
 char Num2Col(int Crystal);
 int GetDaqItemNum(int Clover,int Crystal,int Seg);
 // Calibration
+int ReadCalibrationFile(std::string filename, vector < string > *EnCalibNames,vector < vector < float >>*EnCalibValues);
 float CalibrateEnergy(int Charge, std::vector < float >Coefficients);
 // Waveform energy
 float CalcWaveCharge(std::vector < int >wavebuffer);

@@ -41,6 +41,8 @@ TApplication *App;              // Pointer to root environment for plotting etc
 
 int main(int argc, char **argv)
 {
+   int i;
+
    // Timing
    TStopwatch StopWatch;
    StopWatch.Start();
@@ -51,6 +53,35 @@ int main(int argc, char **argv)
       cout << "Failed to configure the run - exiting!" << endl;
       return -1;
    }
+   
+   // Load any alternate calibration information 
+   if (Config.HaveAltEnergyCalibration) {
+      int NumCal;
+      NumCal = ReadCalibrationFile(Config.EnergyCalibrationFile, &Config.EnCalibNames, &Config.EnCalibValues);
+      if (Config.PrintBasic) {
+         cout << "Alternate energy calibratrion values: " << endl;
+         for (i = 0; i < NumCal; i++) {
+            cout << i;
+            cout << ": " << Config.EnCalibNames.at(i);
+            cout << " " << Config.EnCalibValues.at(i)[0] << " " << Config.EnCalibValues[i][1] << " " << Config.EnCalibValues[i][2] << endl;
+         }
+      }
+   }
+   // Load gain coefficients for waveforms
+   if (Config.HaveWaveCalibration) {
+      int NumCal;
+      NumCal = ReadCalibrationFile(Config.WaveCalibrationFile, &Config.WaveCalibNames, &Config.WaveCalibValues);
+      if (Config.PrintBasic) {
+         cout << "Wave energy calibratrion values: " << endl;
+         for (i = 0; i < NumCal; i++) {
+            cout << i;
+            cout << ": " << Config.WaveCalibNames.at(i);
+            cout << " " << Config.WaveCalibValues.at(i)[0] << " " << Config.WaveCalibValues[i][1] << " " << Config.WaveCalibValues[i][2] <<
+                endl;
+         }
+      }
+   }
+   
    // Set options for histo stats
    gStyle->SetOptStat("iouRMen");
 
@@ -66,6 +97,16 @@ int main(int argc, char **argv)
    }
 
    if(Config.RunSegCoreCorrelation == 1) {
+      if (!Config.HaveAltEnergyCalibration) {
+         cout << "Calibration file for cores required for seg-core correlation calibration of seg energies." << endl;
+      }
+      if (!Config.HaveWaveCalibration) {
+         cout << "Wave calibration file for cores required for seg-core correlation calibration of seg wave energies." << endl;
+      }
+      if (!Config.HaveAltEnergyCalibration && !Config.HaveWaveCalibration) {
+         cout << "Error - Calibration files required for Seg-Core correlation calibration." << endl;
+         return 1;
+      }
       if (SegCoreCalib() > 0) {
          cout << "CorrelateCoresSegs() failed." << endl;
          return 1; 

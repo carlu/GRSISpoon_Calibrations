@@ -132,8 +132,8 @@ void CoincEff(std::vector < TTigFragment > &ev)
             } else {
                int NewCoeffFound = 0;
                //std::vector < float >Coefficients;
-               for (CalChan = 0; CalChan < EnCalibNames.size(); CalChan++) {
-                  if (strncmp(EnCalibNames[CalChan].c_str(), name.c_str(), 9) == 0) {   // bug!  this will match the first core
+               for (CalChan = 0; CalChan < Config.EnCalibNames.size(); CalChan++) {
+                  if (strncmp(Config.EnCalibNames[CalChan].c_str(), name.c_str(), 9) == 0) {   // bug!  this will match the first core
                      // name it finds to either a OR b.  Compare 10 chars woud work but then case sensitivity isses on the x/a/b 
                      // at the end.  Don't really need second core energy right now so I will come back to this later
                      NewCoeffFound = 1;
@@ -141,7 +141,7 @@ void CoincEff(std::vector < TTigFragment > &ev)
                   }
                }
                if (NewCoeffFound == 1) {        // If a new set of coeffs was found, then calibrate
-                  Energy = CalibrateEnergy(ev[i].Charge, EnCalibValues.at(CalChan));
+                  Energy = CalibrateEnergy(ev[i].Charge, Config.EnCalibValues.at(CalChan));
                } else {         // else use the existing calibration
                   Energy = ev[i].ChargeCal;
                }

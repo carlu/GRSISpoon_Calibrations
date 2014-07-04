@@ -52,6 +52,8 @@ int SegCoreCalib() {
    TFile *File = NULL;
    std::string tempstring;
    char CharBuf[CHAR_BUFFER_SIZE];
+   std::string CoreName;
+   std::string SegName;
    TH2F *Histo = NULL;
    ofstream SegCoreCalOut;
    // Fitting stuff
@@ -95,9 +97,13 @@ int SegCoreCalib() {
       for(Crystal = 0; Crystal < CRYSTALS; Crystal++) {
          for(Seg=1; Seg<=SEGS; Seg++) { // should looop segs but not cores
             Histo = NULL;
+            snprintf(CharBuf,CHAR_BUFFER_SIZE,"TIG%02d%cN00a",Clover,Num2Col(Crystal));
+            CoreName = CharBuf;
             snprintf(CharBuf,CHAR_BUFFER_SIZE,"TIG%02d%cP%02dx Chg Mat",Clover,Num2Col(Crystal),Seg);
             cout << CharBuf << endl;
-            Histo = (TH2F*) File->FindObjectAny(CharBuf);
+            SegName = CharBuf;
+            
+            Histo = (TH2F*) File->FindObjectAny(SegName.c_str());
             if(Histo) {
                
                // -------------------------------------------------------------------------
@@ -122,7 +128,9 @@ int SegCoreCalib() {
                float Bgnd;
                float Val;
                float Int;
-               
+               int CalChan;
+               bool NewCoeffFound;
+               int i;
                TF1 *ProfileFit;
                float Min, Max;
                
@@ -186,31 +194,55 @@ int SegCoreCalib() {
                   if(Config.PrintBasic) {
                      cout << "Fit of TProfile failed." << endl;
                   }
-                  SegCoreCalOut << CharBuf << " Fit of TProfile failed!" << endl;
+                  SegCoreCalOut << SegName.c_str() << " Fit of TProfile failed!" << endl;
                   continue;
                }
                
                // Now generate output of correlation fit        
                Coeffs.clear();
-               SegCoreCalOut << CharBuf << " ";
+               SegCoreCalOut << SegName.c_str() << " ";
                for(Param=0;Param<=Config.SegCoreFitOrder;Param++){
                   SegCoreCalOut << ProfileFit->GetParameter(Param) << " ";
                   Coeffs.push_back(ProfileFit->GetParameter(Param));
-                  //SegCoreCalOut << FitRange->GetParameter(Param) << " ";
                }
-               
-               
-               
+
                // Now output effective seg gain coefficients
                // ------------------------------------------
                CoreCoeffs.clear();
                SegCoeffs.clear();
                
-               // Get core coeffs
+               // Loop calibration  core coeffs
+               NewCoeffFound = 0;
+               for (CalChan = 0; CalChan < Config.EnCalibNames.size(); CalChan++) {
+                  //cout << "CN: " << CoreName << " CoeffN: " << Config.EnCalibNames[CalChan].c_str() << endl;
+                  if (strncmp(Config.EnCalibNames[CalChan].c_str(), CoreName.c_str(), 9) == 0) {   // bug!  this will match the first core
+                     // name it finds to either a OR b.  Compare 10 chars woud work but then case sensitivity isses on the x/a/b 
+                     // at the end.  Don't really need second core energy right now so I will come back to this later
+                     NewCoeffFound = 1;
+                     break;
+                  }
+               }
+               if (NewCoeffFound == 1) {        // If a new set of coeffs was found, then calibrate
+                  CoreCoeffs = Config.EnCalibValues.at(CalChan);
+               } else {         // else use the existing calibration
+                  if(Config.PrintBasic) {
+                     cout << "Calibration of " << SegName << " failed as no core coeffs found." << endl;
+                     continue;
+                  }
+               }
                
-               CoreCoeffs.push_back(0.2);
-               CoreCoeffs.push_back(0.16);
-               CoreCoeffs.push_back(0.000001);
+               // Check there are 3 core coeffs 
+               if(CoreCoeffs.size() != 3) {
+                  if(CoreCoeffs.size() == 2) {
+                     CoreCoeffs.push_back(0.0);
+                  }
+                  else {
+                     if(Config.PrintBasic) {
+                        cout << "Calibration of " << SegName << " failed. Wrong number of core coeffs." << endl;
+                        continue;
+                     }
+                  }               
+               }
                
                Int = Config.Integration / Config.Dispersion;
                

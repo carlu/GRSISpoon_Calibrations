@@ -166,8 +166,8 @@ void PropXtalk(std::vector < TTigFragment > &ev)
       } else {
          int NewCoeffFound = 0;
          std::vector < float >Coefficients;
-         for (CalChan = 0; CalChan < EnCalibNames.size(); CalChan++) {
-            if (strncmp(EnCalibNames[CalChan].c_str(), Name.c_str(), 9) == 0) { // bug!  this will match the first core
+         for (CalChan = 0; CalChan < Config.EnCalibNames.size(); CalChan++) {
+            if (strncmp(Config.EnCalibNames[CalChan].c_str(), Name.c_str(), 9) == 0) { // bug!  this will match the first core
                // name it finds to either a OR b.  Compare 10 chars woud work but then case sensitivity isses on the x/a/b 
                // at the end.  Don't really need second core energy right now so I will come back to this later
                NewCoeffFound = 1;
@@ -175,7 +175,7 @@ void PropXtalk(std::vector < TTigFragment > &ev)
             }
          }
          if (NewCoeffFound == 1) {      // If a new set of coeffs was found, then calibrate
-            En = CalibrateEnergy(ev[Frag].Charge, EnCalibValues.at(CalChan));
+            En = CalibrateEnergy(ev[Frag].Charge, Config.EnCalibValues.at(CalChan));
          } else {               // else use the existing calibration
             En = ev[Frag].ChargeCal;
          }
@@ -189,8 +189,8 @@ void PropXtalk(std::vector < TTigFragment > &ev)
       if (ev[Frag].wavebuffer.size() > Config.WaveInitialSamples + Config.WaveFinalSamples) {
          int NewCoeffFound = 0;
          std::vector < float >Coefficients;
-         for (CalChan = 0; CalChan < WaveCalibNames.size(); CalChan++) {
-            if (strncmp(WaveCalibNames[CalChan].c_str(), Name.c_str(), 9) == 0) {       // bug!  this will match the first core
+         for (CalChan = 0; CalChan < Config.WaveCalibNames.size(); CalChan++) {
+            if (strncmp(Config.WaveCalibNames[CalChan].c_str(), Name.c_str(), 9) == 0) {       // bug!  this will match the first core
                // name it finds to either a OR b.  Compare 10 chars woud work but then case sensitivity isses on the x/a/b 
                // at the end.  Don't really need second core energy right now so I will come back to this later
                NewCoeffFound = 1;
@@ -199,7 +199,7 @@ void PropXtalk(std::vector < TTigFragment > &ev)
          }
          if (NewCoeffFound == 1) {      // If a new set of coeffs was found, then calibrate
             WaveCharge = CalcWaveCharge(ev[Frag].wavebuffer);
-            WaveEnergy = CalibrateWaveEnergy(WaveCharge, WaveCalibValues.at(CalChan));
+            WaveEnergy = CalibrateWaveEnergy(WaveCharge, Config.WaveCalibValues.at(CalChan));
          }
       } else {
          WaveCharge = 0.0;

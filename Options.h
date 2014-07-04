@@ -116,6 +116,14 @@ struct RunConfig {              // this struct will hold all information
    int ChargeThresh;
    // Array mode
    bool HighEffMode;            // 1 if TIGRESS is in high eff mode (11cm), 0 if in high peak/total (14.5cm)
+   
+   // Calibration Stuff
+   // Alternate Energy Calibration 
+   vector < string > EnCalibNames;
+   vector < vector < float >>EnCalibValues;
+   // Waveform calibration
+   vector < string > WaveCalibNames;
+   vector < vector < float >>WaveCalibValues;
 
    // Settings for saving events to root file
    std::string EventOut;
