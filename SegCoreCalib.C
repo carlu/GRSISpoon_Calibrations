@@ -57,6 +57,10 @@ int SegCoreCalib() {
    // Fitting stuff
    std::string FitOptions = ("RQE");
       // R=restrict to function range, Q=quiet, L=log likelihood method, E=improved err estimation, + add fit instead of replace
+   // Calibration
+   std::vector<float> Coeffs;      // Seg-core correlation Coeffs
+   std::vector<float> CoreCoeffs;  // Core Calibration Coeffs
+   std::vector<float> SegCoeffs;   // Seg calibration coefficiets
    
    // Check inputs/configuration
    if(Config.files.size() != 1) {
@@ -175,7 +179,7 @@ int SegCoreCalib() {
                }
                  
                
-               bool FitTest = ProfX->Fit(ProfileFit);
+               bool FitTest = ProfX->Fit(ProfileFit,FitOptions.c_str());
                
                // Test fit success
                if(FitTest>0) {
@@ -187,22 +191,26 @@ int SegCoreCalib() {
                }
                
                // Now generate output of correlation fit        
-               std::vector<float> CorrelationCoeffs;     
+               Coeffs.clear();
                SegCoreCalOut << CharBuf << " ";
                for(Param=0;Param<=Config.SegCoreFitOrder;Param++){
                   SegCoreCalOut << ProfileFit->GetParameter(Param) << " ";
-                  CorrelationCoeffs.push_back(ProfileFit->GetParameter(Param));
+                  Coeffs.push_back(ProfileFit->GetParameter(Param));
                   //SegCoreCalOut << FitRange->GetParameter(Param) << " ";
                }
                
                
                
                // Now output effective seg gain coefficients
-               std::vector<float> CoreCoeffs;
+               // ------------------------------------------
+               CoreCoeffs.clear();
+               SegCoeffs.clear();
+               
+               // Get core coeffs
+               
                CoreCoeffs.push_back(0.2);
                CoreCoeffs.push_back(0.16);
                CoreCoeffs.push_back(0.000001);
-               std::vector<float> SegCoeffs;
                
                Int = Config.Integration / Config.Dispersion;
                
@@ -212,44 +220,44 @@ int SegCoreCalib() {
                   Val = CoreCoeffs.at(0);
                   SegCoeffs.push_back(Val);
                   // s1 = c1 * k
-                  Val = CoreCoeffs.at(1) * CorrelationCoeffs.at(0);
+                  Val = CoreCoeffs.at(1) * Coeffs.at(0);
                   SegCoeffs.push_back(Val);
                   // s2 = c2 * k**2
-                  Val = CoreCoeffs.at(2) * pow(CorrelationCoeffs.at(0),2);
+                  Val = CoreCoeffs.at(2) * pow(Coeffs.at(0),2);
                   SegCoeffs.push_back(Val);
                   break;
                case 1:  // Qcore = k0 + k1 * Qseg
                   // s0 = c0 + (C1 * k0 / int) + (c2 * K0**2  / int**2)
-                  Val = CoreCoeffs.at(0) + (CoreCoeffs.at(1) * CorrelationCoeffs.at(0) / Int);
-                  Val += (CoreCoeffs.at(2) * pow(CorrelationCoeffs.at(0),2) / pow(Int,2));        
+                  Val = CoreCoeffs.at(0) + (CoreCoeffs.at(1) * Coeffs.at(0) / Int);
+                  Val += (CoreCoeffs.at(2) * pow(Coeffs.at(0),2) / pow(Int,2));        
                   SegCoeffs.push_back(Val);
                   // s1 = (c1 * k1) + (2 * c2 * k0 * k1 / int)   
-                  Val = (CoreCoeffs.at(1) * CorrelationCoeffs.at(1));
-                  Val += (2*CorrelationCoeffs.at(0)*CorrelationCoeffs.at(1)*CoreCoeffs.at(2) / Int);  
+                  Val = (CoreCoeffs.at(1) * Coeffs.at(1));
+                  Val += (2*Coeffs.at(0)*Coeffs.at(1)*CoreCoeffs.at(2) / Int);  
                   SegCoeffs.push_back(Val);
                   // s2 = c2 * k1**2
-                  Val = CoreCoeffs.at(2) * pow(CorrelationCoeffs.at(1),2);
+                  Val = CoreCoeffs.at(2) * pow(Coeffs.at(1),2);
                   SegCoeffs.push_back(Val);
                   break;
                case 2:  // Qcore = k0 + (k1*Qseg) + (k2 * Qseg**2)
                   // s0 = c0 + (c1 * k0 /int) + (c2 * K0**2  / int**2)
-                  Val = CoreCoeffs.at(0) + (CoreCoeffs.at(1) * CorrelationCoeffs.at(0) / Int);
-                  Val += (CoreCoeffs.at(2) * pow(CorrelationCoeffs.at(0),2) / pow(Int,2)); 
+                  Val = CoreCoeffs.at(0) + (CoreCoeffs.at(1) * Coeffs.at(0) / Int);
+                  Val += (CoreCoeffs.at(2) * pow(Coeffs.at(0),2) / pow(Int,2)); 
                   SegCoeffs.push_back(Val);
                   // s1 = (c1*k1) + (2 * c2 * k0 * k1 / int) 
-                  Val = (CoreCoeffs.at(1) * CorrelationCoeffs.at(1));
-                  Val += (2.0*CorrelationCoeffs.at(0)*CorrelationCoeffs.at(1)*CoreCoeffs.at(2) / Int);  
+                  Val = (CoreCoeffs.at(1) * Coeffs.at(1));
+                  Val += (2.0*Coeffs.at(0)*Coeffs.at(1)*CoreCoeffs.at(2) / Int);  
                   SegCoeffs.push_back(Val);
                   // s2 = (c2 * k1**2) + (c1 * k2 * int) + (2 * c2 * k0 * k2)
-                  Val = CoreCoeffs.at(2) * pow(CorrelationCoeffs.at(1),2);
-                  Val += CoreCoeffs.at(1) * CorrelationCoeffs.at(2) * Int;
-                  Val += 2.0 * CoreCoeffs.at(2) * CorrelationCoeffs.at(0) * CorrelationCoeffs.at(2);
+                  Val = CoreCoeffs.at(2) * pow(Coeffs.at(1),2);
+                  Val += CoreCoeffs.at(1) * Coeffs.at(2) * Int;
+                  Val += 2.0 * CoreCoeffs.at(2) * Coeffs.at(0) * Coeffs.at(2);
                   SegCoeffs.push_back(Val);
                   // s3 = 2 * c2 * k1 * k2 * int
-                  Val = 2.0 * CoreCoeffs.at(2) * CorrelationCoeffs.at(1) * CorrelationCoeffs.at(2) * Int;
+                  Val = 2.0 * CoreCoeffs.at(2) * Coeffs.at(1) * Coeffs.at(2) * Int;
                   SegCoeffs.push_back(Val);
                   // s4 = c2 * k2**2 * int**2
-                  Val = CoreCoeffs.at(2) * pow(CorrelationCoeffs.at(2),2) * pow(Int,2);
+                  Val = CoreCoeffs.at(2) * pow(Coeffs.at(2),2) * pow(Int,2);
                   SegCoeffs.push_back(Val);
                   break;
                }
