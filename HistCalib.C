@@ -2,6 +2,7 @@
 
 // C/C++ libraries:
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <unordered_set>
 #include <vector>
@@ -280,20 +281,20 @@ int CalibrateFiles()
                // Now print reports on results of fits and calibration.
                if (Cal.LinesUsed > 1 && CalibSuccess == 0) {  // If we have more than one line and calibration reported success
                   if (Cal.LinesUsed < 3 || Config.ForceLinear) {  
-                     GainOut << Settings.OutputName << ":\t" << Cal.LinGainFit[0];
-                     GainOut << "\t" << Cal.LinGainFit[1] << endl;
+                     GainOut << setw(20) << left << Settings.OutputName << "\t" << setw(14) << left << Cal.LinGainFit[0];
+                     GainOut << "\t" << setw(14) << left << Cal.LinGainFit[1] << endl;
                   } else {
-                     GainOut << Settings.OutputName << ":\t" << Cal.QuadGainFit[0] << "\t";
-                     GainOut << Cal.QuadGainFit[1] << "\t" << Cal.QuadGainFit[2] << endl;
+                     GainOut << setw(20) << left << Settings.OutputName << "\t" << setw(14) << left << Cal.QuadGainFit[0] << "\t";
+                     GainOut << setw(14) << left << Cal.QuadGainFit[1] << "\t" << setw(14) << left << Cal.QuadGainFit[2] << endl;
                   }
                } else {   // If cal fails
                   if(Config.CalOutputBad==1) {  // And we want output for bad channels
                      if(Config.CalOverwriteBad == 1) {  // either output mean value
-                        GainOut << Settings.OutputName << ":\t0.0\t" << Config.TIGGainEst;
+                        GainOut << setw(20) << left << Settings.OutputName << "\t0.0\t" << setw(20) << left << Config.TIGGainEst;
                         GainOut << "\t0.0" << endl;
                      }
                      else {  // or output fail message
-                        GainOut << Settings.OutputName << " Fail!!!" << endl;
+                        GainOut << setw(20) << left << Settings.OutputName << " Fail!!!" << endl;
                      }
                   }
                }
@@ -372,20 +373,20 @@ int CalibrateFiles()
                // Now print reports on results of fits and calibration.
                if (Cal.LinesUsed > 1 && CalibSuccess == 0) {
                   if (Cal.LinesUsed < 3 || Config.ForceLinear) {
-                     WaveOut << Settings.OutputName << ":\t" << Cal.LinGainFit[0];
-                     WaveOut << "\t" << Cal.LinGainFit[1] << endl;
+                     WaveOut << setw(20) << left << Settings.OutputName << "\t" << setw(14) << left << Cal.LinGainFit[0];
+                     WaveOut << "\t" << setw(14) << left << Cal.LinGainFit[1] << endl;
                   } else {
-                     WaveOut << Settings.OutputName << ":\t" << Cal.QuadGainFit[0] << "\t";
-                     WaveOut << Cal.QuadGainFit[1] << "\t" << Cal.QuadGainFit[2] << endl;
+                     WaveOut << setw(20) << left << Settings.OutputName << "\t" << setw(14) << left << Cal.QuadGainFit[0] << "\t";
+                     WaveOut << setw(14) << left << Cal.QuadGainFit[1] << "\t" << setw(14) << left << Cal.QuadGainFit[2] << endl;
                   }
                } else {  // If cal fails
                   if(Config.CalOutputBad==1) {  // And we want output from failure
                      if(Config.CalOverwriteBad == 1) {  // Use a mean value
-                        WaveOut << Settings.OutputName << ":\t0.0\t" << Config.TIGWaveGainEst;
+                        WaveOut << setw(20) << left << Settings.OutputName << "\t0.0\t" << setw(14) << left << Config.TIGWaveGainEst;
                         WaveOut << "\t0.0" << endl;
                      }
                      else {  // Or write a fail message
-                        WaveOut << Settings.OutputName << " Fail!!!" << endl;
+                        WaveOut << setw(20) << left << Settings.OutputName << " Fail!!!" << endl;
                      }
                   }
                }

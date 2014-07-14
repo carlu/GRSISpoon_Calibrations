@@ -1,6 +1,6 @@
 // C/C++ libraries:
 #include <iostream>
-//#include <iomanip> 
+#include <iomanip> 
 #include <fstream>
 #include <unordered_set>
 #include <vector>
@@ -138,7 +138,7 @@ int SegCoreCalib() {
                // skip if stats too low
                cout << "Counts: " << Histo->Integral() << endl;
                if(Histo->Integral() < Config.MinFitCounts) {
-                  //continue;
+                  continue;
                }
                
                // Subtract background to remove values with Eseg < Ecore
@@ -193,15 +193,15 @@ int SegCoreCalib() {
                   if(Config.PrintBasic) {
                      cout << "Fit of TProfile failed." << endl;
                   }
-                  SegCoreCalOut << SegName.c_str() << " Fit of TProfile failed!" << endl;
+                  SegCoreCalOut << setw(20) << left << SegName.c_str() << " Fit of TProfile failed!" << endl;
                   continue;
                }
                
                // Now generate output of correlation fit        
                Coeffs.clear();
-               //SegCoreCalOut << setw(12) << left << SegName.c_str() << " ";
+               SegCoreCalOut << setw(20) << left << SegName.c_str() << " ";
                for(Param=0;Param<=Config.SegCoreFitOrder;Param++){
-                 // SegCoreCalOut << setw(14) << left << ProfileFit->GetParameter(Param) << " ";
+                 SegCoreCalOut << setw(14) << left << ProfileFit->GetParameter(Param) << " ";
                   Coeffs.push_back(ProfileFit->GetParameter(Param));
                }
 
@@ -294,9 +294,9 @@ int SegCoreCalib() {
                }
                
                for(Param=0;Param<SegCoeffs.size();Param++){
-                  //SegCoreCalOut  << setw(14) << left << SegCoeffs.at(Param) << " ";
+                  SegCoreCalOut  << setw(14) << left << SegCoeffs.at(Param) << " ";
                }
-               //SegCoreCalOut << endl;
+               SegCoreCalOut << endl;
                
                if(Config.PlotSegCoreCal == 1) {
                   cCalib->cd();
