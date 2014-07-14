@@ -1017,6 +1017,16 @@ int ReadConfigFile(std::string filename)
          else {Other += 1;}
          continue;
       }
+      // 2D SegCore Calibration
+      if (strcmp(Line.c_str(), "SEG_CORE_FIT_ORDER")==0) {
+         getline(File,Line);
+         if(sscanf(Line.c_str(), "%d", &ValI) == 1) {
+            Config.SegCoreFitOrder = ValI;
+            Items += 1;
+         }
+         else {Other += 1;}
+         continue;
+      }
       
       // GeTiming Stuff
       //----------------

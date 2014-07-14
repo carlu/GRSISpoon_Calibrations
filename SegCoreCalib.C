@@ -155,7 +155,6 @@ int SegCoreCalib() {
                   }
                }
                
-               
                if(Config.PlotSegCoreCal == 1) {
                   cCalib->cd();
                   Histo->Draw("colz");
@@ -186,7 +185,6 @@ int SegCoreCalib() {
                   break;
                }
                  
-               
                bool FitTest = ProfX->Fit(ProfileFit,FitOptions.c_str());
                
                // Test fit success
@@ -259,7 +257,7 @@ int SegCoreCalib() {
                   SegCoeffs.push_back(Val);
                   break;
                case 1:  // Qcore = k0 + k1 * Qseg
-                  // s0 = c0 + (C1 * k0 / int) + (c2 * K0**2  / int**2)
+                  // s0 = c0 + (c1 * k0 / int) + (c2 * K0**2  / int**2)
                   Val = CoreCoeffs.at(0) + (CoreCoeffs.at(1) * Coeffs.at(0) / Int);
                   Val += (CoreCoeffs.at(2) * pow(Coeffs.at(0),2) / pow(Int,2));        
                   SegCoeffs.push_back(Val);
@@ -274,7 +272,7 @@ int SegCoreCalib() {
                case 2:  // Qcore = k0 + (k1*Qseg) + (k2 * Qseg**2)
                   // s0 = c0 + (c1 * k0 /int) + (c2 * K0**2  / int**2)
                   Val = CoreCoeffs.at(0) + (CoreCoeffs.at(1) * Coeffs.at(0) / Int);
-                  Val += (CoreCoeffs.at(2) * pow(Coeffs.at(0),2) / pow(Int,2)); 
+                  Val += (CoreCoeffs.at(2) * pow(Coeffs.at(0),2)) / pow(Int,2); 
                   SegCoeffs.push_back(Val);
                   // s1 = (c1*k1) + (2 * c2 * k0 * k1 / int) 
                   Val = (CoreCoeffs.at(1) * Coeffs.at(1));

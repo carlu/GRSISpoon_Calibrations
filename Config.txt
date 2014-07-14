@@ -112,6 +112,11 @@ GE_TIMING_GATE_CENTRE
 GE_TIMING_GATE_WIDTH
 5.0
 
+# Seg Core 2D Calibration stuff
+# SEG_CORE_FIT_ORDER should be 1, 2,or 3
+SEG_CORE_FIT_ORDER
+3
+
 # reference efficiency values at 1332.5keV 
 
 SIM_CLOVER_AB_EFF
