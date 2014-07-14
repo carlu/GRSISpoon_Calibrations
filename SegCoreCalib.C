@@ -1,5 +1,6 @@
 // C/C++ libraries:
 #include <iostream>
+//#include <iomanip> 
 #include <fstream>
 #include <unordered_set>
 #include <vector>
@@ -198,9 +199,9 @@ int SegCoreCalib() {
                
                // Now generate output of correlation fit        
                Coeffs.clear();
-               SegCoreCalOut << SegName.c_str() << " ";
+               //SegCoreCalOut << setw(12) << left << SegName.c_str() << " ";
                for(Param=0;Param<=Config.SegCoreFitOrder;Param++){
-                  SegCoreCalOut << ProfileFit->GetParameter(Param) << " ";
+                 // SegCoreCalOut << setw(14) << left << ProfileFit->GetParameter(Param) << " ";
                   Coeffs.push_back(ProfileFit->GetParameter(Param));
                }
 
@@ -293,9 +294,9 @@ int SegCoreCalib() {
                }
                
                for(Param=0;Param<SegCoeffs.size();Param++){
-                  SegCoreCalOut << SegCoeffs.at(Param) << " ";
+                  //SegCoreCalOut  << setw(14) << left << SegCoeffs.at(Param) << " ";
                }
-               SegCoreCalOut << endl;
+               //SegCoreCalOut << endl;
                
                if(Config.PlotSegCoreCal == 1) {
                   cCalib->cd();

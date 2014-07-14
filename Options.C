@@ -1025,6 +1025,12 @@ int ReadConfigFile(std::string filename)
             Items += 1;
          }
          else {Other += 1;}
+         if(Config.SegCoreFitOrder > 2) {
+            Config.SegCoreFitOrder = 2;
+            if(Config.PrintBasic) {
+               cout << "ERROR \"SegCoreFitOrder\" cannot be greater than 2 (" << ValI << " given).  Resetting to default (2). " << endl;
+            }
+         }
          continue;
       }
       
