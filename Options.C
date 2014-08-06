@@ -1150,6 +1150,7 @@ void PrintHelp()
        "\thisX.root assumes no wave spectra and format ChrgXXXX names with numbers according to TIGRESS DAQ analyser convention"
        << endl << endl;
    cout << "[--calsegcore] - Calibration of segments by correlation with core.  Expects input file produced by --cal." << endl << endl;
+   cout << "[--getim] - Some simple Ge timing and energy plots." << endl << endl;
    cout << "[-z] - Include an additional point at 0ch = 0keV in any calibrations." << endl << endl;
    cout <<
        "[-q] - Quiet mode.  [-v] - Verbose mode.  Default prints progress through run and configuration.  Quiet doesn't.  Verbose also prints other stuff"
@@ -1159,7 +1160,9 @@ void PrintHelp()
        << endl << endl;
 
    cout <<
-       "[-d (Clover) (Crystal) (Seg)] - Selects a particular (d)etection element to fit.  Defaults to all. Affect --calspec only"
+       "[-d (Clover) (Crystal) (Seg)] - Selects a particular (d)etection element to fit.  Defaults to all. Affect --calspec only" << endl
+       << "\tReplace (Cl) (Cr) (S) with \"cores\" to fit primary and secondary cores only." << endl
+       << "\tReplace with \"segs\" to fit segs only." 
        << endl << endl;
    cout <<
        "[-mp (Clover) (Crystal) (Seg)] - Manually selects calibration Peaks for a particular detection element to   Defaults to all."

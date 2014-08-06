@@ -6,5 +6,6 @@
 *Dict.[c,h]*
 *~
 *#*#
-CalibOffline
-Sort
+SortHistos
+SortTrees
+*.sublime*
