@@ -163,6 +163,7 @@ float CalcWaveCharge(std::vector < int >wavebuffer)
    Length = wavebuffer.size();
 
    if (wavebuffer.size() < Config.WaveInitialSamples + Config.WaveFinalSamples) {
+      cout << "ERROR - Waveform too short for charge eval." << endl;
       return 0.0;               // return 0 if wave too short
    }
    for (Samp = 0; Samp < Config.WaveInitialSamples; Samp++) {

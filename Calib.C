@@ -348,16 +348,34 @@ int Calib(std::vector < TTigFragment > &ev)
                   hCharge[Clover - 1][Crystal][0]->Fill(ev[Frag].Charge);
                   hWaveCharge[Clover - 1][Crystal][0]->Fill(WaveCharge);
                   hCrystalChargeTemp[Clover - 1][Crystal]->Fill(ev[Frag].Charge);
+
+                  //Temp debugging stuff
+                  string HitInfo;
+                  bool WaveHit = 0;
+                  bool ChargeHit = 0;
+                  char HitInfoChar[CHAR_BUFFER_SIZE];
+                  static unsigned int OutputCounter = 0;
+                  // End of Temp stuff
+
                   // Store information for use at end of event
                   // Hit records
                   if(TestChargeHit(float(ev[Frag].Charge),Config.Integration,Config.ChargeThresh)) {
                      Hits[Clover - 1][Crystal][0] = 1;
                      ChgCrystalFold += 1;
+                     ChargeHit = 1;
+                  }
+                  else {
+                     ChargeHit = 0;
                   }
                   if(TestChargeHit(WaveCharge,1,Config.ChargeThresh)) {
                      WaveHits[Clover - 1][Crystal][0] = 1;
                      WaveChgCrystalFold += 1;
+                     WaveHit = 1;
                   }
+                  else {
+                     WaveHit = 0;
+                  }
+
                   // charge records
                   Charges[Clover - 1][Crystal][0] = ev[Frag].Charge;
                   WaveCharges[Clover - 1][Crystal][0] = WaveCharge;

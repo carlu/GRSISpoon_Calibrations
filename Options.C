@@ -481,6 +481,34 @@ int ReadCommandLineSettings(int argc, char **argv)
       if (strncmp(argv[i], "-z", 2) == 0) {
          Config.FitZero = 1;
       }
+      // List of clovers to fit
+      // -------------------------------------------
+      if (strncmp(argv[i], "-dc", 3) == 0) {
+         if (i >= argc - 1 || strncmp(argv[i + 1], "-", 1) == 0) {
+            cout << "Need to specify (Clover) with \"-dc\" option." << endl;
+            return -1;
+         } else {
+            // If this option selected, clear detector list
+            // Only do this once in case multiple detectors specified
+            if (Config.CalListProvided == 0) {
+               Config.CalListProvided = 1;
+               memset(&Config.CalList, 0, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
+            }
+            // expect a single integer to specify a clover
+            Clover = atoi(argv[++i]);
+            if ((Clover < 0) || (Clover > Limits[0])) {
+               cout << "Error with plot specification!" << endl;
+               return -1;
+            }
+            else {
+               for(Crystal=0;Crystal<4;Crystal++) {
+                  for(Seg=0;Seg<SEGS+2;Seg++) {
+                     Config.CalList[Clover][Crystal][Seg] = 1;
+                  }
+               }
+            }
+         }
+      }
       // List of detectors to fit
       // -------------------------------------------
       if (strncmp(argv[i], "-d", 2) == 0) {

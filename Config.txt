@@ -115,7 +115,7 @@ GE_TIMING_GATE_WIDTH
 # Seg Core 2D Calibration stuff
 # SEG_CORE_FIT_ORDER should be 0, 1, or 2.    
 SEG_CORE_FIT_ORDER
-3
+2
 
 # reference efficiency values at 1332.5keV 
 
