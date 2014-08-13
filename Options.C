@@ -503,7 +503,7 @@ int ReadCommandLineSettings(int argc, char **argv)
             else {
                for(Crystal=0;Crystal<4;Crystal++) {
                   for(Seg=0;Seg<SEGS+2;Seg++) {
-                     Config.CalList[Clover][Crystal][Seg] = 1;
+                     Config.CalList[Clover-1][Crystal][Seg] = 1;
                   }
                }
             }
@@ -1192,6 +1192,9 @@ void PrintHelp()
        << "\tReplace (Cl) (Cr) (S) with \"cores\" to fit primary and secondary cores only." << endl
        << "\tReplace with \"segs\" to fit segs only." 
        << endl << endl;
+   cout << 
+      "[-dc (Clover)] - Selects one clover to be calibrated.  Use multiple times to select several clovers"
+      << endl << endl;    
    cout <<
        "[-mp (Clover) (Crystal) (Seg)] - Manually selects calibration Peaks for a particular detection element to   Defaults to all."
        << endl << endl;
