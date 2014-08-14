@@ -453,6 +453,7 @@ int ReadCommandLineSettings(int argc, char **argv)
             cout << "Manual Peak Selection For Calibration!" << endl;
             cout << "--------------------------------------" << endl;
             memset(&Config.ManualPeakSelect, 1, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
+            Config.ManualPeakCorrection = 1;
          } else {
             n = 0;
             while (strncmp(argv[i + 1], "-", 1) > 0) {  // loop plot items 
@@ -474,6 +475,7 @@ int ReadCommandLineSettings(int argc, char **argv)
             cout << "Manually selecting peaks for Cl: " << Plot[0] << " Cr: " << Plot[1] << " Seg: " << Plot[2] << endl;
             Config.ManualPeakSelect[Plot[0] - 1][Plot[1]][Plot[2]] = 1;
             Config.CalibPlots[Plot[0] - 1][Plot[1]][Plot[2]] = 1;       // Also set this channel to plot so we can see it!
+            Config.ManualPeakCorrection = 1;
          }
       }
       // add 0ch = 0keV to calibration

@@ -154,7 +154,6 @@ int CalibrateFiles()
    // Initialise TCanvas's
    if (Config.ManualPeakCorrection == 1 || Config.PlotCalib == 1) {
       cCalib1 = new TCanvas("cCalib1", "Fit", 800, 600);        // Canvas for spectrum plots
-      
       cCalib1->cd();
 
       cCalib1a = new TCanvas("cCalib1a", "Calibration", 800, 600);      // Canvas for spectrum plots
@@ -788,7 +787,7 @@ int FitGammaSpectrum(TH1F * Histo, HistoFit * Fit, HistoCal * Cal, FitSettings S
          cCalib1->cd(1);
          Histo->Draw();
          cCalib1->Update();
-         App->Run(1);
+         //App->Run(1);
 
          cout << "Please enter peak number for " << En1 << " keV (-1 to specify custom centroid)" << endl;
          cin >> CustomPeak1;
