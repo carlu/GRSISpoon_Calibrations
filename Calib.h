@@ -19,6 +19,9 @@ struct FitSettings {
    bool BackupPeakSelect;       // Fallback to manual peak select if auto fails.
    bool TempFit;                // Indicated this is fitting temp spectra so no plots, output, etc
 
+   bool ClearLowBins;           // Should the low bins be cleared to remove 0keV spike?
+   int MaxClearBin;             // Which is the highest bin that should be cleared?
+
     std::string HistName;
     std::string OutputName;
 

@@ -174,6 +174,10 @@ struct RunConfig {              // this struct will hold all information
    float EnSearchSigma;
    float WaveSearchThresh;
    float WaveSearchSigma;
+   // Clear low bins to aid peak search (large spike at zero can interfere
+   bool ClearLowBinsWave;
+   bool ClearLowBinsEnergy;
+   int MaxClearBin;
    // Energy/ch fitting 
    // Estimate of gain for input of fit
    float TIGGainEst;

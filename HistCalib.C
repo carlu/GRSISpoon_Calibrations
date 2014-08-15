@@ -152,7 +152,7 @@ int CalibrateFiles()
    QuadHist->GetXaxis()->SetTitle("keV/ch^2");
 
    // Initialise TCanvas's
-   if (Config.ManualPeakCorrection == 1 || Config.PlotCalib == 1) {
+   if (Config.ManualPeakCorrection == 1 || Config.PlotCalib == 1 || Config.PlotFits == 1) {
       cCalib1 = new TCanvas("cCalib1", "Fit", 800, 600);        // Canvas for spectrum plots
       cCalib1->cd();
 
@@ -681,7 +681,7 @@ int FitGammaSpectrum(TH1F * Histo, HistoFit * Fit, HistoCal * Cal, FitSettings S
 
    // Variables needed:
    int Peak, Peak1, Peak2, NumPeaks, BestPeak1, BestPeak2, PeakFound;   // for looping peaks and finding correct ones
-   int i;
+   int i, Bin;
    float Ratio, Diff, BestDiff; // test quality of peak match
    float Centre;
    Float_t *PeakPositions;      // for output of root peak search
@@ -721,6 +721,17 @@ int FitGammaSpectrum(TH1F * Histo, HistoFit * Fit, HistoCal * Cal, FitSettings S
          cCalib1->Modified();
          cCalib1->Update();
       }
+
+      // If required, clear first bins of spectra.
+      // Required for data with full clover readout as there are lots of zeros in 
+      // which dwarf the real peaks and cause peak search to fail.
+      if(Settings.ClearLowBins) {
+         for(Bin = 0; Bin<=Settings.MaxClearBin; Bin++) {
+            cout << "Setting bin " << Bin << " to 0.0" << endl;
+            Histo->SetBinContent(Bin,0.0);
+         }
+      }
+
       //-------------------------------------------------------------//
       // First find peaks and identify the first two lines           //
       //-------------------------------------------------------------//
@@ -1352,6 +1363,9 @@ int ConfigureEnergyFit(int Clover, int Crystal, int Seg, int FileType, int FileN
    Settings->TempFit = 0;
    Settings->GainEst = Config.TIGGainEst;
 
+   Settings->ClearLowBins = Config.ClearLowBinsEnergy;
+   Settings->MaxClearBin = Config.MaxClearBin;
+
    return 0;
 }
 
@@ -1392,7 +1406,6 @@ int ConfigureWaveEnFit(int Clover, int Crystal, int Seg, int FileType, int FileN
    // Check if Manual peak select should be active
    if (Config.ManualPeakSelect[Clover - 1][Crystal][Seg]) {
       Settings->PeakSelect = 1;
-      Settings->PlotOn = 1;
    } else {
       Settings->PeakSelect = 0;
    }
@@ -1407,6 +1420,9 @@ int ConfigureWaveEnFit(int Clover, int Crystal, int Seg, int FileType, int FileN
    Settings->BackupPeakSelect = Config.ManualPeakCorrection;
    Settings->TempFit = 0;
    Settings->GainEst = Config.TIGWaveGainEst;
+
+   Settings->ClearLowBins = Config.ClearLowBinsWave;
+   Settings->MaxClearBin = Config.MaxClearBin;
 
    return 0;
 }

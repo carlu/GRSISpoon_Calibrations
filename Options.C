@@ -70,7 +70,7 @@ int LoadDefaultSettings()
       {1173.237, 1332.501},     // 60Co
       {121.7817, 1408.006, 244.6975, 344.2785, 411.116, 778.9040, 964.079, 1112.074, 867.378, 1299.14 },   // 152Eu
       {344.2785, 1408.006, 244.6975, 411.116, 778.9040, 964.079, 1112.074, 867.378, 1299.14},     // 152Eu (no 121)
-      {276.398, 356.017, 80.9971, 302.853, 383.851}     // 133Ba
+      {276.398, 356.017, 302.853, 383.851} // {276.398, 356.017, 80.9971, 302.853, 383.851}     // 133Ba
    };
    // Push source lines to vector of vectors.
    // This is horrible.  Need to find another way to initialise these vectors.
@@ -153,6 +153,10 @@ int LoadDefaultSettings()
    Config.EnSearchSigma = 10;
    Config.WaveSearchThresh = 0.01;
    Config.WaveSearchSigma = 20;
+   // Clear low bins in spectrum?
+   Config.ClearLowBinsWave = 10;
+   Config.ClearLowBinsEnergy = 1;
+   Config.MaxClearBin = 10;
    // Energy/ch fitting 
    // Estimate of gain for input of fit
    Config.TIGGainEst = 0.1603;  // from average of several TIGRESS HPGe calibrations
@@ -419,10 +423,12 @@ int ReadCommandLineSettings(int argc, char **argv)
          if (i >= argc - 1 || strncmp(argv[i + 1], "-", 1) == 0) {      // return error if no file
             cout << "Plotting all fits." << endl;
             Config.PlotFits = 1;
+            Config.PlotCalib = 1;
             memset(&Config.CalibPlots, 1, CLOVERS * CRYSTALS * (SEGS + 2) * sizeof(bool));
             Config.PlotSegCoreCal = 1;
          } else {
             Config.PlotFits = 1;
+            Config.PlotCalib = 1;
             Config.PlotSegCoreCal = 1;
             n = 0;
             while (strncmp(argv[i + 1], "-", 1) > 0) {  // loop plot items 
