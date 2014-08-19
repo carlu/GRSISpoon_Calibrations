@@ -201,6 +201,7 @@ int LoadDefaultSettings()
    // Options for PropXtakl()
    //---------------------------
    Config.PropOut = "PropXTalkOut.root";
+   Config.PropTxtOut = "PropXTalkOut.txt";
    
    // Options for GeTiming
    //------------------------

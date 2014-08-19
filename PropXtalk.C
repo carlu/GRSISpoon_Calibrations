@@ -37,9 +37,6 @@ using namespace std;
 #include "PropXtalk.h"
 #include "Utils.h"
 
-// Gain arrays
-//#include "Gains.h"
-
 // stuff
 extern TApplication *App;
 static TCanvas *cXtalk1;
@@ -450,7 +447,7 @@ int InitPropXtalk()
    char name[512], title[512];
    int Clover, Crystal, Seg, Fold;
 
-   // Initialise output file   
+   // Initialise ROOT output file   
    std::string tempstring = Config.OutPath + Config.PropOut;
    outfile = new TFile(tempstring.c_str(), "RECREATE");
 
@@ -460,6 +457,7 @@ int InitPropXtalk()
    dFold = outfile->mkdir("Fold");
    dOther = outfile->mkdir("Other");
    dWave = outfile->mkdir("Wave");
+   
    // Initialise spectra
    // Raw
    dRaw->cd();
@@ -646,6 +644,7 @@ void FinalPropXtalk()
          XTalkOut << endl;
       }
    }
+   XTalkOut.close();
 
    // Write spectra to file
    // Raw
