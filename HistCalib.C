@@ -702,8 +702,7 @@ int FitGammaSpectrum(TH1F * Histo, HistoFit * Fit, HistoCal * Cal, FitSettings S
    TF1 *FitRange[MAX_LINES];    // pointers to functions for fitting each line
    // Fitting stuff
    std::string FitOptions = ("RQEM");
-   // R=restrict to function range, Q=quiet, L=log likelihood method, E=improved err estimation, + add fit instead of replace
-
+      // R=restrict to function range, Q=quiet, L=log likelihood method, E=improved err estimation, + add fit instead of replace
 
    if (Histo) {
       Integral = Histo->Integral();
@@ -727,7 +726,7 @@ int FitGammaSpectrum(TH1F * Histo, HistoFit * Fit, HistoCal * Cal, FitSettings S
       // which dwarf the real peaks and cause peak search to fail.
       if(Settings.ClearLowBins) {
          for(Bin = 0; Bin<=Settings.MaxClearBin; Bin++) {
-            cout << "Setting bin " << Bin << " to 0.0" << endl;
+            //cout << "Setting bin " << Bin << " to 0.0" << endl;
             Histo->SetBinContent(Bin,0.0);
          }
       }
@@ -769,7 +768,9 @@ int FitGammaSpectrum(TH1F * Histo, HistoFit * Fit, HistoCal * Cal, FitSettings S
                 / PeakPositions[BestPeak2] << endl;
          }
       } else {
-         return -2;
+         if (!Settings.PeakSelect) {
+            return -2;
+         }
       }
 
       // Plot spectrum 
@@ -834,6 +835,8 @@ int FitGammaSpectrum(TH1F * Histo, HistoFit * Fit, HistoCal * Cal, FitSettings S
          cout << "Proceeding with calibration using the following peaks: " << endl;
          cout << "\t" << PeakPositions[0] << " ch = " << En1 << " keV" << endl;
          cout << "\t" << PeakPositions[1] << " ch = " << En2 << " keV" << endl;
+
+         BestDiff = fabs((CustomCentroid1/CustomCentroid2) - IdealRatio) / IdealRatio;
 
       }
 
