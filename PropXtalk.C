@@ -392,9 +392,6 @@ void PropXtalk(std::vector < TTigFragment > &ev)
 
       }
 
-      //cout << "CrystalFoldClover: " << CrystalFoldClover << " SegFoldClover: " << SegFoldClover << endl;
-      //cout << "CoreABClover: " << CoreABClover << " SegABClover: " << SegABClover << endl;
-
       if (CrystalFoldClover > 0 || SegFoldClover > 0) { // If hit in core OR seg of this clover, then increment fold
          hCrystalFoldClover[Clover - 1]->Fill(CrystalFoldClover);
          hSegFoldClover[Clover - 1]->Fill(SegFoldClover);
@@ -403,13 +400,10 @@ void PropXtalk(std::vector < TTigFragment > &ev)
       }
       if (SegFoldClover == 1) {
          // Xtalk calculation here
-         // checks - One seg hit  
-         //        - CoreE = SegE
-         //        - CoreABCloverE = CoreE 
          // As this is fold1, should be able to use HitClover, HitCrystal and HitSeg.
 
          // Energy Gate
-         if (Energies[Clover - 1][HitCrystal][HitSeg] > 100.0) {
+         if (Energies[Clover - 1][HitCrystal][HitSeg] > 100.0) {  
             // Check CoreE = SegE, CoreABCloverE = CoreE    
             //cout << "Cl: " << Clover << " Cr: " << HitCrystal << " HS: " << HitSeg << " En: " << Energies[Clover - 1][HitCrystal][HitSeg] << " CoreEn: " << Energies[Clover - 1][HitCrystal][0] << endl;
             //cout << "Cl: " << Clover << " Cr: " << HitCrystal <<" HS: " << HitSeg << " WEn: " << WaveEnergies[Clover - 1][HitCrystal][HitSeg] << " CorewEn: " << WaveEnergies[Clover - 1][HitCrystal][0] << endl << endl;
@@ -427,9 +421,7 @@ void PropXtalk(std::vector < TTigFragment > &ev)
                }
             }
             XtalkCount[Clover - 1][(HitCrystal * 4) + HitSeg] += 1;
-
          }
-
       }
    }
 
